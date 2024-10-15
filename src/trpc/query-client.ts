@@ -4,6 +4,16 @@ import {
 } from "@tanstack/react-query";
 import SuperJSON from "superjson";
 
+// Configure SuperJSON to handle Date objects
+SuperJSON.registerCustom<Date, string>(
+  {
+    isApplicable: (v): v is Date => v instanceof Date,
+    serialize: (v) => v.toISOString(),
+    deserialize: (v) => new Date(v),
+  },
+  "Date",
+);
+
 export const createQueryClient = () =>
   new QueryClient({
     defaultOptions: {
