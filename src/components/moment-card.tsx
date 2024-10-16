@@ -39,7 +39,7 @@ export function MomentCard({
   const styles = getMomentStyles(moment);
 
   const handleCopyUrl = () => {
-    const url = `${window.location.origin}/embed/moments/${moment.index}`;
+    const url = `${window.location.origin}/embed/moments/${encodeURIComponent(moment.index)}`;
     void navigator.clipboard.writeText(url);
     toast({
       title: "URL Copied",
@@ -49,7 +49,7 @@ export function MomentCard({
   };
 
   const handleCopyEmbed = () => {
-    const embedCode = `<iframe src="${window.location.origin}/embed/moments/${moment.index}" width="100%" height="400" frameborder="0"></iframe>`;
+    const embedCode = `<iframe src="${window.location.origin}/embed/moments/${encodeURIComponent(moment.index)}" width="100%" height="400" frameborder="0"></iframe>`;
     void navigator.clipboard.writeText(embedCode);
     toast({
       title: "Embed Code Copied",
