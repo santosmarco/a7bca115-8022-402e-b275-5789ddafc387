@@ -31,7 +31,7 @@ export function AdminSidebar({
   onClose,
 }: AdminSidebarProps) {
   const { data: videos, isLoading } = api.videos.listAll.useQuery();
-  const names = _.uniq(videos?.data.flatMap((video) => video.tags ?? []));
+  const names = _.uniq(videos?.flatMap((video) => video.tags ?? []));
 
   return (
     <Sheet open={true} onOpenChange={onClose}>

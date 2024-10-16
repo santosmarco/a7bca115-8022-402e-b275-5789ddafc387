@@ -4,7 +4,7 @@ import ApiVideoClient from "@api.video/nodejs-client";
 import axios from "axios";
 import { z } from "zod";
 import { env } from "~/env";
-import { Video } from "~/lib/schemas/video";
+import { Video, VideoWithDetails } from "~/lib/schemas/video";
 
 const apiVideo = new ApiVideoClient({
   apiKey: env.API_VIDEO_API_KEY,
@@ -13,7 +13,14 @@ const apiVideo = new ApiVideoClient({
 export async function listVideos(
   ...args: Parameters<typeof apiVideo.videos.list>
 ) {
-  return await apiVideo.videos.list(...args);
+  const { data } = await apiVideo.videos.list(...args);
+  const videosWithDetails = await Promise.all(
+    data.map(async (video) => {
+      const details = await apiVideo.videos.getStatus(video.videoId);
+      return { ...video, details };
+    }),
+  );
+  return videosWithDetails.map((video) => VideoWithDetails.parse(video));
 }
 
 export async function getVideo(

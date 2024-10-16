@@ -1,28 +1,8 @@
-import { VideoMoments } from "~/lib/schemas/video-moment";
-import { apiVideo } from "~/server/api/services/api-video";
+import { listVideos } from "~/lib/api-video/videos";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const videosRouter = createTRPCRouter({
   listAll: publicProcedure.query(async () => {
-    const videos = await apiVideo.videos.list();
-    const videosWithDuration = await Promise.all(
-      videos.data.map(async (video) => {
-        const details = await apiVideo.videos.getStatus(video.videoId);
-        return { ...video, details };
-      }),
-    );
-    const videosWithMetadataParsed = videosWithDuration.map((video) => {
-      const summary = video.metadata?.find(
-        (item) => item.key === "summary",
-      )?.value;
-      const activities = video.metadata?.find(
-        (item) => item.key === "activities",
-      )?.value;
-      const activitiesParsed = activities
-        ? VideoMoments.parse(JSON.parse(activities))
-        : null;
-      return { ...video, summary, activity: activitiesParsed };
-    });
-    return { data: videosWithMetadataParsed };
+    return await listVideos();
   }),
 });

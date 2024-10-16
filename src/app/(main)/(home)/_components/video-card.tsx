@@ -1,67 +1,65 @@
 import { motion } from "framer-motion";
-import { Clock, Heart, Play } from "lucide-react";
+import _ from "lodash";
+import { Clock, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { Badge } from "~/components/ui/badge";
+import React from "react";
 import { Button } from "~/components/ui/button";
+import { type VideoWithDetails } from "~/lib/schemas/video";
 import { cn } from "~/lib/utils";
-import { type RouterOutputs } from "~/trpc/react";
+import { getVideoMoments } from "~/lib/videos";
 
-export type VideoCardProps = {
-  video: RouterOutputs["videos"]["listAll"]["data"][number];
+export type VideoCardProps = React.ComponentProps<typeof motion.div> & {
+  video: VideoWithDetails;
 };
 
-export function VideoCard({ video }: VideoCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
+export const VideoCard = React.forwardRef<
+  React.ElementRef<typeof motion.div>,
+  VideoCardProps
+>(({ video, className, ...props }, ref) => {
+  const moments = getVideoMoments(video);
+  const momentsByCategory = _.groupBy(moments, (moment) => moment.activity);
 
   return (
     <motion.div
-      className={cn("group relative overflow-hidden rounded-lg shadow-lg")}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ scale: 1.05 }}
-      transition={{ duration: 0.3 }}
+      ref={ref}
+      className={cn(
+        "group relative h-48 overflow-hidden rounded-lg shadow-lg",
+        className,
+      )}
+      {...props}
     >
-      <Link href={`/videos/${video.videoId}`} className="block">
-        <div className="relative aspect-video">
+      <Link href={`/videos/${video.videoId}`} className="block h-full">
+        <div className="relative h-[50%]">
           <Image
             src={video.assets?.thumbnail ?? "/placeholder.svg"}
             alt={video.title ?? "Video"}
             layout="fill"
             objectFit="cover"
-            className="transition-transform duration-300 group-hover:scale-110"
+            className="transition-transform duration-700 group-hover:scale-105"
           />
-          {isHovered && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              <Play className="h-16 w-16 text-white opacity-75" />
-            </div>
-          )}
         </div>
-        <div className="bg-white p-4 dark:bg-gray-800">
-          <h3 className="mb-2 line-clamp-2 text-lg font-semibold transition-colors group-hover:text-primary">
+        <div className="flex h-[50%] flex-col items-start justify-between bg-accent p-3 px-4">
+          <h3 className="line-clamp-2 font-semibold leading-tight transition-colors group-hover:underline group-hover:underline-offset-4">
             {video.title}
           </h3>
-          <div className="mb-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
-            <Clock className="mr-1 h-4 w-4" />
-            <span>
-              {formatDuration(video.details.encoding?.metadata?.duration ?? 0)}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Image
-                src={video.assets?.thumbnail ?? "/placeholder.svg"}
-                alt={video.title ?? "Video thumbnail"}
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
-              <span className="text-sm font-medium">{video.title}</span>
+          <div className="flex w-full items-center justify-between text-sm leading-none">
+            <div className="flex gap-x-2">
+              {Object.entries(momentsByCategory).map(([category, moments]) => (
+                <div key={category} className="flex items-baseline gap-x-1">
+                  <small>{category[0]}</small>
+                  <span className="font-semibold">{moments.length}</span>
+                </div>
+              ))}
             </div>
-            <Badge variant="secondary">
-              {/* video.details.views ?? */ 0} views
-            </Badge>
+            <div className="flex items-center">
+              <Clock className="mr-1 h-3 w-3" />
+              <span>
+                {formatDuration(
+                  video.details?.encoding?.metadata?.duration ?? 0,
+                )}
+              </span>
+            </div>
           </div>
         </div>
       </Link>
@@ -78,7 +76,8 @@ export function VideoCard({ video }: VideoCardProps) {
       </Button>
     </motion.div>
   );
-}
+});
+VideoCard.displayName = "VideoCard";
 
 function formatDuration(seconds: number) {
   const minutes = Math.floor(seconds / 60);

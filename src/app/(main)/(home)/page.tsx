@@ -16,7 +16,7 @@ export default function HomePage() {
   const { data: allVideos, isLoading } = api.videos.listAll.useQuery();
   const videosToShow =
     selectedName &&
-    allVideos?.data.filter((video) => video.tags?.includes(selectedName));
+    allVideos?.filter((video) => video.tags?.includes(selectedName));
 
   useEffect(() => {
     let typedChars = "";

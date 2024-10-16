@@ -44,3 +44,23 @@ export const Video = z.object({
   mp4Support: z.boolean().catch(false),
 });
 export type Video = z.infer<typeof Video>;
+
+export const VideoEncodingMetadata = z.object({
+  duration: z.number().nullish(),
+});
+export type VideoEncodingMetadata = z.infer<typeof VideoEncodingMetadata>;
+
+export const VideoEncoding = z.object({
+  metadata: VideoEncodingMetadata.nullish(),
+});
+export type VideoEncoding = z.infer<typeof VideoEncoding>;
+
+export const VideoDetails = z.object({
+  encoding: VideoEncoding.nullish(),
+});
+export type VideoDetails = z.infer<typeof VideoDetails>;
+
+export const VideoWithDetails = Video.extend({
+  details: VideoDetails.nullish(),
+});
+export type VideoWithDetails = z.infer<typeof VideoWithDetails>;
