@@ -64,7 +64,6 @@ export function VideoPlayer({
   useEffect(() => {
     if (startAt !== undefined && videoRef.current) {
       videoRef.current.currentTime = startAt;
-      console.log("startAt", startAt);
     }
   }, [startAt, videoRef]);
 

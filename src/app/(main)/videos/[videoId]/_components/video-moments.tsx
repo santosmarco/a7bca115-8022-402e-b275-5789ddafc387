@@ -2,30 +2,34 @@
 
 import _ from "lodash";
 import { MomentCard } from "~/components/moment-card";
+import { Badge } from "~/components/ui/badge";
 import { ScrollArea } from "~/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { type Video } from "~/lib/schemas/video";
 import { type VideoMoment } from "~/lib/schemas/video-moment";
-import { getVideoMoments } from "~/lib/videos";
+import { handleMomentCategorySort } from "~/lib/videos";
 
 export type VideoMomentsProps = {
-  video: Video;
+  moments: VideoMoment[];
   selectedCategory: string | undefined;
   onCategoryChange: (category: string) => void;
   onSkipToMoment: (moment: VideoMoment) => void;
 };
 
 export function VideoMoments({
-  video,
+  moments,
   selectedCategory,
   onCategoryChange,
   onSkipToMoment,
 }: VideoMomentsProps) {
-  const moments = getVideoMoments(video);
-  const categories = _.sortBy(
-    _.uniq(moments.map((moment) => moment.activity)),
-    (category) => category.toLowerCase(),
-  );
+  const categories = _.uniq(moments.map((moment) => moment.activity))
+    .sort(handleMomentCategorySort)
+    .concat(["Analysis"])
+    .map((category) => ({
+      label: category,
+      value: category,
+      disabled: category === "Analysis",
+      comingSoon: category === "Analysis",
+    }));
   const momentsByCategory = _.mapValues(
     _.groupBy(moments, (moment) => moment.activity),
     (moments) =>
@@ -34,20 +38,28 @@ export function VideoMoments({
 
   return (
     <Tabs
-      value={selectedCategory ?? categories[0]}
+      defaultValue={selectedCategory ?? categories[0]?.value}
       onValueChange={onCategoryChange}
     >
       <TabsList className="flex justify-start gap-x-6 bg-transparent lg:mb-2 lg:p-4">
         {categories.map((category) => (
           <TabsTrigger
-            key={category}
-            value={category}
-            className="relative rounded-full hover:text-muted-foreground/70 data-[state=active]:bg-foreground data-[state=active]:text-background"
+            key={category.value}
+            value={category.value}
+            className="relative flex items-center rounded-full hover:text-muted-foreground/70 data-[state=active]:bg-foreground data-[state=active]:text-background"
+            disabled={category.disabled}
           >
-            <span className="absolute -right-2.5 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold leading-none text-foreground">
-              {momentsByCategory[category]?.length}
-            </span>
-            {category}
+            {!category.disabled && (
+              <span className="absolute -right-2.5 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold leading-none text-foreground">
+                {momentsByCategory[category.value]?.length}
+              </span>
+            )}
+            {category.label}
+            {category.comingSoon && (
+              <Badge size="sm" color="primary" className="ml-2 opacity-80">
+                Soon
+              </Badge>
+            )}
           </TabsTrigger>
         ))}
       </TabsList>

@@ -127,6 +127,9 @@ importers:
       "@trpc/server":
         specifier: ^11.0.0-rc.446
         version: 11.0.0-rc.566
+      axios:
+        specifier: ^1.7.7
+        version: 1.7.7
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.0

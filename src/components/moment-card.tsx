@@ -15,6 +15,7 @@ import { toast } from "~/hooks/use-toast";
 import { type VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
 import { ExpandingText } from "./expanding-text";
+import { getMomentStyles } from "~/lib/moments";
 
 export type MomentCardProps = {
   moment: VideoMoment;
@@ -34,6 +35,8 @@ export function MomentCard({
   className,
 }: MomentCardProps) {
   const [isOpen, setIsOpen] = useState(false);
+
+  const styles = getMomentStyles(moment);
 
   const handleCopyUrl = () => {
     const url = `${window.location.origin}/embed/moments/${moment.index}`;
@@ -70,9 +73,9 @@ export function MomentCard({
         delay: index ? index * 0.1 : 0,
       }}
     >
-      <div className="mb-3 flex flex-col md:flex-row md:items-center md:justify-between lg:mb-2">
+      <div className="mb-3 flex flex-col md:mb-2 md:flex-row md:items-center md:justify-between">
         <h2 className="font-bold">{moment.title}</h2>
-        <div className="mt-0.5 flex items-center gap-x-2 text-muted-foreground lg:mt-0">
+        <div className="mt-0.5 flex items-center gap-x-2 text-muted-foreground md:mt-0">
           <span className="flex items-center gap-x-1.5 text-sm">
             <ClockIcon className="h-3.5 w-3.5" />
             {moment.segment_start_timestamp.replace(/\.\d+/, "")}
@@ -100,11 +103,17 @@ export function MomentCard({
           )}
         </div>
       </div>
-      <div className="mb-3 flex flex-wrap items-center gap-2 lg:mb-4">
-        <Badge variant="outline" className="rounded-full">
-          {moment.target_person_type}
-        </Badge>
-        <Badge variant="outline" className="rounded-full">
+      <div className="mb-3 flex flex-wrap items-center gap-2 md:mb-4">
+        {moment.target_person_type && (
+          <Badge variant="outline" className="rounded-full">
+            {moment.target_person_type}
+          </Badge>
+        )}
+        <Badge
+          variant="outline"
+          className="rounded-full"
+          {...styles.activityTypeBadge}
+        >
           {moment.activity_type}
         </Badge>
       </div>

@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const EmotionSequence = z.object({
-  sequence_id: z.number(),
-  segment_id_sequence_start: z.number(),
-  segment_id_sequence_end: z.number(),
+  sequence_id: z.coerce.number().int().nonnegative(),
+  segment_id_sequence_start: z.coerce.number().int().nonnegative(),
+  segment_id_sequence_end: z.coerce.number().int().nonnegative(),
   speaker_name: z.string(),
   emotion: z.string(),
   emotion_intensity: z.number(),

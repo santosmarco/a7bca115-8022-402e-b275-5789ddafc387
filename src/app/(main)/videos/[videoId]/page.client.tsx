@@ -9,21 +9,32 @@ import { VideoPlayer } from "~/components/player/video";
 import { Button } from "~/components/ui/button";
 import { type Video } from "~/lib/schemas/video";
 import { type VideoMoment } from "~/lib/schemas/video-moment";
-import { getVideoMoments, getVideoSummary } from "~/lib/videos";
+import {
+  emotionToMoment,
+  getVideoEmotions,
+  getVideoMoments,
+  getVideoSummary,
+} from "~/lib/videos";
 import { MeetingSummary } from "./_components/meeting-summary";
 import { VideoMoments } from "./_components/video-moments";
 import { VideoTags } from "./_components/video-tags";
 
 export type VideoPageClientProps = {
   video: Video;
+  vtt: string;
 };
 
-export function VideoPageClient({ video }: VideoPageClientProps) {
+export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
   const router = useRouter();
   const [category, setCategory] = useQueryState("category", parseAsString);
   const [startAt, setStartAt] = useQueryState("startAt", parseAsInteger);
   const summary = getVideoSummary(video);
-  const moments = getVideoMoments(video, category ?? undefined);
+  const moments = getVideoMoments(video);
+  const emotions = getVideoEmotions(video);
+  const emotionMoments = (emotions ?? []).map((emotion) =>
+    emotionToMoment(emotion, video, vtt),
+  );
+  const allMoments = [...moments, ...emotionMoments];
 
   const handleCategoryChange = (category: string) => {
     void setCategory(category);
@@ -35,7 +46,7 @@ export function VideoPageClient({ video }: VideoPageClientProps) {
 
   return (
     <PlayerProvider>
-      <header className="fixed left-0 right-0 top-0 hidden items-center justify-between border-b border-border p-4 pl-0 lg:flex">
+      <header className="fixed left-0 right-0 top-0 z-50 hidden items-center justify-between border-b border-border bg-background p-4 pl-0 lg:flex">
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -69,7 +80,9 @@ export function VideoPageClient({ video }: VideoPageClientProps) {
           <div className="space-y-4 lg:col-span-2 lg:space-y-6">
             <VideoPlayer
               video={video}
-              momentsShown={moments}
+              momentsShown={allMoments.filter(
+                ({ activity }) => !category || activity === category,
+              )}
               startAt={startAt ?? undefined}
             />
             {summary && (
@@ -78,7 +91,7 @@ export function VideoPageClient({ video }: VideoPageClientProps) {
               </div>
             )}
             <VideoMoments
-              video={video}
+              moments={allMoments}
               selectedCategory={category ?? undefined}
               onCategoryChange={handleCategoryChange}
               onSkipToMoment={handleSkipToMoment}
