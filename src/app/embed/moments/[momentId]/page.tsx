@@ -22,7 +22,7 @@ export default async function EmbedMomentPage({
 
   const video = await getVideo(videoId);
 
-  const moment = getVideoMomentById(video, momentId);
+  const moment = getVideoMomentById(video, decodeURIComponent(momentId));
   if (!moment) {
     return notFound();
   }
