@@ -3,6 +3,7 @@
 import ApiVideoClient from "@api.video/nodejs-client";
 
 import { env } from "~/env";
+import { Video } from "~/lib/schemas/video";
 
 const apiVideo = new ApiVideoClient({
   apiKey: env.API_VIDEO_API_KEY,
@@ -17,5 +18,6 @@ export async function listVideos(
 export async function getVideo(
   ...args: Parameters<typeof apiVideo.videos.get>
 ) {
-  return await apiVideo.videos.get(...args);
+  const video = await apiVideo.videos.get(...args);
+  return Video.parse(video);
 }

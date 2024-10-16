@@ -1,11 +1,14 @@
 /**
- * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially useful
- * for Docker builds.
+ * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
+ * This is especially useful for Docker builds.
  */
 await import("./src/env.js");
 
-/** @type {import("next").NextConfig} */
-const config = {
+/**
+ * @type {import("next").NextConfig}
+ */
+const nextConfig = {
+  reactStrictMode: true,
   experimental: {
     typedRoutes: true,
   },
@@ -14,4 +17,4 @@ const config = {
   },
 };
 
-export default config;
+export default nextConfig;

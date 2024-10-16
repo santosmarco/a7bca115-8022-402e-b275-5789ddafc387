@@ -1,19 +1,21 @@
-import type Video from "@api.video/nodejs-client/lib/model/Video";
 import { TagIcon } from "lucide-react";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
+import { type Video } from "~/lib/schemas/video";
 
-export type VideoTagsProps = Pick<Video, "tags">;
+export type VideoTagsProps = {
+  video: Video;
+};
 
-export function VideoTags({ tags }: VideoTagsProps) {
+export function VideoTags({ video }: VideoTagsProps) {
   return (
-    <Card>
-      <CardHeader className="bg-secondary">
-        <CardTitle className="text-lg">Tags</CardTitle>
+    <Card className="border-accent">
+      <CardHeader className="bg-secondary/50">
+        <CardTitle>Tags</CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="py-4">
         <div className="flex flex-wrap gap-2">
-          {tags?.map((tag, index) => (
+          {video.tags?.map((tag, index) => (
             <Badge
               key={index}
               variant="secondary"

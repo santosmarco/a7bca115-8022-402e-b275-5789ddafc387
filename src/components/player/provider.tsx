@@ -2,38 +2,35 @@
 
 import * as React from "react";
 
-export type PlayerSegment = {
-  start: number;
-  end: number;
-  color: string;
+export type PlayerState = {
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  buffered: number;
+  volume: number;
+  isMuted: boolean;
+  isFullscreen: boolean;
+  playbackRate: number;
+  error: string | null;
+  isControlsVisible: boolean;
+};
+
+export type PlayerMethods = {
+  play: () => void;
+  pause: () => void;
+  togglePlay: () => void;
+  seek: (time: number) => void;
+  changeVolume: (value: number) => void;
+  toggleMute: (muted?: boolean) => void;
+  toggleFullscreen: () => void;
+  changePlaybackRate: (rate: number) => void;
+  skip: (seconds: number) => void;
 };
 
 export type PlayerContextValue = {
   videoRef: React.RefObject<HTMLVideoElement>;
-  isPlaying: boolean;
-  play: () => void;
-  pause: () => void;
-  togglePlay: () => void;
-  currentTime: number;
-  duration: number;
-  seek: (time: number) => void;
-  buffered: number;
-  segments: Array<PlayerSegment>;
-  setSegments: (segments: Array<PlayerSegment>) => void;
-  volume: number;
-  changeVolume: (value: number) => void;
-  isMuted: boolean;
-  toggleMute: () => void;
-  isFullscreen: boolean;
-  toggleFullscreen: () => void;
-  playbackRate: number;
-  changePlaybackRate: (rate: number) => void;
-  isCaptionOn: boolean;
-  toggleCaptions: () => void;
-  error: string | null;
-  isControlsVisible: boolean;
-  skip: (seconds: number) => void;
-};
+} & PlayerState &
+  PlayerMethods;
 
 export const PlayerContext = React.createContext<PlayerContextValue | null>(
   null,
@@ -50,10 +47,8 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const [currentTime, setCurrentTime] = React.useState<number>(0); // In seconds
   const [duration, setDuration] = React.useState<number>(0); // In seconds
   const [buffered, setBuffered] = React.useState<number>(0); // In seconds
-  const [segments, setSegments] = React.useState<Array<PlayerSegment>>([]);
   const [isFullscreen, setIsFullscreen] = React.useState<boolean>(false);
   const [playbackRate, setPlaybackRate] = React.useState<number>(1); // Speed of playback
-  const [isCaptionOn, setIsCaptionOn] = React.useState<boolean>(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isControlsVisible, setIsControlsVisible] =
     React.useState<boolean>(true);
@@ -61,48 +56,48 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
   // Play the video
-  const play = React.useCallback(() => {
-    void videoRef.current?.play();
+  const play = React.useCallback(async () => {
+    if (!videoRef.current) return;
+    await videoRef.current.play();
   }, []);
 
   // Pause the video
   const pause = React.useCallback(() => {
-    videoRef.current?.pause();
+    if (!videoRef.current) return;
+    videoRef.current.pause();
   }, []);
 
   // Toggle play/pause
-  const togglePlay = React.useCallback(() => {
-    if (isPlaying) {
-      pause();
-    } else {
-      play();
-    }
-  }, [isPlaying, pause, play]);
+  const togglePlay = React.useCallback(async () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) await play();
+    else pause();
+  }, [pause, play, videoRef]);
 
   // Seek to a specific time
   const seek = React.useCallback((time: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = time;
+    setCurrentTime(time);
   }, []);
 
   // Handle volume change
   const changeVolume = React.useCallback((value: number) => {
-    if (videoRef.current) {
-      videoRef.current.volume = value;
-      setVolume(value);
-      setIsMuted(value === 0);
-    }
+    if (!videoRef.current) return;
+    videoRef.current.volume = value;
+    videoRef.current.muted = value === 0;
+    setVolume(value);
+    setIsMuted(value === 0);
   }, []);
 
   // Toggle mute
-  const toggleMute = React.useCallback(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  }, [isMuted]);
+  const toggleMute = React.useCallback(
+    (muted?: boolean) => {
+      const value = muted ?? !isMuted;
+      changeVolume(value ? 0 : 1);
+    },
+    [isMuted, changeVolume],
+  );
 
   // Toggle fullscreen
   const toggleFullscreen = React.useCallback(() => {
@@ -141,19 +136,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       setPlaybackRate(rate);
     }
   }, []);
-
-  // Toggle captions/subtitles
-  const toggleCaptions = React.useCallback(() => {
-    if (videoRef.current) {
-      const tracks = videoRef.current.textTracks;
-      if (tracks.length > 0) {
-        for (const track of tracks) {
-          track.mode = isCaptionOn ? "hidden" : "showing";
-        }
-        setIsCaptionOn(!isCaptionOn);
-      }
-    }
-  }, [isCaptionOn]);
 
   // Update current time
   const handleTimeUpdate = React.useCallback(() => {
@@ -200,7 +182,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
   const handleVolumeChange = React.useCallback(() => {
     if (videoRef.current) {
       setVolume(videoRef.current.volume);
-      setIsMuted(videoRef.current.muted);
     }
   }, []);
 
@@ -278,8 +259,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       duration,
       seek,
       buffered,
-      segments,
-      setSegments,
       volume,
       changeVolume,
       isMuted,
@@ -288,8 +267,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       toggleFullscreen,
       playbackRate,
       changePlaybackRate,
-      isCaptionOn,
-      toggleCaptions,
       error,
       isControlsVisible,
       skip,
@@ -303,8 +280,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       duration,
       seek,
       buffered,
-      segments,
-      setSegments,
       volume,
       changeVolume,
       isMuted,
@@ -313,8 +288,6 @@ export function PlayerProvider({ children }: PlayerProviderProps) {
       toggleFullscreen,
       playbackRate,
       changePlaybackRate,
-      isCaptionOn,
-      toggleCaptions,
       error,
       isControlsVisible,
       skip,

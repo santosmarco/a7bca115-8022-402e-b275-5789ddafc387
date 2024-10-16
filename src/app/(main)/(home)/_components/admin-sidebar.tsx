@@ -1,6 +1,7 @@
 "use client";
 
 import _ from "lodash";
+import { Button } from "~/components/ui/button";
 
 import {
   Select,
@@ -60,9 +61,9 @@ export function AdminSidebar({
           </Select>
         </div>
         <SheetClose asChild>
-          <button className="mt-4 rounded-md bg-gray-200 px-4 py-2">
+          <Button variant="secondary" className="mt-4">
             Close
-          </button>
+          </Button>
         </SheetClose>
       </SheetContent>
     </Sheet>

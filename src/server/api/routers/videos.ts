@@ -1,4 +1,4 @@
-import { Activities } from "~/lib/schemas/activity";
+import { VideoMoments } from "~/lib/schemas/video-moment";
 import { apiVideo } from "~/server/api/services/api-video";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -19,7 +19,7 @@ export const videosRouter = createTRPCRouter({
         (item) => item.key === "activities",
       )?.value;
       const activitiesParsed = activities
-        ? Activities.parse(JSON.parse(activities))
+        ? VideoMoments.parse(JSON.parse(activities))
         : null;
       return { ...video, summary, activity: activitiesParsed };
     });

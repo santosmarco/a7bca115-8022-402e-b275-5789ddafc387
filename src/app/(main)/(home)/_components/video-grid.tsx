@@ -1,8 +1,8 @@
-import type Video from "@api.video/nodejs-client/lib/model/Video";
+import { type RouterOutputs } from "~/trpc/react";
 import { VideoCard } from "./video-card";
 
 export type VideoGridProps = {
-  videos: Video[];
+  videos: RouterOutputs["videos"]["listAll"]["data"];
 };
 
 export function VideoGrid({ videos }: VideoGridProps) {

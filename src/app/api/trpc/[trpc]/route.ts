@@ -1,6 +1,5 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { type NextRequest } from "next/server";
-import SuperJSON from "superjson";
 
 import { env } from "~/env";
 import { appRouter } from "~/server/api/root";

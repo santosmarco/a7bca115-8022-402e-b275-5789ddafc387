@@ -59,7 +59,9 @@ export function VideoCard({ video }: VideoCardProps) {
               />
               <span className="text-sm font-medium">{video.title}</span>
             </div>
-            <Badge variant="secondary">{video.details.views ?? 0} views</Badge>
+            <Badge variant="secondary">
+              {/* video.details.views ?? */ 0} views
+            </Badge>
           </div>
         </div>
       </Link>

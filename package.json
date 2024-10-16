@@ -11,12 +11,14 @@
     "db:studio": "drizzle-kit studio",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "format": "prettier --write ."
   },
   "dependencies": {
     "@api.video/nodejs-client": "^2.6.4",
     "@api.video/react-player": "^1.1.0",
     "@hookform/resolvers": "^3.9.0",
+    "@mantine/hooks": "^7.13.2",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-alert-dialog": "^1.1.2",
     "@radix-ui/react-aspect-ratio": "^1.1.0",
@@ -47,6 +49,9 @@
     "@radix-ui/react-tooltip": "^1.1.3",
     "@t3-oss/env-nextjs": "^0.10.1",
     "@tanstack/react-query": "^5.50.0",
+    "@tiptap/pm": "^2.8.0",
+    "@tiptap/react": "^2.8.0",
+    "@tiptap/starter-kit": "^2.8.0",
     "@trpc/client": "^11.0.0-rc.446",
     "@trpc/react-query": "^11.0.0-rc.446",
     "@trpc/server": "^11.0.0-rc.446",
@@ -64,6 +69,7 @@
     "lucide-react": "^0.451.0",
     "next": "^14.2.4",
     "next-themes": "^0.3.0",
+    "nuqs": "^1.20.0",
     "plyr-react": "^5.3.0",
     "postgres": "^3.4.4",
     "react": "^18.3.1",
@@ -72,12 +78,14 @@
     "react-hook-form": "^7.53.0",
     "react-resizable-panels": "^2.1.4",
     "recharts": "^2.12.7",
+    "rxjs": "^7.8.1",
     "server-only": "^0.0.1",
     "sonner": "^1.5.0",
     "superjson": "^2.2.1",
     "tailwind-merge": "^2.5.3",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.0.0",
+    "video.js": "^8.18.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
@@ -93,9 +101,10 @@
     "eslint-config-next": "^14.2.4",
     "eslint-plugin-drizzle": "^0.2.3",
     "postcss": "^8.4.39",
-    "prettier": "^3.3.2",
+    "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.5",
     "tailwindcss": "^3.4.3",
+    "type-fest": "^4.26.1",
     "typescript": "^5.5.3"
   },
   "ct3aMetadata": {

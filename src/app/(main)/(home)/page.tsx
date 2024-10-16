@@ -1,13 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { z } from "zod";
+import { useLocalStorage } from "~/hooks/use-local-storage";
 import { api } from "~/trpc/react";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { VideoGrid } from "./_components/video-grid";
 
 export default function HomePage() {
   const [showAdmin, setShowAdmin] = useState(false);
-  const [selectedName, setSelectedName] = useState<string>("");
+  const [selectedName, setSelectedName] = useLocalStorage(
+    "selectedName",
+    z.string(),
+  );
   const { data: allVideos, isLoading } = api.videos.listAll.useQuery();
   const videosToShow =
     selectedName &&
@@ -24,13 +29,13 @@ export default function HomePage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [setShowAdmin]);
 
   return (
     <div className="flex min-h-screen">
       {showAdmin && (
         <AdminSidebar
-          selectedName={selectedName}
+          selectedName={selectedName ?? ""}
           onNameSelect={(name) => setSelectedName(name)}
           onClose={() => setShowAdmin(false)}
         />

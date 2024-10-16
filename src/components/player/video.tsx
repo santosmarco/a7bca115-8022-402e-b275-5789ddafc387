@@ -1,17 +1,19 @@
 "use client";
 
+import dayjs from "dayjs";
+import { motion } from "framer-motion";
+import _ from "lodash";
 import {
   Maximize,
   Minimize,
   Pause,
   Play,
   RotateCcw,
-  Settings,
   SkipForward,
-  Subtitles,
   Volume2,
   VolumeX,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import { Slider } from "~/components/ui/slider";
 import {
@@ -20,15 +22,22 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { type Video } from "~/lib/schemas/video";
+import { type VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
 import { usePlayer } from "./provider";
-import _ from "lodash";
 
 export type VideoPlayerProps = {
-  videoId: string;
+  video: Video;
+  momentsShown?: VideoMoment[];
+  startAt?: number;
 };
 
-export function VideoPlayer({ videoId }: VideoPlayerProps) {
+export function VideoPlayer({
+  video,
+  momentsShown,
+  startAt,
+}: VideoPlayerProps) {
   const {
     videoRef,
     isPlaying,
@@ -36,21 +45,45 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
     currentTime,
     duration,
     seek,
-    buffered,
+    play,
     volume,
     changeVolume,
     isMuted,
     toggleMute,
     isFullscreen,
     toggleFullscreen,
-    playbackRate,
-    changePlaybackRate,
-    isCaptionOn,
-    toggleCaptions,
     isControlsVisible,
     skip,
-    segments,
   } = usePlayer();
+
+  const [currentMoment, setCurrentMoment] = useState<VideoMoment | undefined>(
+    undefined,
+  );
+  const [hoveredMoment, setHoveredMoment] = useState<VideoMoment | null>(null);
+
+  useEffect(() => {
+    if (startAt !== undefined && videoRef.current) {
+      videoRef.current.currentTime = startAt;
+      console.log("startAt", startAt);
+    }
+  }, [startAt, videoRef]);
+
+  useEffect(() => {
+    toggleMute(true);
+    play();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (momentsShown && currentTime) {
+      const newCurrentMoment = momentsShown.find(
+        (moment) =>
+          currentTime >= moment.segment_start_timestamp_in_seconds &&
+          currentTime < moment.segment_end_timestamp_in_seconds,
+      );
+      setCurrentMoment(newCurrentMoment);
+    }
+  }, [currentTime, momentsShown]);
 
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60);
@@ -58,74 +91,143 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  console.log({ duration, currentTime, buffered, videoRef, segments });
-
   return (
-    <TooltipProvider delayDuration={0}>
-      <div className="group relative w-full">
+    <TooltipProvider>
+      <div className="group relative w-full rounded-lg">
         <video
           ref={videoRef}
-          src={`https://vod.api.video/vod/${videoId}/mp4/source.mp4`}
+          src={`https://vod.api.video/vod/${video.videoId}/mp4/source.mp4`}
           className="w-full cursor-pointer rounded-lg"
           crossOrigin="anonymous"
           playsInline={true}
           preload="auto"
           onClick={togglePlay}
         />
+
         {isControlsVisible && (
-          <div className="pointer-events-none absolute inset-0 rounded-lg bg-accent-foreground/50" />
+          <div className="pointer-events-none absolute inset-0 rounded-lg bg-accent/50" />
         )}
+
+        {isControlsVisible && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.1 }}
+            className="absolute left-0 right-0 top-0 flex flex-row items-start justify-between rounded-b rounded-t-lg bg-gradient-to-b from-accent to-transparent p-4 px-6 pb-12 text-lg font-normal text-primary-foreground"
+          >
+            <div className="flex flex-col items-start">
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.25 }}
+              >
+                {video.title}
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.2 }}
+                className="text-sm text-primary-foreground/70"
+              >
+                {dayjs(video.publishedAt).format("dddd, MMMM D")}
+              </motion.div>
+            </div>
+
+            {currentMoment && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4, duration: 0.2 }}
+                className="mt-2 max-w-[40%] text-right text-sm font-semibold text-primary-foreground"
+              >
+                {currentMoment.title}
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+
         <div
           className={cn(
-            "absolute -bottom-0.5 -left-1 -right-1 rounded-b-lg rounded-t-sm border border-border bg-accent p-4 shadow-md transition-opacity duration-300",
+            "absolute bottom-0 left-0 right-0 rounded-b-lg rounded-t-sm bg-accent p-4 transition-all duration-300",
             isControlsVisible ? "opacity-100" : "opacity-0",
           )}
         >
-          {_.sortBy([...segments], "start").map((segment) => (
-            <div
-              key={segment.start}
-              className={cn("absolute top-4 h-1.5", {
-                "bg-chart-1": segment.color === "chart-1",
-                "bg-chart-2": segment.color === "chart-2",
-                "bg-chart-3": segment.color === "chart-3",
-                "bg-chart-4": segment.color === "chart-4",
-                "bg-chart-5": segment.color === "chart-5",
-              })}
-              style={{
-                marginLeft: `${(segment.start / duration) * 964}px`,
-                width: `${((segment.end - segment.start) / duration) * 964}px`,
-              }}
-            />
-          ))}
-          <Slider
-            min={0}
-            max={duration}
-            value={[currentTime]}
-            onValueChange={(value) => seek(value[0])}
-            className="mb-4"
-            aria-label="Seek"
-          >
-            <div
-              className="absolute h-full bg-primary/50"
-              style={{ width: `${(buffered / duration) * 100}%` }}
-            />
-          </Slider>
+          <Tooltip open={!!hoveredMoment}>
+            <div className="relative -mb-1 h-1 w-full rounded-full bg-accent">
+              {momentsShown &&
+                _.sortBy(
+                  momentsShown,
+                  (moment) => moment.segment_start_timestamp_in_seconds,
+                ).map((moment) => (
+                  <Tooltip key={moment.index}>
+                    <TooltipTrigger
+                      className="absolute top-0 h-full rounded-full bg-primary"
+                      style={{
+                        left: `${(moment.segment_start_timestamp_in_seconds / (duration ?? 1)) * 100}%`,
+                        width: `${((moment.segment_end_timestamp_in_seconds - moment.segment_start_timestamp_in_seconds) / (duration ?? 1)) * 100}%`,
+                      }}
+                    />
+                    <TooltipContent>
+                      <p>{moment.title}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+            </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <TooltipTrigger asChild>
+              <Slider
+                min={0}
+                max={duration ?? 100}
+                value={[currentTime ?? 0]}
+                onValueChange={(value) => seek(value[0] ?? 0)}
+                aria-label="Seek"
+                onMouseMove={(ev) => {
+                  if (momentsShown && duration) {
+                    const rect = ev.currentTarget.getBoundingClientRect();
+                    const mouseX = ev.clientX - rect.left;
+                    const mouseTimePosition = (mouseX / rect.width) * duration;
+
+                    const newHoveredMoment = momentsShown.find(
+                      (moment) =>
+                        mouseTimePosition >=
+                          moment.segment_start_timestamp_in_seconds &&
+                        mouseTimePosition <
+                          moment.segment_end_timestamp_in_seconds,
+                    );
+
+                    setHoveredMoment(newHoveredMoment ?? null);
+                  }
+                }}
+                onMouseLeave={() => setHoveredMoment(null)}
+              />
+            </TooltipTrigger>
+            <TooltipContent
+              sideOffset={24}
+              className={cn(
+                "bg-accent text-xs shadow-xl",
+                !hoveredMoment && "hidden",
+              )}
+            >
+              {hoveredMoment?.title}
+            </TooltipContent>
+          </Tooltip>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-x-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-primary/10 hover:text-primary"
+                    className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
                     onClick={togglePlay}
                     aria-label={isPlaying ? "Pause" : "Play"}
                   >
                     {isPlaying ? (
-                      <Pause className="h-6 w-6" />
+                      <Pause className="h-4 w-4" />
                     ) : (
-                      <Play className="h-6 w-6" />
+                      <Play className="h-4 w-4" />
                     )}
                   </Button>
                 </TooltipTrigger>
@@ -138,11 +240,11 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-primary/10 hover:text-primary"
+                    className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
                     onClick={() => skip(-10)}
                     aria-label="Rewind 10 seconds"
                   >
-                    <RotateCcw className="h-6 w-6" />
+                    <RotateCcw className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -154,31 +256,31 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-primary/10 hover:text-primary"
+                    className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
                     onClick={() => skip(10)}
                     aria-label="Forward 10 seconds"
                   >
-                    <SkipForward className="h-6 w-6" />
+                    <SkipForward className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Forward 10 seconds</p>
                 </TooltipContent>
               </Tooltip>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="hover:bg-primary/10 hover:text-primary"
-                      onClick={toggleMute}
+                      className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
+                      onClick={() => changeVolume(isMuted ? 1 : 0)}
                       aria-label={isMuted ? "Unmute" : "Mute"}
                     >
                       {isMuted ? (
-                        <VolumeX className="h-6 w-6" />
+                        <VolumeX className="h-4 w-4" />
                       ) : (
-                        <Volume2 className="h-6 w-6" />
+                        <Volume2 className="h-4 w-4" />
                       )}
                     </Button>
                   </TooltipTrigger>
@@ -190,13 +292,13 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
                   min={0}
                   max={1}
                   step={0.1}
-                  value={[volume]}
-                  onValueChange={(value) => changeVolume(value[0])}
-                  className="w-24"
+                  value={[volume ?? 0]}
+                  onValueChange={(value) => changeVolume(value[0] ?? 0)}
+                  className="w-16"
                   aria-label="Volume"
                 />
               </div>
-              <span className="text-xs">
+              <span className="ml-2 text-xs">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
@@ -206,54 +308,16 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="hover:bg-primary/10 hover:text-primary"
-                    onClick={toggleCaptions}
-                    aria-label={
-                      isCaptionOn ? "Turn off captions" : "Turn on captions"
-                    }
-                  >
-                    <Subtitles className="h-6 w-6" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {isCaptionOn ? "Turn off captions" : "Turn on captions"}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-primary/10 hover:text-primary"
-                    onClick={() => {
-                      /* Open settings menu */
-                    }}
-                    aria-label="Settings"
-                  >
-                    <Settings className="h-6 w-6" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Settings</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hover:bg-primary/10 hover:text-primary"
+                    className="h-5 w-5 hover:bg-primary/10 hover:text-primary"
                     onClick={toggleFullscreen}
                     aria-label={
                       isFullscreen ? "Exit fullscreen" : "Enter fullscreen"
                     }
                   >
                     {isFullscreen ? (
-                      <Minimize className="h-6 w-6" />
+                      <Minimize className="h-4 w-4" />
                     ) : (
-                      <Maximize className="h-6 w-6" />
+                      <Maximize className="h-4 w-4" />
                     )}
                   </Button>
                 </TooltipTrigger>
