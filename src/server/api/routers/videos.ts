@@ -3,6 +3,6 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const videosRouter = createTRPCRouter({
   listAll: publicProcedure.query(async () => {
-    return await listVideos();
+    return await listVideos({ pageSize: 25 });
   }),
 });
