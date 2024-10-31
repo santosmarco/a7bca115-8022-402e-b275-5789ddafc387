@@ -14,6 +14,7 @@ export type Database = {
           clean_vtt_file: string | null
           created_at: string
           date: string | null
+          db_created_at: string | null
           name: string | null
           original_vtt_file: string | null
           speaker: string | null
@@ -24,6 +25,7 @@ export type Database = {
           clean_vtt_file?: string | null
           created_at?: string
           date?: string | null
+          db_created_at?: string | null
           name?: string | null
           original_vtt_file?: string | null
           speaker?: string | null
@@ -34,6 +36,7 @@ export type Database = {
           clean_vtt_file?: string | null
           created_at?: string
           date?: string | null
+          db_created_at?: string | null
           name?: string | null
           original_vtt_file?: string | null
           speaker?: string | null

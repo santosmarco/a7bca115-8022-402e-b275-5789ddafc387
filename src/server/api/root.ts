@@ -1,7 +1,9 @@
 import { videosRouter } from "~/server/api/routers/videos";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
+import { momentsRouter } from "./routers/moments";
 
 export const appRouter = createTRPCRouter({
+  moments: momentsRouter,
   videos: videosRouter,
 });
 

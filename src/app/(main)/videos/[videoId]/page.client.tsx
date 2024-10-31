@@ -46,7 +46,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
 
   return (
     <PlayerProvider>
-      <header className="fixed left-0 right-0 top-0 z-50 hidden items-center justify-between border-b border-border bg-background p-4 pl-0 lg:flex">
+      <header className="fixed left-64 right-0 top-0 z-50 hidden items-center justify-between border-b border-border bg-background p-4 pl-0 lg:flex">
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}

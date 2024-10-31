@@ -53,13 +53,14 @@ async function fetchVideoData(videoId: string) {
       momentsResult.data.map(transformMoment);
 
     return {
+      meeting: meetingResult.data?.[0],
       summary: (meetingResult.data?.[0]?.summary ?? "").replace(/^"|"$/g, ""),
       moments: transformedMoments,
     };
   } catch (error) {
     throw new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: `Failed to fetch video data: ${error.message}`,
+      message: `Failed to fetch video data: ${(error as Error).message}`,
       cause: error,
     });
   }
@@ -72,10 +73,13 @@ export const videosRouter = createTRPCRouter({
 
       return await Promise.all(
         videos.map(async (video) => {
-          const { summary, moments } = await fetchVideoData(video.videoId);
+          const { meeting, summary, moments } = await fetchVideoData(
+            video.videoId,
+          );
 
           return {
             ...video,
+            vtt: meeting?.original_vtt_file,
             metadata: [
               ...video.metadata.filter(
                 (m) => m.key !== "summary" && m.key !== "activities",

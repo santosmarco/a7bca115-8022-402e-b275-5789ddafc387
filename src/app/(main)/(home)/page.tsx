@@ -40,8 +40,8 @@ export default function HomePage() {
           onClose={() => setShowAdmin(false)}
         />
       )}
-      <main className="flex-1 p-6">
-        <h1 className="mb-6 text-2xl font-bold">Videos</h1>
+      <main className="flex-1 space-y-4 py-6">
+        <h1 className="text-3xl font-bold">Meetings</h1>
         {isLoading ? (
           <p>Loading...</p>
         ) : videosToShow ? (

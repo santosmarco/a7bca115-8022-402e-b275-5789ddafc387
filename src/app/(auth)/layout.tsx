@@ -2,10 +2,7 @@ import "~/styles/globals.css";
 
 import { type Metadata } from "next";
 import { Inter } from "next/font/google";
-import { redirect } from "next/navigation";
 
-import { AppSidebar } from "~/components/app-sidebar";
-import { createClient } from "~/lib/supabase/server";
 import { TRPCReactProvider } from "~/trpc/react";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -15,32 +12,18 @@ export const metadata: Metadata = {
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children?: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
   return (
     <html
       lang="en"
       className={`${inter.variable} dark bg-background text-foreground`}
     >
       <TRPCReactProvider>
-        <body>
-          <AppSidebar user={user} />
-          <div className="pl-64">
-            <main className="p-12">{children}</main>
-          </div>
-        </body>
+        <body>{children}</body>
       </TRPCReactProvider>
     </html>
   );
