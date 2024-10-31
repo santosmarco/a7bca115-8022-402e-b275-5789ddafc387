@@ -77,9 +77,11 @@ export const videosRouter = createTRPCRouter({
           return {
             ...video,
             metadata: [
-              ...video.metadata,
+              ...video.metadata.filter(
+                (m) => m.key !== "summary" && m.key !== "activities",
+              ),
               { key: "summary", value: summary },
-              { key: "moments", value: JSON.stringify(moments) },
+              { key: "activities", value: JSON.stringify(moments) },
             ],
           };
         }),
@@ -103,9 +105,11 @@ export const videosRouter = createTRPCRouter({
         return {
           ...video,
           metadata: [
-            ...video.metadata,
+            ...video.metadata.filter(
+              (m) => m.key !== "summary" && m.key !== "activities",
+            ),
             { key: "summary", value: summary },
-            { key: "moments", value: JSON.stringify(moments) },
+            { key: "activities", value: JSON.stringify(moments) },
           ],
         };
       } catch (error) {
