@@ -19,20 +19,10 @@ export async function updateSession(request: NextRequest) {
     {
       cookies: {
         getAll() {
-          const cookies = request.cookies.getAll();
-          console.log("[Auth Middleware] Getting cookies", {
-            cookieCount: cookies.length,
-            cookieNames: cookies.map((c) => c.name),
-          });
-          return cookies;
+          return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          console.log("[Auth Middleware] Setting cookies", {
-            cookieCount: cookiesToSet.length,
-            cookieNames: cookiesToSet.map((c) => c.name),
-          });
-
-          cookiesToSet.forEach(({ name, value }) =>
+          cookiesToSet.forEach(({ name, value, options }) =>
             request.cookies.set(name, value),
           );
           supabaseResponse = NextResponse.next({
