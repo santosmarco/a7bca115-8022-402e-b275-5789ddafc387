@@ -120,8 +120,8 @@ export default function SignInPage() {
           >
             By continuing, you agree to our
             <br />
-            <Link href="/terms">Terms of Service</Link> and{" "}
-            <Link href="/privacy">Privacy Policy</Link>
+            <Link href="/">Terms of Service</Link> and{" "}
+            <Link href="/">Privacy Policy</Link>
           </motion.p>
         </div>
       </motion.div>
