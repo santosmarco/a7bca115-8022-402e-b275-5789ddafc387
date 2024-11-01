@@ -11,8 +11,13 @@ export type VideoPageProps = {
   params: VideoPageParams;
 };
 
-export default async function VideoPage({ params }: VideoPageProps) {
-  const video = await api.videos.getOne({ videoId: params.videoId });
+export default async function VideoPage({
+  params,
+}: {
+  params: Promise<{ videoId: string }>;
+}) {
+  const { videoId } = await params;
+  const video = await api.videos.getOne({ videoId });
   const vtt = await getVTT(video.videoId, "en");
 
   return <VideoPageClient video={video} vtt={vtt.content} />;

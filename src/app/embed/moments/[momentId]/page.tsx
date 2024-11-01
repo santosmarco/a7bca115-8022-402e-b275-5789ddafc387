@@ -15,8 +15,12 @@ export type EmbedMomentPageProps = {
 };
 
 export default async function EmbedMomentPage({
-  params: { momentId },
-}: EmbedMomentPageProps) {
+  params,
+}: {
+  params: Promise<{ momentId: string }>;
+}) {
+  const { momentId } = await params;
+
   const [videoId] = momentId.split("_");
   if (!videoId) {
     return notFound();
