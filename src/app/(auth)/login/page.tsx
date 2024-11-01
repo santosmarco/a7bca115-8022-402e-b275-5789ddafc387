@@ -27,6 +27,9 @@ export default function SignInPage() {
   const handleSignIn = () => {
     void supabase.auth.signInWithOAuth({
       provider: "google",
+      options: {
+        redirectTo: getURL() + "auth/callback",
+      },
     });
   };
 
