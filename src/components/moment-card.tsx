@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { ClockIcon, Share2Icon } from "lucide-react";
 import { useState } from "react";
+
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import {
@@ -12,10 +13,11 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { toast } from "~/hooks/use-toast";
+import { getMomentStyles } from "~/lib/moments";
 import { type VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
+
 import { ExpandingText } from "./expanding-text";
-import { getMomentStyles } from "~/lib/moments";
 
 export type MomentCardProps = {
   moment: VideoMoment;

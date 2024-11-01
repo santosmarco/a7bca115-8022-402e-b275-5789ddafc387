@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
+
 import { PlayerProvider } from "~/components/player/provider";
 import { VideoPlayer } from "~/components/player/video";
 import { Button } from "~/components/ui/button";
@@ -15,6 +16,7 @@ import {
   getVideoMoments,
   getVideoSummary,
 } from "~/lib/videos";
+
 import { MeetingSummary } from "./_components/meeting-summary";
 import { VideoMoments } from "./_components/video-moments";
 import { VideoTags } from "./_components/video-tags";

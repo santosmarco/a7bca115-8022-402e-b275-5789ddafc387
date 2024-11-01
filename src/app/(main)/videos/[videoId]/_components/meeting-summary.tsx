@@ -1,7 +1,7 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { ExpandingText } from "~/components/expanding-text";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export type MeetingSummaryProps = {
   summary: string;

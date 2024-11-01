@@ -1,7 +1,6 @@
 import type { ClassValue } from "clsx";
-import type { Falsey } from "lodash";
-
 import { clsx } from "clsx";
+import type { Falsey } from "lodash";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {

@@ -1,8 +1,10 @@
 "use client";
 
+import { AnimatePresence,motion } from "framer-motion";
 import { BarChart3, LogOut, Puzzle, TrendingUpIcon, Video } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
@@ -11,7 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "~/lib/supabase/client";
 import { cn } from "~/lib/utils";
 

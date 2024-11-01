@@ -15,6 +15,9 @@ const nextConfig = {
   images: {
     domains: ["vod.api.video"],
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;

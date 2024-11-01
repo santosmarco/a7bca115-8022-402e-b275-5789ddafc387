@@ -3,6 +3,7 @@
 import { Filter, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
 import { MomentCard } from "~/components/moment-card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { VideoMoment } from "~/lib/schemas/video-moment";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 import {
   emotionToMoment,
   getVideoEmotions,

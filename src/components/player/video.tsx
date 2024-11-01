@@ -14,6 +14,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+
 import { Button } from "~/components/ui/button";
 import { Slider } from "~/components/ui/slider";
 import {
@@ -25,6 +26,7 @@ import {
 import { type Video } from "~/lib/schemas/video";
 import { type VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
+
 import { usePlayer } from "./provider";
 
 export type VideoPlayerProps = {

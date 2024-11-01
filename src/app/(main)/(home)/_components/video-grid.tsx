@@ -1,5 +1,7 @@
 import { stagger } from "framer-motion";
+
 import { type VideoWithDetails } from "~/lib/schemas/video";
+
 import { VideoCard } from "./video-card";
 
 export type VideoGridProps = {
