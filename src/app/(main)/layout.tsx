@@ -10,8 +10,18 @@ export default async function MainLayout({
 }) {
   let user;
   try {
+    console.log("[Main Layout] Fetching user");
     user = await api.auth.getUser();
-  } catch {
+    console.log("[Main Layout] User fetched successfully", {
+      userId: user.id,
+      email: user.email,
+    });
+  } catch (error) {
+    console.error("[Main Layout] Failed to fetch user", {
+      error,
+      errorMessage: (error as Error).message,
+      stack: (error as Error).stack,
+    });
     redirect("/login");
   }
 
