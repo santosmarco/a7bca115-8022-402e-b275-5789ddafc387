@@ -132,6 +132,24 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          id: string
+          is_admin: boolean
+          nickname: string | null
+        }
+        Insert: {
+          id: string
+          is_admin?: boolean
+          nickname?: string | null
+        }
+        Update: {
+          id?: string
+          is_admin?: boolean
+          nickname?: string | null
+        }
+        Relationships: []
+      }
       segments: {
         Row: {
           duration: number | null

@@ -1,41 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
+import Image from "next/image";
 import { SiGoogle } from "react-icons/si";
 
+import titanLogo from "~/assets/titan-logo.svg";
 import { Button } from "~/components/ui/button";
+import { Link } from "~/components/ui/link";
 import { createClient } from "~/lib/supabase/client";
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: "easeOut",
-    },
-  },
-};
-
 export default function SignInPage() {
-  // const session = /* await getServerAuthSession(); */ null;
-
-  // if (session) {
-  //   redirect("/");
-  // }
-
   const supabase = createClient();
 
   const handleSignIn = () => {
@@ -48,72 +22,97 @@ export default function SignInPage() {
   };
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="container mx-auto flex h-screen w-screen flex-col items-center justify-center"
-    >
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-background to-accent/20">
+      {/* Animated background elements */}
       <motion.div
-        className="mx-auto flex w-full flex-col justify-center space-y-8 sm:w-[350px]"
-        variants={containerVariants}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.5 }}
+        transition={{ duration: 2 }}
+        className="absolute inset-0 z-0"
       >
-        <motion.div
-          className="flex flex-col space-y-2 text-center"
-          variants={itemVariants}
-        >
-          <motion.h1
-            className="text-2xl font-semibold tracking-tight"
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-          >
-            Sign in
-          </motion.h1>
-          <motion.p
-            className="text-sm text-muted-foreground"
-            variants={itemVariants}
-          >
-            to continue to Titan
-          </motion.p>
-        </motion.div>
-
-        <motion.div
-          variants={itemVariants}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          <Button
-            variant="outline"
-            onClick={handleSignIn}
-            className="w-full gap-x-2"
-          >
-            <SiGoogle />
-            Sign in with Google
-          </Button>
-        </motion.div>
-
-        <motion.p
-          className="px-8 text-center text-sm text-muted-foreground"
-          variants={itemVariants}
-        >
-          By clicking continue, you agree to our{" "}
-          <Link
-            href="/terms"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Terms of Service
-          </Link>{" "}
-          and{" "}
-          <Link
-            href="/privacy"
-            className="underline underline-offset-4 hover:text-primary"
-          >
-            Privacy Policy
-          </Link>
-          .
-        </motion.p>
+        <div className="absolute -left-4 top-0 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-[500px] w-[500px] rounded-full bg-primary/10 blur-3xl" />
       </motion.div>
-    </motion.div>
+
+      {/* Login container */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 w-full max-w-md rounded-2xl border border-border/50 bg-background/50 p-8 shadow-xl backdrop-blur-xl"
+      >
+        <div className="space-y-6">
+          {/* Logo and title */}
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"
+            >
+              <Image src={titanLogo} alt="Titan Logo" width={48} height={48} />
+            </motion.div>
+            <motion.h1
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="text-2xl font-bold tracking-tight"
+            >
+              Welcome to Titan
+            </motion.h1>
+            <motion.p
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="mt-2 text-sm text-muted-foreground"
+            >
+              Sign in to continue to your account
+            </motion.p>
+          </motion.div>
+
+          {/* Sign in button */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Button
+              variant="outline"
+              onClick={handleSignIn}
+              className="relative w-full overflow-hidden border-border/50 bg-background/50 transition-colors hover:bg-accent"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+                className="absolute inset-0 z-0 bg-gradient-to-r from-background to-accent opacity-0 transition-opacity hover:opacity-10"
+              />
+              <span className="relative z-10 flex items-center justify-center gap-2">
+                <SiGoogle className="h-4 w-4" />
+                Sign in with Google
+              </span>
+            </Button>
+          </motion.div>
+
+          {/* Terms */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            className="text-center text-sm text-muted-foreground"
+          >
+            By continuing, you agree to our
+            <br />
+            <Link href="/terms">Terms of Service</Link> and{" "}
+            <Link href="/privacy">Privacy Policy</Link>
+          </motion.p>
+        </div>
+      </motion.div>
+    </div>
   );
 }

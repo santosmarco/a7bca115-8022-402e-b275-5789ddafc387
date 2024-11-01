@@ -1,0 +1,13 @@
+:root {
+  .dark-mode {
+    @apply bg-background;
+  }
+}
+
+.notion-page-no-cover {
+  @apply !mt-0;
+}
+
+.notion-asset-wrapper iframe {
+  @apply bg-background;
+}

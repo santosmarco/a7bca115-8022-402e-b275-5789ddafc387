@@ -1,81 +1,95 @@
 "use client";
 
-import { AnimatePresence,motion } from "framer-motion";
-import { BarChart3, LogOut, Puzzle, TrendingUpIcon, Video } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import _ from "lodash";
+import {
+  BarChart3,
+  LogOut,
+  Puzzle,
+  TrendingUpIcon,
+  User,
+  Video,
+} from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 
+import titanLogo from "~/assets/titan-logo.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { useLocalStorage } from "~/hooks/use-local-storage";
 import { createClient } from "~/lib/supabase/client";
+import { type Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
+import type { RouterOutputs } from "~/trpc/react";
 
-type SidebarButtonProps = {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  isActive?: boolean;
-  className?: string;
+export type AppSidebarProps = {
+  user: RouterOutputs["auth"]["getUser"];
 };
 
-function SidebarButton({
-  href,
-  icon,
-  label,
-  isActive,
-  className,
-}: SidebarButtonProps) {
-  return (
-    <Link href={href}>
-      <motion.div
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        className={cn(
-          "group relative flex items-center gap-6 rounded-sm px-8 py-4 text-muted-foreground transition-all hover:bg-blue-500/10",
-          isActive
-            ? "text-blue-500 before:absolute before:bottom-1.5 before:left-0 before:top-1.5 before:w-1.5 before:rounded-r before:bg-blue-500"
-            : "hover:text-primary-foreground",
-          className,
-        )}
-      >
-        <motion.div
-          initial={{ rotate: 0 }}
-          whileHover={{ rotate: 10, scale: 1.1 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          {icon}
-        </motion.div>
-        <motion.span
-          initial={{ x: -5, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          className="text-sm"
-        >
-          {label}
-        </motion.span>
-      </motion.div>
-    </Link>
-  );
-}
+const ProfileSchema = z.object({
+  id: z.string(),
+  nickname: z.string().nullable(),
+  is_admin: z.boolean(),
+}) satisfies z.ZodType<Tables<"profiles">>;
 
-export function AppSidebar({
-  user,
-}: {
-  user: Awaited<
-    ReturnType<ReturnType<typeof createClient>["auth"]["getUser"]>
-  >["data"]["user"];
-}) {
+export function AppSidebar({ user }: AppSidebarProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
+  const [profiles, setProfiles] = useState<Tables<"profiles">[]>([]);
+  const [selectedProfile, setSelectedProfile] = useLocalStorage(
+    "selectedProfile",
+    ProfileSchema,
+  );
+  const [authSectionIsHovered, setAuthSectionIsHovered] = useState(false);
+
+  useEffect(() => {
+    async function fetchProfiles() {
+      if (!user.is_admin || profiles.length > 0) return;
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("nickname");
+      if (!allProfiles) return;
+      setProfiles(allProfiles);
+      if (!selectedProfile)
+        setSelectedProfile(
+          _.pick(user, [
+            "id",
+            "nickname",
+            "is_admin",
+          ] satisfies (keyof Tables<"profiles">)[]),
+        );
+    }
+
+    void fetchProfiles();
+  }, []);
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error(error);
+    }
+
+    router.push("/login");
   };
+
+  const handleProfileChange = async (profile: Tables<"profiles">) => {
+    setSelectedProfile(profile);
+  };
+
+  console.log(user);
 
   const menuItems = [
     {
@@ -109,38 +123,22 @@ export function AppSidebar({
       initial={{ x: -320 }}
       animate={{ x: 0 }}
       transition={{ type: "spring", damping: 20 }}
-      className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-black text-white"
+      className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-accent/25 text-foreground"
     >
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="px-4 py-6"
+        className="px-7 py-6"
       >
-        <Link href="/" className="flex items-center gap-2">
-          <motion.svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="text-white"
-            whileHover={{ rotate: 180 }}
-            transition={{ duration: 0.5 }}
-          >
-            <path
-              d="M4 9h16M4 9v7M4 9H2m18 0v7m0-7h2M4 16h16m-13 4V16m10 4V16"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </motion.svg>
+        <Link href="/" className="flex items-center gap-4">
+          <Image src={titanLogo} alt="Titan Logo" width={32} height={32} />
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-sm font-medium"
+            className="text-xl font-bold"
           >
             Titan
           </motion.span>
@@ -157,12 +155,27 @@ export function AppSidebar({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <SidebarButton
-                href={item.href}
-                icon={item.icon}
-                label={item.label}
-                isActive={item.isActive}
-              />
+              <Link href={item.href}>
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={cn(
+                    "group relative flex items-center gap-6 rounded-sm px-8 py-4 text-muted-foreground transition-all hover:bg-primary/10",
+                    item.isActive
+                      ? "text-primary before:absolute before:bottom-1.5 before:left-0 before:top-1.5 before:w-1.5 before:rounded-r before:bg-primary"
+                      : "hover:text-foreground",
+                  )}
+                >
+                  <span>{item.icon}</span>
+                  <motion.span
+                    initial={{ x: -5, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="text-sm"
+                  >
+                    {item.label}
+                  </motion.span>
+                </motion.div>
+              </Link>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -173,26 +186,31 @@ export function AppSidebar({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="mt-auto border-t border-border/10 px-2 py-4"
+        className="mt-auto border-t border-border"
       >
         {user && (
-          <div className="mt-4 px-2">
+          <div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  onHoverStart={() => setAuthSectionIsHovered(true)}
+                  onHoverEnd={() => setAuthSectionIsHovered(false)}
                 >
                   <Button
                     variant="ghost"
-                    className="h-auto w-full justify-start px-2 py-3 hover:bg-blue-500/10"
+                    className="group relative h-16 w-full justify-start overflow-hidden rounded-none px-4 transition-all hover:bg-none"
                   >
-                    <div className="flex items-center gap-3">
-                      <motion.div
-                        whileHover={{ rotate: 360 }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <Avatar className="h-8 w-8">
+                    {/* Animated background gradient */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-primary/5 to-primary/10"
+                      initial={{ x: "-100%" }}
+                      animate={{ x: authSectionIsHovered ? "0%" : "-100%" }}
+                      transition={{ duration: 0.3 }}
+                    />
+
+                    <div className="relative z-10 flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10 border-2 border-border/50 transition-colors group-hover:border-primary/50">
                           <AvatarImage
                             src={
                               user.user_metadata.avatar_url as
@@ -200,18 +218,26 @@ export function AppSidebar({
                                 | undefined
                             }
                           />
-                          <AvatarFallback>
+                          <AvatarFallback className="bg-primary/5">
                             {user.email?.slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
-                      </motion.div>
+                        <motion.div
+                          className="absolute -inset-1 rounded-full bg-primary/10"
+                          initial={{ scale: 0, opacity: 0 }}
+                          whileHover={{ scale: 1.2, opacity: 0.5 }}
+                          transition={{ duration: 0.3 }}
+                        />
+                      </div>
+
                       <div className="flex flex-col items-start text-left">
                         <motion.span
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           className="text-sm font-medium text-foreground"
                         >
-                          {user.user_metadata.full_name}
+                          {selectedProfile?.nickname ??
+                            user.user_metadata.full_name}
                         </motion.span>
                         <motion.span
                           initial={{ opacity: 0 }}
@@ -226,19 +252,41 @@ export function AppSidebar({
                   </Button>
                 </motion.div>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+
+              <DropdownMenuContent align="end" className="w-56" sideOffset={16}>
+                {user.is_admin && profiles.length > 0 && (
+                  <>
+                    <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
+                      <User className="h-3 w-3" />
+                      Admin • Switch Profile
+                    </DropdownMenuLabel>
+                    {profiles.map((profile) => (
+                      <DropdownMenuItem
+                        key={profile.id}
+                        onClick={() => handleProfileChange(profile)}
+                        className="flex cursor-pointer items-center gap-2"
+                      >
+                        <span
+                          className={cn(
+                            "h-2 w-2 rounded-full",
+                            selectedProfile?.id === profile.id
+                              ? "bg-primary"
+                              : "bg-muted",
+                          )}
+                        />
+                        {profile.nickname}
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="cursor-pointer gap-2 text-destructive-foreground"
                 >
-                  <DropdownMenuItem
-                    onClick={handleSignOut}
-                    className="text-destructive"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
-                  </DropdownMenuItem>
-                </motion.div>
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

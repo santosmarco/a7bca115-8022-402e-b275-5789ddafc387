@@ -5,8 +5,8 @@ import { Inter } from "next/font/google";
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "~/components/app-sidebar";
-import { createClient } from "~/lib/supabase/server";
 import { TRPCReactProvider } from "~/trpc/react";
+import { api } from "~/trpc/server";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -20,12 +20,10 @@ export default async function RootLayout({
 }: {
   children?: React.ReactNode;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  let user;
+  try {
+    user = await api.auth.getUser();
+  } catch {
     redirect("/login");
   }
 
@@ -34,14 +32,15 @@ export default async function RootLayout({
       lang="en"
       className={`${inter.variable} dark bg-background text-foreground`}
     >
-      <TRPCReactProvider>
-        <body>
+      <body>
+        <TRPCReactProvider>
           <AppSidebar user={user} />
+
           <div className="pl-64">
             <main className="p-12">{children}</main>
           </div>
-        </body>
-      </TRPCReactProvider>
+        </TRPCReactProvider>
+      </body>
     </html>
   );
 }

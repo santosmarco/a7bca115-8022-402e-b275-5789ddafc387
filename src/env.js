@@ -9,6 +9,9 @@ export const env = createEnv({
       .default("development"),
     // API Video
     API_VIDEO_API_KEY: z.string(),
+    // Notion
+    NOTION_INTEGRATION_SECRET: z.string(),
+    NOTION_REPORTS_DATABASE_ID: z.string(),
   },
 
   client: {
@@ -20,6 +23,8 @@ export const env = createEnv({
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     API_VIDEO_API_KEY: process.env.API_VIDEO_API_KEY,
+    NOTION_INTEGRATION_SECRET: process.env.NOTION_INTEGRATION_SECRET,
+    NOTION_REPORTS_DATABASE_ID: process.env.NOTION_REPORTS_DATABASE_ID,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
