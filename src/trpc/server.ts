@@ -4,7 +4,6 @@ import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import { headers } from "next/headers";
 import { cache } from "react";
 
-import { createClient } from "~/lib/supabase/server";
 import { type AppRouter, createCaller } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 
@@ -14,10 +13,7 @@ const createContext = cache(async () => {
   const heads = new Headers(await headers());
   heads.set("x-trpc-source", "rsc");
 
-  return createTRPCContext({
-    headers: heads,
-    supabase: await createClient(),
-  });
+  return createTRPCContext({ headers: heads });
 });
 
 const getQueryClient = cache(createQueryClient);

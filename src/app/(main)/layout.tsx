@@ -1,29 +1,19 @@
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "~/components/app-sidebar";
-import { api } from "~/trpc/server";
+import { getUser } from "~/lib/supabase/actions/auth";
 
 export default async function MainLayout({
   children,
 }: {
   children?: React.ReactNode;
 }) {
-  let user;
-  try {
-    console.log("[Main Layout] Fetching user");
-    user = await api.auth.getUser();
-    console.log("[Main Layout] User fetched successfully", {
-      userId: user.id,
-      email: user.email,
-    });
-  } catch (error) {
-    console.error("[Main Layout] Failed to fetch user", {
-      error,
-      errorMessage: (error as Error).message,
-      stack: (error as Error).stack,
-    });
+  const userResult = await getUser();
+  if (!userResult?.data) {
     redirect("/login");
   }
+
+  const user = userResult.data;
 
   return (
     <>

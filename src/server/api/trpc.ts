@@ -2,13 +2,10 @@ import { initTRPC } from "@trpc/server";
 import SuperJSON from "superjson";
 import { ZodError } from "zod";
 
-import type { SupabaseServerClient } from "~/lib/supabase/server";
-
-export const createTRPCContext = async (opts: {
-  headers: Headers;
-  supabase: SupabaseServerClient;
-}) => {
-  return { ...opts };
+export const createTRPCContext = async (opts: { headers: Headers }) => {
+  return {
+    headers: opts.headers,
+  };
 };
 
 const t = initTRPC.context<typeof createTRPCContext>().create({

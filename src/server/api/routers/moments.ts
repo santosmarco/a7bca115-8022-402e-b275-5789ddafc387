@@ -6,6 +6,7 @@ import {
   fetchPaginatedMoments,
   fetchVideoMoments,
 } from "~/lib/db/moments";
+import { createClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 const reactionTypeSchema = z.enum(["thumbs_up", "thumbs_down"]);
@@ -82,8 +83,9 @@ export const momentsRouter = createTRPCRouter({
 
   getReactions: publicProcedure
     .input(z.object({ momentId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const { data, error } = await ctx.supabase
+    .query(async ({ input }) => {
+      const supabase = await createClient();
+      const { data, error } = await supabase
         .from("moment_reactions")
         .select("*, user:profiles(*)")
         .eq("moment_id", input.momentId);
@@ -100,20 +102,24 @@ export const momentsRouter = createTRPCRouter({
         type: reactionTypeSchema,
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.supabase.auth.getUser();
-      if (!user.data.user) {
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
-      const existingReaction = await ctx.supabase
+      const existingReaction = await supabase
         .from("moment_reactions")
         .select("*")
         .eq("moment_id", input.momentId)
-        .eq("user_id", user.data.user.id);
+        .eq("user_id", user.id);
 
       if (existingReaction.data?.[0]?.id) {
-        const { error } = await ctx.supabase
+        const { error } = await supabase
           .from("moment_reactions")
           .delete()
           .eq("id", existingReaction.data[0].id);
@@ -122,9 +128,9 @@ export const momentsRouter = createTRPCRouter({
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", cause: error });
       }
 
-      const { error } = await ctx.supabase.from("moment_reactions").upsert({
+      const { error } = await supabase.from("moment_reactions").upsert({
         moment_id: input.momentId,
-        user_id: user.data.user.id,
+        user_id: user.id,
         reaction_type: input.type,
       });
 
@@ -135,8 +141,9 @@ export const momentsRouter = createTRPCRouter({
 
   getComments: publicProcedure
     .input(z.object({ momentId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const { data, error } = await ctx.supabase
+    .query(async ({ input }) => {
+      const supabase = await createClient();
+      const { data, error } = await supabase
         .from("moment_comments")
         .select("*, user:profiles(*)")
         .eq("moment_id", input.momentId)
@@ -154,15 +161,19 @@ export const momentsRouter = createTRPCRouter({
         content: z.string().min(1).max(500),
       }),
     )
-    .mutation(async ({ ctx, input }) => {
-      const user = await ctx.supabase.auth.getUser();
-      if (!user.data.user) {
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError || !user) {
         throw new TRPCError({ code: "UNAUTHORIZED" });
       }
 
-      const { error } = await ctx.supabase.from("moment_comments").insert({
+      const { error } = await supabase.from("moment_comments").insert({
         moment_id: input.momentId,
-        user_id: user.data.user.id,
+        user_id: user.id,
         content: input.content,
       });
 
