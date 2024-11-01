@@ -93,16 +93,16 @@ export function AppSidebar({ user }: AppSidebarProps) {
 
   const menuItems = [
     {
-      href: "/moments",
-      icon: <TrendingUpIcon />,
-      label: "Moments",
-      isActive: pathname.startsWith("/moments"),
-    },
-    {
       href: "/",
       icon: <Video className="h-5 w-5" />,
       label: "Meetings",
       isActive: pathname === "/" || pathname.startsWith("/videos"),
+    },
+    {
+      href: "/moments",
+      icon: <TrendingUpIcon />,
+      label: "Moments",
+      isActive: pathname.startsWith("/moments"),
     },
     {
       href: "/reports",
@@ -253,7 +253,12 @@ export function AppSidebar({ user }: AppSidebarProps) {
                 </motion.div>
               </DropdownMenuTrigger>
 
-              <DropdownMenuContent align="end" className="w-56" sideOffset={16}>
+              <DropdownMenuContent
+                align="end"
+                sideOffset={-64}
+                alignOffset={-256}
+                className="mb-4 ml-4 w-56"
+              >
                 {user.is_admin && profiles.length > 0 && (
                   <>
                     <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">

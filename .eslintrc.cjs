@@ -6,7 +6,7 @@ const eslintConfig = {
   parserOptions: {
     project: true,
   },
-  plugins: ["@typescript-eslint", "drizzle", "simple-import-sort"],
+  plugins: ["@typescript-eslint", "simple-import-sort"],
   extends: [
     "next/core-web-vitals",
     "plugin:@typescript-eslint/recommended-type-checked",
@@ -25,7 +25,6 @@ const eslintConfig = {
     ],
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     "@typescript-eslint/require-await": "off",
-
     "simple-import-sort/exports": "warn",
     "simple-import-sort/imports": "warn",
   },

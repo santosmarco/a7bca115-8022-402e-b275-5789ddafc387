@@ -51,6 +51,7 @@ export function emotionToMoment(
   );
 
   return {
+    id: `${video.videoId}_Emotion_${emotion.sequence_id}`,
     index: `${video.videoId}_Emotion_${emotion.sequence_id}`,
     sequence_id: emotion.sequence_id,
     segment_id_sequence_start: emotion.segment_id_sequence_start,

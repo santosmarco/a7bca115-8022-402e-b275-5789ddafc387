@@ -10,6 +10,7 @@ export function transformMoment(
   idx: number,
 ): VideoMoment {
   return {
+    id: moment.id ?? `${moment.video_api_id}_${moment.activity}_${idx}`,
     index: `${moment.video_api_id}_${moment.activity}_${idx}`,
     sequence_id: idx ?? "",
     segment_id_sequence_start: moment.segment_id_sequence_start ?? 0,

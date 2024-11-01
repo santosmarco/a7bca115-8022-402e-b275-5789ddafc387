@@ -10,7 +10,5 @@ export default async function ReportPage({
   const { reportId } = await params;
   const report = await api.notion.getOne({ reportId });
 
-  console.log(report.blocks);
-
   return <ReportPageClient report={report} />;
 }

@@ -8,6 +8,8 @@ import {
 } from "~/lib/db/moments";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
+const reactionTypeSchema = z.enum(["thumbs_up", "thumbs_down"]);
+
 export const momentsRouter = createTRPCRouter({
   listByVideo: publicProcedure
     .input(z.object({ videoId: z.string() }))
@@ -76,5 +78,96 @@ export const momentsRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  getReactions: publicProcedure
+    .input(z.object({ momentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { data, error } = await ctx.supabase
+        .from("moment_reactions")
+        .select("*, user:profiles(*)")
+        .eq("moment_id", input.momentId);
+
+      if (error)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", cause: error });
+      return data;
+    }),
+
+  addReaction: publicProcedure
+    .input(
+      z.object({
+        momentId: z.string(),
+        type: reactionTypeSchema,
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.supabase.auth.getUser();
+      if (!user.data.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      const existingReaction = await ctx.supabase
+        .from("moment_reactions")
+        .select("*")
+        .eq("moment_id", input.momentId)
+        .eq("user_id", user.data.user.id);
+
+      if (existingReaction.data?.[0]?.id) {
+        const { error } = await ctx.supabase
+          .from("moment_reactions")
+          .delete()
+          .eq("id", existingReaction.data[0].id);
+
+        if (error)
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", cause: error });
+      }
+
+      const { error } = await ctx.supabase.from("moment_reactions").upsert({
+        moment_id: input.momentId,
+        user_id: user.data.user.id,
+        reaction_type: input.type,
+      });
+
+      if (error)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", cause: error });
+      return { success: true };
+    }),
+
+  getComments: publicProcedure
+    .input(z.object({ momentId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { data, error } = await ctx.supabase
+        .from("moment_comments")
+        .select("*, user:profiles(*)")
+        .eq("moment_id", input.momentId)
+        .order("created_at", { ascending: true });
+
+      if (error)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", cause: error });
+      return data;
+    }),
+
+  addComment: publicProcedure
+    .input(
+      z.object({
+        momentId: z.string(),
+        content: z.string().min(1).max(500),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const user = await ctx.supabase.auth.getUser();
+      if (!user.data.user) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
+
+      const { error } = await ctx.supabase.from("moment_comments").insert({
+        moment_id: input.momentId,
+        user_id: user.data.user.id,
+        content: input.content,
+      });
+
+      if (error)
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", cause: error });
+      return { success: true };
     }),
 });

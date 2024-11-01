@@ -16,13 +16,14 @@ import {
   getVideoMoments,
   getVideoSummary,
 } from "~/lib/videos";
+import type { RouterOutputs } from "~/trpc/react";
 
 import { MeetingSummary } from "./_components/meeting-summary";
 import { VideoMoments } from "./_components/video-moments";
 import { VideoTags } from "./_components/video-tags";
 
 export type VideoPageClientProps = {
-  video: Video;
+  video: RouterOutputs["videos"]["getOne"];
   vtt: string;
 };
 

@@ -1,18 +1,9 @@
-import axios from "axios";
 import { z } from "zod";
 
 import { env } from "~/env";
 import { notion, notionApi } from "~/lib/notion/client";
 
 import { createTRPCRouter, publicProcedure } from "../trpc";
-
-async function getPageWithBlocks(pageId: string) {
-  const [page, { data: blocks }] = await Promise.all([
-    notionApi.getPage(pageId),
-    axios.get(`https://notion-api.splitbee.io/v1/page/${pageId}`),
-  ]);
-  return { ...page };
-}
 
 export const notionRouter = createTRPCRouter({
   listByClient: publicProcedure
@@ -24,8 +15,18 @@ export const notionRouter = createTRPCRouter({
       });
       const reportPages = await Promise.all(
         reports.results
-          .filter((result) => result.object === "page")
-          .map((result) => getPageWithBlocks(result.id)),
+          .filter(
+            (
+              result,
+            ): result is Extract<
+              typeof result,
+              { object: "page"; properties: unknown }
+            > => result.object === "page" && "properties" in result,
+          )
+          .map(async (result) => ({
+            ...result,
+            ...(await notionApi.getPage(result.id)),
+          })),
       );
       return reportPages;
     }),
@@ -33,6 +34,6 @@ export const notionRouter = createTRPCRouter({
   getOne: publicProcedure
     .input(z.object({ reportId: z.string() }))
     .query(async ({ input }) => {
-      return getPageWithBlocks(input.reportId);
+      return await notionApi.getPage(input.reportId);
     }),
 });

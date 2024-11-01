@@ -45,6 +45,87 @@ export type Database = {
         }
         Relationships: []
       }
+      moment_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          moment_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          moment_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          moment_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moment_comments_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moment_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moment_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          moment_id: string
+          reaction_type: Database["public"]["Enums"]["moment_reaction_type"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          moment_id: string
+          reaction_type: Database["public"]["Enums"]["moment_reaction_type"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          moment_id?: string
+          reaction_type?: Database["public"]["Enums"]["moment_reaction_type"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moment_reactions_moment_id_fkey"
+            columns: ["moment_id"]
+            isOneToOne: false
+            referencedRelation: "moments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moment_reactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       moments: {
         Row: {
           activity: string | null
@@ -216,7 +297,9 @@ export type Database = {
     }
     Views: Record<never, never>
     Functions: Record<never, never>
-    Enums: Record<never, never>
+    Enums: {
+      moment_reaction_type: "thumbs_up" | "thumbs_down"
+    }
     CompositeTypes: Record<never, never>
   }
 }

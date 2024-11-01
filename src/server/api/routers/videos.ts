@@ -12,6 +12,7 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 function transformMoment(moment: Tables<"moments">, idx: number) {
   return {
+    id: moment.id,
     index: `${moment.video_api_id}_${moment.activity}_${idx}`,
     sequence_id: idx ?? "",
     segment_id_sequence_start: moment.segment_id_sequence_start ?? 0,

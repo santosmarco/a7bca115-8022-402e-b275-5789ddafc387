@@ -1,23 +1,74 @@
-import "react-notion/src/styles.css";
+"use client";
 
-import { NotionRenderer } from "react-notion-x";
+import { motion } from "framer-motion";
+import { FileText } from "lucide-react";
+import Link from "next/link";
 
-import { api } from "~/trpc/server";
+import { ReportCard } from "~/components/report-card";
+import { api } from "~/trpc/react";
 
-export default async function ReportsPage() {
-  const user = await api.auth.getUser();
+export default function ReportsPage() {
+  const { data: user } = api.auth.getUser.useQuery();
+  const { data: reports, isLoading } = api.notion.listByClient.useQuery({
+    name: user?.nickname ?? "",
+  });
 
-  console.log(user);
+  if (isLoading) {
+    return (
+      <div className="mt-24 flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <FileText className="h-8 w-8 animate-pulse text-primary" />
+            <p className="text-sm text-muted-foreground">Loading reports...</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
-  const reports = await api.notion.listByClient({ name: "Kanishka Rao" });
-
-  console.log(reports.map((r) => r.properties));
+  if (!reports?.length) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <FileText className="h-8 w-8 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">No reports found</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <NotionRenderer
-      recordMap={reports[0]?.blocks}
-      fullPage={true}
-      darkMode={false}
-    />
+    <div className="container mx-auto space-y-8 py-6">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">Reports</h1>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      >
+        {reports.map((report, index) => (
+          <Link key={report.id} href={`/reports/${report.id}`}>
+            <ReportCard
+              report={report}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+            />
+          </Link>
+        ))}
+      </motion.div>
+    </div>
   );
 }
