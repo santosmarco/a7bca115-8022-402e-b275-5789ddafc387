@@ -14,7 +14,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { z } from "zod";
 
 import titanLogo from "~/assets/titan-logo.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
@@ -27,7 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
-import { useLocalStorage } from "~/hooks/use-local-storage";
+import { useProfile } from "~/hooks/use-profile";
 import { createClient } from "~/lib/supabase/client";
 import { type Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
@@ -37,21 +36,13 @@ export type AppSidebarProps = {
   user: RouterOutputs["auth"]["getUser"];
 };
 
-const ProfileSchema = z.object({
-  id: z.string(),
-  nickname: z.string().nullable(),
-  is_admin: z.boolean(),
-}) satisfies z.ZodType<Tables<"profiles">>;
-
 export function AppSidebar({ user }: AppSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
   const [profiles, setProfiles] = useState<Tables<"profiles">[]>([]);
-  const [selectedProfile, setSelectedProfile] = useLocalStorage(
-    "selectedProfile",
-    ProfileSchema,
-  );
+  const { profile: selectedProfile, setProfile: setSelectedProfile } =
+    useProfile();
   const [authSectionIsHovered, setAuthSectionIsHovered] = useState(false);
 
   useEffect(() => {
