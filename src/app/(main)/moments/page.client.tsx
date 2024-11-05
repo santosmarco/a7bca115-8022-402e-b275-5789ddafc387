@@ -15,24 +15,30 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { useProfile } from "~/hooks/use-profile";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import {
   emotionToMoment,
   getVideoEmotions,
   getVideoMoments,
 } from "~/lib/videos";
-import { type RouterOutputs } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 type MomentsPageProps = {
   videos: RouterOutputs["videos"]["listAll"];
 };
 
-export function MomentsPageClient({ videos }: MomentsPageProps) {
+export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVideo, setSelectedVideo] = useState("all");
   const [selectedSort, setSelectedSort] = useState("recent");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const { profile } = useProfile();
+  const { data: user } = api.auth.getUser.useQuery();
+  const videos = videosProp.filter((v) =>
+    v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+  );
 
   const videosEnriched = videos.map((video) => {
     const moments = getVideoMoments(video);
