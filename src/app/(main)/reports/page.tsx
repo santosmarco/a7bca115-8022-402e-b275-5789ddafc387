@@ -5,12 +5,14 @@ import { FileText } from "lucide-react";
 import Link from "next/link";
 
 import { ReportCard } from "~/components/report-card";
+import { useProfile } from "~/hooks/use-profile";
 import { api } from "~/trpc/react";
 
 export default function ReportsPage() {
+  const { profile } = useProfile();
   const { data: user } = api.auth.getUser.useQuery();
   const { data: reports, isLoading } = api.notion.listByClient.useQuery({
-    name: user?.nickname ?? "",
+    name: profile?.nickname ?? user?.nickname ?? "",
   });
 
   if (isLoading) {
@@ -32,7 +34,7 @@ export default function ReportsPage() {
 
   if (!reports?.length) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-24 flex items-center justify-center">
         <div className="text-center">
           <motion.div
             initial={{ opacity: 0 }}
