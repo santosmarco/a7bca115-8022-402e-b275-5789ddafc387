@@ -9,6 +9,7 @@ export const notionRouter = createTRPCRouter({
   listByClient: publicProcedure
     .input(z.object({ name: z.string() }))
     .query(async ({ input }) => {
+      if (!input.name) return [];
       const reports = await notion.databases.query({
         database_id: env.NOTION_REPORTS_DATABASE_ID,
         filter: { property: "Client", select: { equals: input.name } },
