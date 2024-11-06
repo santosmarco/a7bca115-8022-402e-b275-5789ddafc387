@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { FileVideo, Search } from "lucide-react";
 
 import { Input } from "~/components/ui/input";
+import { useProfile } from "~/hooks/use-profile";
 import { api } from "~/trpc/react";
 
 import { VideoGrid } from "./_components/video-grid";
@@ -32,9 +33,16 @@ const itemVariants = {
 };
 
 export default function HomePage() {
-  const { data: videos, isLoading } = api.videos.listAll.useQuery();
+  const { data, isLoading } = api.videos.listAll.useQuery();
+  const { profile } = useProfile();
+  const { data: user, isLoading: userIsLoading } = api.auth.getUser.useQuery();
+  const videos = profile?.is_admin
+    ? data
+    : data?.filter((v) =>
+        v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+      );
 
-  if (isLoading) {
+  if (isLoading || userIsLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <motion.div

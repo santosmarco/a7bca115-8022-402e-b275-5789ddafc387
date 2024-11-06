@@ -1,19 +1,20 @@
 import { redirect } from "next/navigation";
 
 import { AppSidebar } from "~/components/app-sidebar";
-import { getUser } from "~/lib/supabase/actions/auth";
+import { api } from "~/trpc/server";
 
 export default async function MainLayout({
   children,
 }: {
   children?: React.ReactNode;
 }) {
-  const userResult = await getUser();
-  if (!userResult?.data) {
+  let user: Awaited<ReturnType<typeof api.auth.getUser>> | null = null;
+  try {
+    user = await api.auth.getUser();
+  } catch (error) {
+    console.error("Failed to get user:", error);
     redirect("/login");
   }
-
-  const user = userResult.data;
 
   return (
     <>
