@@ -9,7 +9,12 @@ export const authRouter = createTRPCRouter({
     const supabase = await createClient();
     try {
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      if (error)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to sign out: ${(error as Error).message}`,
+          cause: error,
+        });
       return { success: true };
     } catch (error) {
       throw new TRPCError({
@@ -27,7 +32,17 @@ export const authRouter = createTRPCRouter({
         data: { session },
         error,
       } = await supabase.auth.getSession();
-      if (error) throw error;
+      if (error)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to get session: ${(error as Error).message}`,
+          cause: error,
+        });
+      if (!session)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Session not found",
+        });
       return session;
     } catch (error) {
       throw new TRPCError({
@@ -52,7 +67,10 @@ export const authRouter = createTRPCRouter({
           cause: error,
         });
       if (!user)
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("*")
