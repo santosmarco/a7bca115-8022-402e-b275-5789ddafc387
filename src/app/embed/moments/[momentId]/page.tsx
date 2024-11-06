@@ -17,10 +17,8 @@ export type EmbedMomentPageProps = {
 
 export default async function EmbedMomentPage({
   params,
-}: {
-  params: Promise<{ momentId: string }>;
-}) {
-  const { momentId } = await params;
+}: EmbedMomentPageProps) {
+  const { momentId } = params;
 
   const [videoId] = momentId.split("_");
   if (!videoId) {
