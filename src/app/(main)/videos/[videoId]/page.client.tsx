@@ -7,9 +7,9 @@ import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
 import { PlayerProvider } from "~/components/player/provider";
 import { VideoPlayer } from "~/components/player/video";
+import { PlayerV2 } from "~/components/player-v2";
 import { Button } from "~/components/ui/button";
-import { type Video } from "~/lib/schemas/video";
-import { type VideoMoment } from "~/lib/schemas/video-moment";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 import {
   emotionToMoment,
   getVideoEmotions,
@@ -81,6 +81,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
       <div className="container mx-auto space-y-8 p-4 pt-8 lg:pt-32">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2 lg:space-y-6">
+            <PlayerV2 video={{ ...video, vtt }} />
             <VideoPlayer
               video={video}
               momentsShown={allMoments.filter(

@@ -12,7 +12,7 @@ export default function ReportsPage() {
   const { profile } = useProfile();
   const { data: user } = api.auth.getUser.useQuery();
   const { data: reports, isLoading } = api.notion.listByClient.useQuery({
-    name: profile?.nickname ?? user?.nickname ?? "",
+    ...(!profile?.is_admin && { name: profile?.nickname ?? user?.nickname }),
   });
 
   if (isLoading) {

@@ -36,9 +36,11 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const { profile } = useProfile();
   const { data: user } = api.auth.getUser.useQuery();
-  const videos = videosProp.filter((v) =>
-    v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-  );
+  const videos = profile?.is_admin
+    ? videosProp
+    : videosProp.filter((v) =>
+        v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+      );
 
   const videosEnriched = videos.map((video) => {
     const moments = getVideoMoments(video);
