@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Script from "next/script";
 
-import { getVideo, getVTT } from "~/lib/api-video/videos";
+import { getVTT } from "~/lib/api-video/videos";
 import { getVideoMomentById } from "~/lib/videos";
+import { api } from "~/trpc/server";
 
 import { EmbedMomentPageClient } from "./page.client";
 
@@ -26,8 +27,8 @@ export default async function EmbedMomentPage({
     return notFound();
   }
 
-  const video = await getVideo(videoId);
-  const vtt = await getVTT(videoId, "en");
+  const video = await api.videos.getOne({ videoId });
+  const vtt = await getVTT(video.videoId, "en");
 
   const moment = getVideoMomentById(
     video,
