@@ -6,11 +6,6 @@ import { env } from "~/env";
 import type { Database } from "./database.types";
 
 export async function updateSession(request: NextRequest) {
-  console.log("[Auth Middleware] Starting session update", {
-    url: request.url,
-    headers: Object.fromEntries(request.headers.entries()),
-  });
-
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -25,9 +20,7 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             request.cookies.set(name, value),
           );
-          supabaseResponse = NextResponse.next({
-            request,
-          });
+          supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options),
           );
@@ -38,23 +31,14 @@ export async function updateSession(request: NextRequest) {
 
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser();
-
-  console.log("[Auth Middleware] Get user result", {
-    hasUser: !!user,
-    error: userError,
-    path: request.nextUrl.pathname,
-  });
 
   if (
     !user &&
     !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
+    !request.nextUrl.pathname.startsWith("/auth") &&
+    !request.nextUrl.pathname.startsWith("/embed")
   ) {
-    console.log("[Auth Middleware] Redirecting to login", {
-      from: request.nextUrl.pathname,
-    });
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
