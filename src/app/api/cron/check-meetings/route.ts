@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const preferredRegion = "fra1";
 export const maxDuration = 300;
 
-export default async function GET(request: Request) {
+export async function GET(request: Request) {
   console.log("Starting cron job to check meetings...");
 
   // Verify cron secret to ensure request is from Vercel
