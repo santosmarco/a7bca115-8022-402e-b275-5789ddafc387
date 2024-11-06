@@ -15,7 +15,15 @@ export function SignInButton() {
     void supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${getBaseUrl()}auth/callback`,
+        redirectTo: `${getBaseUrl()}auth/callback?${new URLSearchParams({
+          provider: "google",
+        })}`,
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
+        scopes:
+          "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events.readonly",
       },
     });
   }, [supabase]);

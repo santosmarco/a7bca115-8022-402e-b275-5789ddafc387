@@ -9,9 +9,9 @@ import {
   ThumbsUp,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
 
-import { toast } from "sonner";
 import { ExpandingText } from "~/components/expanding-text";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";

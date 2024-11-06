@@ -10,6 +10,12 @@ export const env = createEnv({
     // Vercel
     VERCEL_URL: z.string().optional(),
     SITE_URL: z.string().optional(),
+    CRON_SECRET: z.string(),
+    // Internal API Key
+    INTERNAL_API_KEY: z.string(),
+    // OAuth
+    GOOGLE_OAUTH_CLIENT_ID: z.string(),
+    GOOGLE_OAUTH_CLIENT_SECRET: z.string(),
     // API Video
     API_VIDEO_API_KEY: z.string(),
     // Meeting Baas
@@ -33,11 +39,14 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     VERCEL_URL: process.env.VERCEL_URL,
     SITE_URL: process.env.SITE_URL,
+    CRON_SECRET: process.env.CRON_SECRET,
+    INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
+    GOOGLE_OAUTH_CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID,
+    GOOGLE_OAUTH_CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
     API_VIDEO_API_KEY: process.env.API_VIDEO_API_KEY,
     NOTION_INTEGRATION_SECRET: process.env.NOTION_INTEGRATION_SECRET,
     NOTION_REPORTS_DATABASE_ID: process.env.NOTION_REPORTS_DATABASE_ID,
     MEETING_BAAS_API_KEY: process.env.MEETING_BAAS_API_KEY,
-
     // Client
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,

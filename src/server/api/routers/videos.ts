@@ -38,13 +38,18 @@ async function fetchVideoData(
   try {
     const supabase = await createClient();
 
+    let momentsQuery = supabase
+      .from("moments")
+      .select("*")
+      .eq("video_api_id", videoId);
+
+    if (!includeDeprecated) {
+      momentsQuery = momentsQuery.eq("latest", true);
+    }
+
     const [meetingResult, momentsResult] = await Promise.all([
       supabase.from("meetings").select("*").eq("video_api_id", videoId),
-      supabase
-        .from("moments")
-        .select("*")
-        .eq("video_api_id", videoId)
-        .eq("latest", !includeDeprecated),
+      momentsQuery,
     ]);
 
     if (meetingResult.error) throw meetingResult.error;
@@ -70,9 +75,7 @@ async function fetchVideoData(
 export const videosRouter = createTRPCRouter({
   listAll: publicProcedure
     .input(
-      z
-        .object({ includeDeprecated: z.boolean().default(false) })
-        .default({ includeDeprecated: false }),
+      z.object({ includeDeprecated: z.boolean().default(false) }).default({}),
     )
     .query(async ({ input }) => {
       try {

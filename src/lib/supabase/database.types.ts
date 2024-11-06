@@ -9,16 +9,103 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calendar_integrations: {
+        Row: {
+          email: string
+          google_id: string
+          id: string
+          name: string
+          resource_id: string | null
+          user_id: string
+          uuid: string | null
+          watch_expiry: string | null
+        }
+        Insert: {
+          email: string
+          google_id: string
+          id?: string
+          name: string
+          resource_id?: string | null
+          user_id: string
+          uuid?: string | null
+          watch_expiry?: string | null
+        }
+        Update: {
+          email?: string
+          google_id?: string
+          id?: string
+          name?: string
+          resource_id?: string | null
+          user_id?: string
+          uuid?: string | null
+          watch_expiry?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_integrations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_credentials: {
+        Row: {
+          access_token: string | null
+          created_at: string
+          expiry_date: string | null
+          id: string
+          provider: string | null
+          refresh_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          provider?: string | null
+          refresh_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          provider?: string | null
+          refresh_token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_credentials_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meetings: {
         Row: {
           clean_vtt_file: string | null
           created_at: string
           date: string | null
           db_created_at: string | null
+          duration_in_ms: number | null
+          meeting_baas_original_json: Json | null
           name: string | null
           original_vtt_file: string | null
+          recorded_at: string | null
+          source_url: string | null
           speaker: string | null
           summary: string | null
+          thumbnail_url: string | null
           video_api_id: string
         }
         Insert: {
@@ -26,10 +113,15 @@ export type Database = {
           created_at?: string
           date?: string | null
           db_created_at?: string | null
+          duration_in_ms?: number | null
+          meeting_baas_original_json?: Json | null
           name?: string | null
           original_vtt_file?: string | null
+          recorded_at?: string | null
+          source_url?: string | null
           speaker?: string | null
           summary?: string | null
+          thumbnail_url?: string | null
           video_api_id: string
         }
         Update: {
@@ -37,10 +129,15 @@ export type Database = {
           created_at?: string
           date?: string | null
           db_created_at?: string | null
+          duration_in_ms?: number | null
+          meeting_baas_original_json?: Json | null
           name?: string | null
           original_vtt_file?: string | null
+          recorded_at?: string | null
+          source_url?: string | null
           speaker?: string | null
           summary?: string | null
+          thumbnail_url?: string | null
           video_api_id?: string
         }
         Relationships: []
@@ -270,6 +367,48 @@ export type Database = {
           id?: string
           is_admin?: boolean
           nickname?: string | null
+        }
+        Relationships: []
+      }
+      scheduled_meetings: {
+        Row: {
+          calendar_id: string
+          conference_id: string
+          created_at: string | null
+          event_id: string
+          id: string
+          meet_link: string | null
+          notification_time: string
+          start_time: string
+          status: string
+          summary: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          calendar_id: string
+          conference_id: string
+          created_at?: string | null
+          event_id: string
+          id?: string
+          meet_link?: string | null
+          notification_time: string
+          start_time: string
+          status?: string
+          summary?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          calendar_id?: string
+          conference_id?: string
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          meet_link?: string | null
+          notification_time?: string
+          start_time?: string
+          status?: string
+          summary?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
