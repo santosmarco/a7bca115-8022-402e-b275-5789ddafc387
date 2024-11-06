@@ -5,7 +5,7 @@ import { env } from "~/env";
 import { getEvents } from "~/lib/google-calendar/client";
 import { createClient } from "~/lib/supabase/server";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 export const preferredRegion = "fra1";
 export const maxDuration = 300;
 

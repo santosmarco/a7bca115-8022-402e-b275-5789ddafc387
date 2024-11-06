@@ -128,7 +128,8 @@
     "supabase": "1.207.9",
     "tailwindcss": "^3.4.14",
     "type-fest": "^4.26.1",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "vercel": "^37.14.0"
   },
   "packageManager": "pnpm@9.6.0"
 }
