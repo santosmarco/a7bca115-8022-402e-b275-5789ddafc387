@@ -6,12 +6,12 @@ import { cn } from "~/lib/utils";
 export const Link = React.forwardRef<
   React.ElementRef<typeof NextLink>,
   React.ComponentPropsWithoutRef<typeof NextLink>
->(({ className, children, ...props }, ref) => {
+>(function Link({ className, children, ...props }, ref) {
   return (
     <NextLink
       ref={ref}
       className={cn(
-        "underline underline-offset-4 hover:text-primary",
+        "underline underline-offset-4 transition-all hover:text-primary",
         className,
       )}
       {...props}
