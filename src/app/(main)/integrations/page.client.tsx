@@ -3,16 +3,16 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Puzzle } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { SiApple, SiGoogle, SiSlack, SiZoom } from "react-icons/si";
+import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { env } from "~/env";
-import { toast } from "~/hooks/use-toast";
 import { createClient } from "~/lib/supabase/client";
 import type { RouterOutputs } from "~/trpc/react";
-import { api } from "~/trpc/react";
 
 export type IntegrationsPageClientProps = {
   user: RouterOutputs["auth"]["getUser"];
@@ -81,87 +81,68 @@ const integrations = [
 ] satisfies Integration[];
 
 export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
+  const router = useRouter();
   const supabase = createClient();
-  const [isConnecting, setIsConnecting] = useState(false);
-  const apiUtils = api.useUtils();
+  const [connectingProviders, setConnectingProviders] = useState<
+    Integration["provider"][]
+  >([]);
+  const [disconnectingProviders, setDisconnectingProviders] = useState<
+    Integration["provider"][]
+  >([]);
 
   const handleConnect = useCallback(
-    async (
-      provider: Parameters<typeof supabase.auth.linkIdentity>[0]["provider"],
-    ) => {
-      setIsConnecting(true);
+    async (provider: Integration["provider"]) => {
+      setConnectingProviders((prev) => [...prev, provider]);
 
       const { error } = await supabase.auth.linkIdentity({
         provider,
         options: {
-          redirectTo: `${getBaseUrl()}auth/callback`,
+          redirectTo: `${getBaseUrl()}auth/callback?next=/integrations`,
         },
       });
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Failed to connect",
-          description: error.message,
-        });
-        setIsConnecting(false);
+        toast.error("Failed to connect", { description: error.message });
+        setConnectingProviders((prev) => prev.filter((p) => p !== provider));
         return;
       }
-
-      await apiUtils.auth.getUser.invalidate();
-
-      toast({
-        title: "Connected",
-        description: "You are now connected to this integration.",
-      });
-
-      setIsConnecting(false);
     },
-    [supabase, apiUtils],
+    [supabase],
   );
 
   const handleDisconnect = useCallback(
-    async (
-      provider: Parameters<typeof supabase.auth.unlinkIdentity>[0]["provider"],
-    ) => {
-      setIsConnecting(true);
+    async (provider: Integration["provider"]) => {
+      setDisconnectingProviders((prev) => [...prev, provider]);
 
       const integrationIdentity = user.identities?.find(
         (i) => i.provider === provider,
       );
 
       if (!integrationIdentity) {
-        toast({
-          variant: "destructive",
-          title: "Not connected",
+        toast.error("Not connected", {
           description: "You are not connected to this integration.",
         });
-        setIsConnecting(false);
+        setDisconnectingProviders((prev) => prev.filter((p) => p !== provider));
         return;
       }
 
       const { error } = await supabase.auth.unlinkIdentity(integrationIdentity);
 
       if (error) {
-        toast({
-          variant: "destructive",
-          title: "Failed to disconnect",
-          description: error.message,
-        });
-        setIsConnecting(false);
+        toast.error("Failed to disconnect", { description: error.message });
+        setDisconnectingProviders((prev) => prev.filter((p) => p !== provider));
         return;
       }
 
-      await apiUtils.auth.getUser.invalidate();
+      router.refresh();
 
-      toast({
-        title: "Disconnected",
+      toast.info("Disconnected", {
         description: "You are no longer connected to this integration.",
       });
 
-      setIsConnecting(false);
+      setDisconnectingProviders((prev) => prev.filter((p) => p !== provider));
     },
-    [supabase, user, apiUtils],
+    [supabase, user, router],
   );
 
   return (
@@ -198,6 +179,10 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
             const isConnected = user.identities?.some(
               (i) => i.provider === integration.provider,
             );
+            const isLoading =
+              connectingProviders.includes(integration.provider) ||
+              disconnectingProviders.includes(integration.provider);
+            const providerList = user.identities?.map((i) => i.provider);
 
             return (
               <motion.div
@@ -231,16 +216,25 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
                         : handleConnect(integration.provider)
                     }
                     className="group/btn relative overflow-hidden"
-                    disabled={integration.comingSoon ?? isConnecting}
+                    disabled={
+                      integration.comingSoon ??
+                      (isLoading ||
+                        (providerList?.length === 1 &&
+                          integration.provider === providerList[0]))
+                    }
                   >
                     <span className="relative z-10">
                       {integration.comingSoon
                         ? "Coming Soon"
-                        : isConnecting
+                        : connectingProviders.includes(integration.provider)
                           ? "Connecting..."
-                          : isConnected
-                            ? "Disconnect"
-                            : "Connect"}
+                          : disconnectingProviders.includes(
+                                integration.provider,
+                              )
+                            ? "Disconnecting..."
+                            : isConnected
+                              ? "Disconnect"
+                              : "Connect"}
                     </span>
                     <motion.div
                       initial={{ x: "-100%" }}
