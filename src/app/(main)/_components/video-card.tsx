@@ -9,7 +9,7 @@ import React from "react";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { type VideoWithDetails } from "~/lib/schemas/video";
+import type { VideoWithDetails } from "~/lib/schemas/video";
 import { cn } from "~/lib/utils";
 import { getVideoMoments } from "~/lib/videos";
 
@@ -63,7 +63,7 @@ export const VideoCard = React.forwardRef<
               hover: { opacity: 1, scale: 1 },
             }}
             transition={{ duration: 0.2 }}
-            className="absolute left-1/2 top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-primary shadow-lg"
+            className="absolute left-[calc(50%-1.5rem)] top-[calc(50%-1.5rem)] flex h-12 w-12 items-center justify-center rounded-full bg-primary shadow-lg"
           >
             <Play className="h-6 w-6 text-primary-foreground" />
           </motion.div>
@@ -76,21 +76,21 @@ export const VideoCard = React.forwardRef<
 
         {/* Content Section */}
         <div className="flex h-[40%] flex-col justify-between p-4">
-          <div className="space-y-2">
-            <h3 className="line-clamp-2 text-base font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
+          <div className="h-full space-y-2">
+            <h3 className="line-clamp-2 flex-1 text-base font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
               {video.title}
             </h3>
 
             {/* Categories */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 pt-1">
               {Object.entries(momentsByCategory).map(([category, moments]) => (
                 <Badge
                   key={category}
                   variant="secondary"
-                  className="flex items-center gap-1 px-1.5 py-0.5 text-xs"
+                  className="flex items-center gap-1.5 border border-primary/40 px-1.5 py-0 text-xs font-normal"
                 >
                   {category}
-                  <span className="ml-1 rounded-sm bg-primary/10 px-1 font-mono text-[10px] font-medium">
+                  <span className="flex h-5 items-center justify-center border-l border-primary/40 pl-1.5 font-mono text-[10px] font-medium">
                     {moments.length}
                   </span>
                 </Badge>

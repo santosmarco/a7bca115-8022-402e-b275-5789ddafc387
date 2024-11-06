@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FileText } from "lucide-react";
+import { FileText, FileX2Icon } from "lucide-react";
 import Link from "next/link";
 
 import { ReportCard } from "~/components/report-card";
@@ -31,7 +31,7 @@ export default function ReportsPage() {
           className="flex flex-col items-center gap-4"
         >
           <FileText className="h-10 w-10 animate-pulse text-primary" />
-          <p className="text-sm text-muted-foreground">Loading meetings...</p>
+          <p className="text-sm text-muted-foreground">Loading reports...</p>
         </motion.div>
       </div>
     );
@@ -39,17 +39,16 @@ export default function ReportsPage() {
 
   if (!reports?.length) {
     return (
-      <div className="mt-24 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <FileText className="h-8 w-8 text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">No reports found</p>
-          </motion.div>
-        </div>
+      <div className="mt-20 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <FileX2Icon className="h-10 w-10 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No reports found</p>
+        </motion.div>
       </div>
     );
   }

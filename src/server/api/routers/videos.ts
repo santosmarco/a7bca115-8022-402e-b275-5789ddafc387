@@ -31,7 +31,10 @@ function transformMoment(moment: Tables<"moments">, idx: number) {
   } satisfies VideoMoment;
 }
 
-async function fetchVideoData(videoId: string) {
+async function fetchVideoData(
+  videoId: string,
+  { includeDeprecated }: { includeDeprecated: boolean },
+) {
   try {
     const supabase = await createClient();
 
@@ -41,7 +44,7 @@ async function fetchVideoData(videoId: string) {
         .from("moments")
         .select("*")
         .eq("video_api_id", videoId)
-        .eq("latest", true),
+        .eq("latest", !includeDeprecated),
     ]);
 
     if (meetingResult.error) throw meetingResult.error;
@@ -65,46 +68,59 @@ async function fetchVideoData(videoId: string) {
 }
 
 export const videosRouter = createTRPCRouter({
-  listAll: publicProcedure.query(async () => {
-    try {
-      const videos = await listVideos({ pageSize: 25 });
+  listAll: publicProcedure
+    .input(
+      z
+        .object({ includeDeprecated: z.boolean().default(false) })
+        .default({ includeDeprecated: false }),
+    )
+    .query(async ({ input }) => {
+      try {
+        const videos = await listVideos({ pageSize: 25 });
 
-      return await Promise.all(
-        videos.map(async (video) => {
-          const { meeting, summary, moments } = await fetchVideoData(
-            video.videoId,
-          );
+        return await Promise.all(
+          videos.map(async (video) => {
+            const { meeting, summary, moments } = await fetchVideoData(
+              video.videoId,
+              { includeDeprecated: input.includeDeprecated },
+            );
 
-          return {
-            ...video,
-            meeting,
-            vtt: meeting?.original_vtt_file,
-            metadata: [
-              ...video.metadata.filter(
-                (m) => m.key !== "summary" && m.key !== "activities",
-              ),
-              { key: "summary", value: summary },
-              { key: "activities", value: JSON.stringify(moments) },
-            ],
-          };
-        }),
-      );
-    } catch (error) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: `Failed to list videos: ${(error as Error).message}`,
-        cause: error,
-      });
-    }
-  }),
+            return {
+              ...video,
+              meeting,
+              vtt: meeting?.original_vtt_file,
+              metadata: [
+                ...video.metadata.filter(
+                  (m) => m.key !== "summary" && m.key !== "activities",
+                ),
+                { key: "summary", value: summary },
+                { key: "activities", value: JSON.stringify(moments) },
+              ],
+            };
+          }),
+        );
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to list videos: ${(error as Error).message}`,
+          cause: error,
+        });
+      }
+    }),
 
   getOne: publicProcedure
-    .input(z.object({ videoId: z.string() }))
+    .input(
+      z.object({
+        videoId: z.string(),
+        includeDeprecated: z.boolean().default(false),
+      }),
+    )
     .query(async ({ input }) => {
       try {
         const video = await getVideo(input.videoId);
         const { meeting, summary, moments } = await fetchVideoData(
           video.videoId,
+          { includeDeprecated: input.includeDeprecated },
         );
 
         return {

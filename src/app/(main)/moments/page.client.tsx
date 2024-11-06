@@ -155,7 +155,7 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
               <Input
                 placeholder="Search moments..."
                 className="pl-8"
-                value={searchQuery}
+                value={searchQuery ?? ""}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
@@ -168,7 +168,10 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
 
         {/* Filter Options */}
         <div className="flex max-w-full flex-col gap-2 sm:flex-row sm:gap-4">
-          <Select value={selectedVideo} onValueChange={setSelectedVideo}>
+          <Select
+            value={selectedVideo ?? "all"}
+            onValueChange={setSelectedVideo}
+          >
             <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder="Video Source" />
             </SelectTrigger>
@@ -197,7 +200,7 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
 
           <ScrollArea className="max-w-full overflow-scroll sm:max-w-[calc(100%-0.8125rem)]">
             <Tabs
-              value={selectedCategory}
+              value={selectedCategory ?? "all"}
               onValueChange={setSelectedCategory}
               className="w-full sm:w-auto"
             >

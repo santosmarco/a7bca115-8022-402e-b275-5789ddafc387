@@ -45,6 +45,14 @@ export function MobileNav({ user, className }: SidebarNavProps) {
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="left" className="flex h-screen w-64 flex-col p-0">
+          <Link
+            href="/"
+            className="absolute left-4 top-4 flex items-center gap-2"
+          >
+            <Image src={titanLogo} alt="Titan Logo" width={32} height={32} />
+            <span className="text-xl font-bold">Titan</span>
+          </Link>
+
           <SidebarContent user={user} onNavClick={() => setOpen(false)} />
         </SheetContent>
       </Sheet>
