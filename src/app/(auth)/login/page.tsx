@@ -2,43 +2,19 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { SiGoogle } from "react-icons/si";
 
 import titanLogo from "~/assets/titan-logo.svg";
-import { Button } from "~/components/ui/button";
 import { Link } from "~/components/ui/link";
-import { createClient } from "~/lib/supabase/client";
 
-const getURL = () => {
-  let url =
-    process?.env?.NEXT_PUBLIC_SITE_URL ?? // Set this to your site URL in production env.
-    process?.env?.NEXT_PUBLIC_VERCEL_URL ?? // Automatically set by Vercel.
-    window.location.origin;
-  // Make sure to include `https://` when not localhost.
-  url = url.startsWith("http") ? url : `https://${url}`;
-  // Make sure to include a trailing `/`.
-  url = url.endsWith("/") ? url : `${url}/`;
-  return url;
-};
+import { SignInButton } from "./_components/sign-in-button";
 
 export default function SignInPage() {
-  const supabase = createClient();
-
-  const handleSignIn = () => {
-    void supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: getURL() + "auth/callback",
-      },
-    });
-  };
-
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-background to-accent/20">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-accent/30 to-primary/20">
       {/* Animated background elements */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: 0.5 }}
+        animate={{ opacity: 0.6 }}
         transition={{ duration: 2 }}
         className="absolute inset-0 z-0"
       >
@@ -51,7 +27,7 @@ export default function SignInPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-border/50 bg-background/50 p-8 shadow-xl backdrop-blur-xl"
+        className="relative isolate z-10 w-full max-w-md rounded-2xl border border-border/50 bg-background/20 p-8 shadow-xl ring-1 ring-ring/5 backdrop-blur-xl"
       >
         <div className="space-y-6">
           {/* Logo and title */}
@@ -65,7 +41,7 @@ export default function SignInPage() {
               initial={{ y: -20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"
+              className="mx-auto mb-2 flex h-12 w-12 items-center justify-center"
             >
               <Image src={titanLogo} alt="Titan Logo" width={48} height={48} />
             </motion.div>
@@ -87,29 +63,7 @@ export default function SignInPage() {
             </motion.p>
           </motion.div>
 
-          {/* Sign in button */}
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            <Button
-              variant="outline"
-              onClick={handleSignIn}
-              className="relative w-full overflow-hidden border-border/50 bg-background/50 transition-colors hover:bg-accent"
-            >
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.7 }}
-                className="absolute inset-0 z-0 bg-gradient-to-r from-background to-accent opacity-0 transition-opacity hover:opacity-10"
-              />
-              <span className="relative z-10 flex items-center justify-center gap-2">
-                <SiGoogle className="h-4 w-4" />
-                Sign in with Google
-              </span>
-            </Button>
-          </motion.div>
+          <SignInButton />
 
           {/* Terms */}
           <motion.p
@@ -120,8 +74,19 @@ export default function SignInPage() {
           >
             By continuing, you agree to our
             <br />
-            <Link href="/">Terms of Service</Link> and{" "}
-            <Link href="/">Privacy Policy</Link>
+            <Link
+              href="https://www.withtitan.com/legal/client-terms-of-service"
+              target="_blank"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="https://www.withtitan.com/legal/privacy-policy"
+              target="_blank"
+            >
+              Privacy Policy
+            </Link>
           </motion.p>
         </div>
       </motion.div>
