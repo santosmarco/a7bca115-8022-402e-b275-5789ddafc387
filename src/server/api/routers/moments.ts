@@ -81,6 +81,59 @@ export const momentsRouter = createTRPCRouter({
       }
     }),
 
+  search: publicProcedure
+    .input(
+      z.object({
+        query: z.string(),
+        limit: z.number().min(1).max(100).optional().default(50),
+        ids: z.array(z.string()).optional(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const supabase = await createClient();
+
+      try {
+        let query = supabase
+          .from("moments")
+          .select("id")
+          .eq("latest", true)
+          .limit(input.limit);
+
+        if (input.query) {
+          query = query.textSearch(
+            "search_vector",
+            input.query
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .map((term) => `${term}:*`)
+              .join(" & "),
+          );
+        }
+
+        if (input.ids) {
+          query = query.in("id", input.ids);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Failed to search moments: ${(error as Error).message}`,
+            cause: error,
+          });
+        }
+
+        return data;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to search moments: ${(error as Error).message}`,
+          cause: error,
+        });
+      }
+    }),
+
   getReactions: publicProcedure
     .input(z.object({ momentId: z.string() }))
     .query(async ({ input }) => {

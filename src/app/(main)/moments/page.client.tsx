@@ -2,7 +2,7 @@
 
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { motion } from "framer-motion";
-import _ from "lodash";
+import _, { map } from "lodash";
 import {
   CrossIcon,
   FileVideo,
@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { MomentCard } from "~/components/moment-card";
 import { Button } from "~/components/ui/button";
@@ -45,6 +45,7 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useQueryState("search", parseAsString);
+  const [searchQueryDebounced, setSearchQueryDebounced] = useState(searchQuery);
   const [selectedVideo, setSelectedVideo] = useQueryState(
     "video",
     parseAsString,
@@ -62,6 +63,11 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
       : videosProp.filter((v) =>
           v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
         );
+
+  const { data: searchMomentIds } = api.moments.search.useQuery({
+    query: searchQueryDebounced ?? "",
+    limit: 100,
+  });
 
   const videosEnriched = videos.map((video) => {
     const moments = getVideoMoments(video);
@@ -83,23 +89,17 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
   // Filter and sort moments based on user selections
   const filteredMoments = moments
     .filter((moment) => {
-      if (searchQuery) {
-        const searchLower = searchQuery.toLowerCase();
-        return (
-          moment.title.toLowerCase().includes(searchLower) ||
-          moment.summary.toLowerCase().includes(searchLower)
-        );
-      }
-      return true;
-    })
-    .filter((moment) => {
       if (selectedVideo === "all") return true;
       return moment.video_id === selectedVideo;
     })
     .filter((moment) => {
       if (selectedCategory === "all") return true;
       return moment.activity === selectedCategory;
-    });
+    })
+    .filter(
+      (moment) =>
+        !searchMomentIds || searchMomentIds.find((x) => x.id === moment.id),
+    );
 
   const categories = _.sortBy(
     Array.from(new Set(moments.map((m) => m.activity))),
@@ -112,11 +112,23 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
     );
   };
 
+  const debouncedSetSearchQueryDebounced = useCallback(
+    _.debounce((value: string) => {
+      setSearchQueryDebounced(value);
+    }, 300),
+    [],
+  );
+
+  const handleSearchChange = (value: string) => {
+    void setSearchQuery(value);
+    debouncedSetSearchQueryDebounced(value);
+  };
+
   useEffect(
     function resetCategoryOnVideoChange() {
       void setSelectedCategory("all");
     },
-    [selectedVideo, setSelectedCategory],
+    [setSelectedCategory],
   );
 
   useEffect(
@@ -124,7 +136,7 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
       void setSelectedVideo("all");
       void setSelectedCategory("all");
     },
-    [profile, setSelectedVideo, setSelectedCategory],
+    [setSelectedVideo, setSelectedCategory],
   );
 
   if (!videos.length) {
@@ -156,7 +168,7 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
                 placeholder="Search moments..."
                 className="pl-8"
                 value={searchQuery ?? ""}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
             </div>
             <Button variant="outline" className="flex gap-2">
