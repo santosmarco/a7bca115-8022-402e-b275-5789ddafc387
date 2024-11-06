@@ -38,8 +38,9 @@ export async function getEvents(accessToken: string, calendarId = "primary") {
     timeMax: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
     singleEvents: true,
     orderBy: "startTime",
-    q: "hangoutsMeet",
   });
+
+  console.log(`Found ${response.data.items?.length} events`, response.data);
 
   return (
     response.data.items?.filter(
