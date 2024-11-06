@@ -24,66 +24,130 @@ export async function GET(request: Request) {
   try {
     // 1. Get all calendar integrations
     console.log("Fetching calendar integrations...");
-    const { data: integrations, error: integrationsError } = await supabase
-      .from("calendar_integrations")
-      .select("*, credentials:integration_credentials(*)");
+    const { data: calendarIntegrations, error: calendarIntegrationsError } =
+      await supabase.from("calendar_integrations").select("*");
 
-    if (integrationsError) throw integrationsError;
-    console.log(`Found ${integrations.length} calendar integrations`);
+    if (calendarIntegrationsError) {
+      console.error(
+        "Failed to fetch calendar integrations:",
+        calendarIntegrationsError,
+      );
+      throw calendarIntegrationsError;
+    }
+
+    if (!calendarIntegrations) {
+      console.log("No calendar integrations found");
+      return NextResponse.json({
+        success: true,
+        calendarsProcessed: 0,
+        meetingsNotified: 0,
+      });
+    }
+
+    console.log(`Found ${calendarIntegrations.length} calendar integrations`);
 
     // 2. For each calendar, get upcoming meetings and store them
-    for (const integration of integrations) {
-      console.log(`Processing calendar: ${integration.google_id}`);
-      const accessToken = integration.credentials.find(
-        (credential) => credential.provider === "google",
-      )?.access_token;
+    for (const calendarIntegration of calendarIntegrations) {
+      console.log(`Processing calendar: ${calendarIntegration.google_id}`);
+
+      const userId = calendarIntegration.user_id;
+
+      const {
+        data: integrationCredentials,
+        error: integrationCredentialsError,
+      } = await supabase
+        .from("integration_credentials")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("provider", "google")
+        .maybeSingle();
+
+      if (integrationCredentialsError) {
+        console.error(
+          "Failed to fetch integration credentials:",
+          integrationCredentialsError,
+        );
+        continue;
+      }
+      if (!integrationCredentials) {
+        console.warn(
+          `No integration credentials found for calendar ${calendarIntegration.google_id}`,
+        );
+        continue;
+      }
+
+      const accessToken = integrationCredentials.access_token;
 
       if (!accessToken) {
         console.warn(
-          `No access token found for calendar ${integration.google_id}`,
+          `No access token found for calendar ${calendarIntegration.google_id}`,
         );
         continue;
       }
 
       try {
-        const events = await getEvents(accessToken, integration.google_id);
+        const events = await getEvents(
+          accessToken,
+          calendarIntegration.google_id,
+        );
+
+        if (!events) {
+          console.log(
+            `No events found for calendar ${calendarIntegration.google_id}`,
+          );
+          continue;
+        }
+
         console.log(
-          `Found ${events.length} events for calendar ${integration.google_id}`,
+          `Found ${events.length} events for calendar ${calendarIntegration.google_id}`,
         );
 
         for (const event of events) {
           if (
             !event.id ||
             !event.start?.dateTime ||
-            !event.conferenceData?.conferenceId
+            !event.conferenceData?.conferenceId ||
+            !event.conferenceData?.entryPoints?.[0]?.uri
           ) {
             console.log(
-              `Skipping event ${event.id} due to missing required data`,
+              `Skipping event ${event.id ?? "unknown"} due to missing required data`,
             );
             continue;
           }
 
           const startTime = new Date(event.start.dateTime);
+          // Validate date parsing
+          if (Number.isNaN(startTime.getTime())) {
+            console.log(`Invalid start time for event ${event.id}`);
+            continue;
+          }
+
           const notificationTime = new Date(
             startTime.getTime() - 4 * 60 * 1000,
           );
 
           console.log(`Storing/updating meeting: ${event.id}`);
           // Store or update the meeting
-          await supabase.from("scheduled_meetings").upsert({
-            event_id: event.id,
-            calendar_id: integration.google_id,
-            start_time: startTime.toISOString(),
-            notification_time: notificationTime.toISOString(),
-            summary: event.summary ?? "",
-            meet_link: event.conferenceData.entryPoints?.[0]?.uri ?? "",
-            conference_id: event.conferenceData.conferenceId,
-            status: "scheduled",
-          });
+          const { error: upsertError } = await supabase
+            .from("scheduled_meetings")
+            .upsert({
+              event_id: event.id,
+              calendar_id: calendarIntegration.google_id,
+              start_time: startTime.toISOString(),
+              notification_time: notificationTime.toISOString(),
+              summary: event.summary ?? "",
+              meet_link: event.conferenceData.entryPoints[0].uri,
+              conference_id: event.conferenceData.conferenceId,
+              status: "scheduled",
+            });
+
+          if (upsertError) {
+            console.error(`Failed to upsert meeting ${event.id}:`, upsertError);
+          }
         }
       } catch (error) {
         console.error(
-          `Failed to process calendar ${integration.google_id}:`,
+          `Failed to process calendar ${calendarIntegration.google_id}:`,
           error instanceof Error ? error.message : error,
         );
       }
@@ -91,28 +155,44 @@ export async function GET(request: Request) {
 
     // 3. Get meetings that need notification now
     console.log("Checking for meetings that need notification...");
+    const now = new Date();
     const { data: meetings, error: meetingsError } = await supabase
       .from("scheduled_meetings")
       .select("*")
       .eq("status", "scheduled")
-      .gte("notification_time", new Date().toISOString())
+      .gte("notification_time", now.toISOString())
       .lte(
         "notification_time",
-        new Date(Date.now() + 4 * 60 * 1000).toISOString(),
+        new Date(now.getTime() + 4 * 60 * 1000).toISOString(),
       );
 
     if (meetingsError) throw meetingsError;
+
+    if (!meetings) {
+      console.log("No meetings found that need notification");
+      return NextResponse.json({
+        success: true,
+        calendarsProcessed: calendarIntegrations.length,
+        meetingsNotified: 0,
+      });
+    }
+
     console.log(`Found ${meetings.length} meetings that need notification`);
 
     // 4. Process each meeting that needs notification
     for (const meeting of meetings) {
       console.log(`Processing meeting ${meeting.id}`);
       try {
+        if (!meeting.meet_link) {
+          console.log(`Meeting ${meeting.id} has no meet link, skipping`);
+          continue;
+        }
+
         // Send notification to recording service
         console.log(
           `Sending notification to recording service for meeting ${meeting.id}`,
         );
-        await axios.post(
+        const response = await axios.post(
           "https://api.meetingbaas.com/bots",
           {
             meeting_url: meeting.meet_link,
@@ -136,12 +216,22 @@ export async function GET(request: Request) {
           },
         );
 
+        if (response.status !== 200) {
+          throw new Error(
+            `Recording service returned status ${response.status}`,
+          );
+        }
+
         // Update meeting status
         console.log(`Updating meeting ${meeting.id} status to notified`);
-        await supabase
+        const { error: updateError } = await supabase
           .from("scheduled_meetings")
           .update({ status: "notified" })
           .eq("id", meeting.id);
+
+        if (updateError) {
+          throw updateError;
+        }
       } catch (error) {
         console.error(
           `Failed to process meeting ${meeting.id}:`,
@@ -153,7 +243,7 @@ export async function GET(request: Request) {
     console.log("Cron job completed successfully");
     return NextResponse.json({
       success: true,
-      calendarsProcessed: integrations.length,
+      calendarsProcessed: calendarIntegrations.length,
       meetingsNotified: meetings.length,
     });
   } catch (error) {
