@@ -52,7 +52,7 @@ export function VideoMoments({
               disabled={category.disabled}
             >
               {!category.disabled && (
-                <span className="absolute -right-2.5 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold leading-none text-foreground">
+                <span className="absolute -right-2 -top-2 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold leading-none text-foreground">
                   {momentsByCategory[category.value]?.length}
                 </span>
               )}

@@ -1,6 +1,6 @@
 import { cva, type VariantProps } from "class-variance-authority";
-import * as React from "react";
-import { type Except } from "type-fest";
+import type * as React from "react";
+import type { Except } from "type-fest";
 
 import { cn } from "~/lib/utils";
 
@@ -30,18 +30,18 @@ const badgeVariants = cva(
       },
       color: {
         primary:
-          "bg-blue-50 text-blue-700 ring-blue-700/10 [&>svg]:fill-blue-500",
+          "border-blue-700 bg-blue-50 text-blue-700 ring-blue-700/10 [&>svg]:fill-blue-500",
         success:
-          "bg-green-50 text-green-700 ring-green-700/10 [&>svg]:fill-green-500",
+          "border-green-700 bg-green-50 text-green-700 ring-green-700/10 [&>svg]:fill-green-500",
         destructive:
-          "bg-red-50 text-red-700 ring-red-600/10 [&>svg]:fill-red-500",
+          "border-red-700 bg-red-50 text-red-700 ring-red-600/10 [&>svg]:fill-red-500",
         warning:
-          "bg-yellow-50 text-yellow-700 ring-yellow-700/10 [&>svg]:fill-yellow-500",
+          "border-yellow-700 bg-yellow-50 text-yellow-700 ring-yellow-700/10 [&>svg]:fill-yellow-500",
         indigo:
-          "bg-indigo-50 text-indigo-700 ring-indigo-700/10 [&>svg]:fill-indigo-500",
+          "border-indigo-700 bg-indigo-50 text-indigo-700 ring-indigo-700/10 [&>svg]:fill-indigo-500",
         purple:
-          "bg-purple-50 text-purple-700 ring-purple-700/10 [&>svg]:fill-purple-500",
-        pink: "bg-pink-50 text-pink-700 ring-pink-700/10 [&>svg]:fill-pink-500",
+          "border-purple-700 bg-purple-50 text-purple-700 ring-purple-700/10 [&>svg]:fill-purple-500",
+        pink: "border-pink-700 bg-pink-50 text-pink-700 ring-pink-700/10 [&>svg]:fill-pink-500",
       },
     },
     compoundVariants: [
