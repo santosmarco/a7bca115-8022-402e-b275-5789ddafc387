@@ -10,12 +10,10 @@ import {
   User,
   Video,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import titanLogo from "~/assets/titan-logo.svg";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
@@ -32,11 +30,12 @@ import type { Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 
-export type AppSidebarProps = {
+export type SidebarContentProps = {
   user: RouterOutputs["auth"]["getUser"];
+  onNavClick?: () => void;
 };
 
-export function AppSidebar({ user }: AppSidebarProps) {
+export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
   const router = useRouter();
   const pathname = usePathname();
   const supabase = createClient();
@@ -81,8 +80,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
     setSelectedProfile(profile);
   };
 
-  console.log(user);
-
   const menuItems = [
     {
       href: "/",
@@ -111,32 +108,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
   ];
 
   return (
-    <motion.aside
-      initial={{ x: -320 }}
-      animate={{ x: 0 }}
-      transition={{ type: "spring", damping: 20 }}
-      className="fixed left-0 top-0 z-50 flex h-screen w-64 flex-col bg-accent/25 text-foreground"
-    >
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="px-7 py-6"
-      >
-        <Link href="/" className="flex items-center gap-4">
-          <Image src={titanLogo} alt="Titan Logo" width={32} height={32} />
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3 }}
-            className="text-xl font-bold"
-          >
-            Titan
-          </motion.span>
-        </Link>
-      </motion.div>
-
+    <>
       {/* Navigation */}
       <nav className="mt-32 flex-1 space-y-2">
         <AnimatePresence>
@@ -147,7 +119,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Link href={item.href}>
+              <Link href={item.href} onClick={onNavClick}>
                 <motion.div
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -289,6 +261,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
           </div>
         )}
       </motion.div>
-    </motion.aside>
+    </>
   );
 }

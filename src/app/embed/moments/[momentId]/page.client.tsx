@@ -1,7 +1,7 @@
 "use client";
 
 import { MomentCard } from "~/components/moment-card";
-import { type VideoMoment } from "~/lib/schemas/video-moment";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 
 export type EmbedMomentPageClientProps = {
   moment: VideoMoment;

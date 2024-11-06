@@ -23,8 +23,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { type Video } from "~/lib/schemas/video";
-import { type VideoMoment } from "~/lib/schemas/video-moment";
+import type { Video } from "~/lib/schemas/video";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
 
 import { usePlayer } from "./provider";
@@ -114,7 +114,7 @@ export function VideoPlayer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.1 }}
-            className="absolute left-0 right-0 top-0 flex flex-row items-start justify-between rounded-b rounded-t-lg bg-gradient-to-b from-accent to-transparent p-4 px-6 pb-12 text-lg font-normal text-primary-foreground"
+            className="absolute left-0 right-0 top-0 flex flex-row items-start justify-between rounded-b rounded-t-lg bg-gradient-to-b from-accent to-transparent p-4 px-6 pb-12 text-lg font-normal text-foreground"
           >
             <div className="flex flex-col items-start">
               <motion.div
@@ -129,7 +129,7 @@ export function VideoPlayer({
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.2 }}
-                className="text-sm text-primary-foreground/70"
+                className="text-sm text-foreground/70"
               >
                 {dayjs(video.publishedAt).format("dddd, MMMM D")}
               </motion.div>
@@ -140,7 +140,7 @@ export function VideoPlayer({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4, duration: 0.2 }}
-                className="mt-2 max-w-[40%] text-right text-sm font-semibold text-primary-foreground"
+                className="mt-2 max-w-[40%] text-right text-sm font-semibold text-foreground"
               >
                 {currentMoment.title}
               </motion.div>
@@ -150,7 +150,7 @@ export function VideoPlayer({
 
         <div
           className={cn(
-            "absolute bottom-0 left-0 right-0 rounded-b-lg rounded-t-sm bg-accent p-4 transition-all duration-300",
+            "absolute bottom-0 left-0 right-0 rounded-b-lg rounded-t-sm bg-gradient-to-t from-accent to-transparent p-4 transition-all duration-300",
             isControlsVisible ? "opacity-100" : "opacity-0",
           )}
         >
@@ -169,7 +169,7 @@ export function VideoPlayer({
                         width: `${((moment.segment_end_timestamp_in_seconds - moment.segment_start_timestamp_in_seconds) / (duration ?? 1)) * 100}%`,
                       }}
                     />
-                    <TooltipContent>
+                    <TooltipContent className="bg-accent text-xs text-foreground">
                       <p>{moment.title}</p>
                     </TooltipContent>
                   </Tooltip>
@@ -206,7 +206,7 @@ export function VideoPlayer({
             <TooltipContent
               sideOffset={24}
               className={cn(
-                "bg-accent text-xs shadow-xl",
+                "bg-accent text-xs text-foreground shadow-xl",
                 !hoveredMoment && "hidden",
               )}
             >
@@ -232,7 +232,7 @@ export function VideoPlayer({
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent align="start">
                   <p>{isPlaying ? "Pause" : "Play"}</p>
                 </TooltipContent>
               </Tooltip>
@@ -249,7 +249,7 @@ export function VideoPlayer({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Rewind 10 seconds</p>
+                  <p>Rewind 10s</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -265,10 +265,10 @@ export function VideoPlayer({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Forward 10 seconds</p>
+                  <p>Forward 10s</p>
                 </TooltipContent>
               </Tooltip>
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1.5">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
@@ -322,7 +322,7 @@ export function VideoPlayer({
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent align="end">
                   <p>{isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}</p>
                 </TooltipContent>
               </Tooltip>

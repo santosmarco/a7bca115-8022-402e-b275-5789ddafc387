@@ -48,7 +48,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
 
   return (
     <PlayerProvider>
-      <header className="fixed left-64 right-0 top-0 z-50 hidden items-center justify-between border-b border-border bg-background p-4 pl-0 lg:flex">
+      <header className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background pl-0 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border lg:p-4">
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -61,7 +61,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
               size="icon"
               onClick={() => router.push("/")}
               aria-label="Go back"
-              className="h-[3.25rem] w-16 hover:bg-transparent"
+              className="h-[3.25rem] w-14 hover:bg-transparent lg:h-16"
             >
               <ChevronLeft className="h-6 w-6" />
             </Button>
@@ -71,13 +71,15 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <div className="text-muted-foreground">You are watching</div>
-            <div className="text-lg font-bold">{video.title}</div>
+            <div className="text-sm text-muted-foreground lg:text-base">
+              You are watching
+            </div>
+            <div className="font-bold lg:text-lg">{video.title}</div>
           </motion.div>
         </motion.div>
       </header>
 
-      <div className="container mx-auto space-y-8 p-4 pt-8 lg:pt-32">
+      <div className="container mx-auto space-y-8 p-4 pt-24">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2 lg:space-y-6">
             <VideoPlayer

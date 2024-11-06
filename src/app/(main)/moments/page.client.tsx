@@ -1,12 +1,25 @@
 "use client";
 
-import { Filter, Search } from "lucide-react";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { motion } from "framer-motion";
+import _ from "lodash";
+import {
+  CrossIcon,
+  FileVideo,
+  Filter,
+  FrownIcon,
+  Search,
+  TrendingUpIcon,
+  XOctagonIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { parseAsString, useQueryState } from "nuqs";
+import { useEffect } from "react";
 
 import { MomentCard } from "~/components/moment-card";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
+import { ScrollBar } from "~/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -30,17 +43,25 @@ type MomentsPageProps = {
 
 export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedVideo, setSelectedVideo] = useState("all");
-  const [selectedSort, setSelectedSort] = useState("recent");
-  const [selectedCategory, setSelectedCategory] = useState("all");
+
+  const [searchQuery, setSearchQuery] = useQueryState("search", parseAsString);
+  const [selectedVideo, setSelectedVideo] = useQueryState(
+    "video",
+    parseAsString,
+  );
+  const [selectedCategory, setSelectedCategory] = useQueryState(
+    "category",
+    parseAsString,
+  );
+
   const { profile } = useProfile();
   const { data: user } = api.auth.getUser.useQuery();
-  const videos = profile?.is_admin
-    ? videosProp
-    : videosProp.filter((v) =>
-        v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-      );
+  const videos =
+    user?.is_admin && (!profile || user.id === profile.id)
+      ? videosProp
+      : videosProp.filter((v) =>
+          v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+        );
 
   const videosEnriched = videos.map((video) => {
     const moments = getVideoMoments(video);
@@ -52,7 +73,12 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
     return { video, moments, emotions, emotionMoments, allMoments };
   });
 
-  const moments = videosEnriched.flatMap((v) => v.allMoments);
+  const moments =
+    selectedVideo === "all"
+      ? videosEnriched.flatMap((v) => v.allMoments)
+      : videosEnriched
+          .filter((v) => v.video.videoId === selectedVideo)
+          .flatMap((v) => v.allMoments);
 
   // Filter and sort moments based on user selections
   const filteredMoments = moments
@@ -75,7 +101,10 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
       return moment.activity === selectedCategory;
     });
 
-  const categories = Array.from(new Set(moments.map((m) => m.activity)));
+  const categories = _.sortBy(
+    Array.from(new Set(moments.map((m) => m.activity))),
+    (x) => x,
+  );
 
   const handleSkipToMoment = (moment: VideoMoment) => () => {
     void router.push(
@@ -83,13 +112,44 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
     );
   };
 
+  useEffect(
+    function resetCategoryOnVideoChange() {
+      void setSelectedCategory("all");
+    },
+    [selectedVideo, setSelectedCategory],
+  );
+
+  useEffect(
+    function resetVideoAndCategoryOnProfileChange() {
+      void setSelectedVideo("all");
+      void setSelectedCategory("all");
+    },
+    [profile, setSelectedVideo, setSelectedCategory],
+  );
+
+  if (!videos.length) {
+    return (
+      <div className="mt-20 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <FrownIcon className="h-10 w-10 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No moments found</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto space-y-8 py-6">
+      <div className="container mx-auto space-y-2 py-6 sm:space-y-8">
         {/* Header and Search Section */}
         <div className="space-y-4">
           <h1 className="text-3xl font-bold">All Moments</h1>
-          <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -107,9 +167,9 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
         </div>
 
         {/* Filter Options */}
-        <div className="flex flex-col gap-4 sm:flex-row">
+        <div className="flex max-w-full flex-col gap-2 sm:flex-row sm:gap-4">
           <Select value={selectedVideo} onValueChange={setSelectedVideo}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder="Video Source" />
             </SelectTrigger>
             <SelectContent>
@@ -135,24 +195,27 @@ export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
             </SelectContent>
           </Select> */}
 
-          <Tabs
-            value={selectedCategory}
-            onValueChange={setSelectedCategory}
-            className="w-full sm:w-auto"
-          >
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              {categories.map((category) => (
-                <TabsTrigger key={category} value={category}>
-                  {category}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+          <ScrollArea className="max-w-full overflow-scroll sm:max-w-[calc(100%-0.8125rem)]">
+            <Tabs
+              value={selectedCategory}
+              onValueChange={setSelectedCategory}
+              className="w-full sm:w-auto"
+            >
+              <TabsList>
+                <TabsTrigger value="all">All</TabsTrigger>
+                {categories.map((category) => (
+                  <TabsTrigger key={category} value={category}>
+                    {category}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+            <ScrollBar orientation="horizontal" className="invisible" />
+          </ScrollArea>
         </div>
 
         {/* Moments Grid */}
-        <div className="grid gap-6">
+        <div className="grid gap-6 pt-4 sm:pt-0">
           {filteredMoments.map((moment, index) => (
             <MomentCard
               key={moment.index}

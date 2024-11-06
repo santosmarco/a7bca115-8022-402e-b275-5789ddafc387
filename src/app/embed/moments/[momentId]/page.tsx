@@ -25,33 +25,38 @@ export default async function EmbedMomentPage({
     return notFound();
   }
 
-  const video = await api.videos.getOne({ videoId });
-  const vtt = await getVTT(video.videoId, "en");
+  try {
+    const video = await api.videos.getOne({ videoId });
+    const vtt = await getVTT(video.videoId, "en");
 
-  const moment = getVideoMomentById(
-    video,
-    decodeURIComponent(momentId),
-    vtt.content,
-  );
-  if (!moment) {
+    const moment = getVideoMomentById(
+      video,
+      decodeURIComponent(momentId),
+      vtt.content,
+    );
+    if (!moment) {
+      return notFound();
+    }
+
+    return (
+      <>
+        <EmbedMomentPageClient moment={moment} />
+        <Script
+          strategy="afterInteractive"
+          src={`
+            function sendHeight() {
+              const height = document.body.scrollHeight;
+              window.parent.postMessage({ type: 'resize', height }, '*');
+            }
+            
+            window.addEventListener('load', sendHeight);
+            new ResizeObserver(sendHeight).observe(document.body);
+          `}
+        />
+      </>
+    );
+  } catch (error) {
+    console.error(error);
     return notFound();
   }
-
-  return (
-    <>
-      <EmbedMomentPageClient moment={moment} />
-      <Script
-        strategy="afterInteractive"
-        src={`
-          function sendHeight() {
-            const height = document.body.scrollHeight;
-            window.parent.postMessage({ type: 'resize', height }, '*');
-          }
-          
-          window.addEventListener('load', sendHeight);
-          new ResizeObserver(sendHeight).observe(document.body);
-        `}
-      />
-    </>
-  );
 }

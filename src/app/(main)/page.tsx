@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { FileVideo, Search } from "lucide-react";
+import { CameraIcon, FileVideo, Search, VideoOffIcon } from "lucide-react";
 
 import { Input } from "~/components/ui/input";
 import { useProfile } from "~/hooks/use-profile";
@@ -36,22 +36,23 @@ export default function HomePage() {
   const { data, isLoading } = api.videos.listAll.useQuery();
   const { profile } = useProfile();
   const { data: user, isLoading: userIsLoading } = api.auth.getUser.useQuery();
-  const videos = profile?.is_admin
-    ? data
-    : data?.filter((v) =>
-        v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-      );
+  const videos =
+    user?.is_admin && (!profile || user.id === profile.id)
+      ? data
+      : data?.filter((v) =>
+          v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+        );
 
   if (isLoading || userIsLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-20 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="flex flex-col items-center gap-4"
         >
-          <FileVideo className="mx-auto mb-4 h-12 w-12 animate-pulse text-primary" />
+          <FileVideo className="h-10 w-10 animate-pulse text-primary" />
           <p className="text-sm text-muted-foreground">Loading meetings...</p>
         </motion.div>
       </div>
@@ -60,14 +61,14 @@ export default function HomePage() {
 
   if (!videos?.length) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="mt-20 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
-          className="text-center"
+          className="flex flex-col items-center gap-4"
         >
-          <FileVideo className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+          <VideoOffIcon className="h-10 w-10 text-muted-foreground" />
           <p className="text-sm text-muted-foreground">No meetings found</p>
         </motion.div>
       </div>

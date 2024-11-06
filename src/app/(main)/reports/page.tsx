@@ -11,23 +11,28 @@ import { api } from "~/trpc/react";
 export default function ReportsPage() {
   const { profile } = useProfile();
   const { data: user } = api.auth.getUser.useQuery();
-  const { data: reports, isLoading } = api.notion.listByClient.useQuery({
-    ...(!profile?.is_admin && { name: profile?.nickname ?? user?.nickname }),
-  });
+  const { data, isLoading } = api.notion.listAll.useQuery();
+  const reports =
+    user?.is_admin && (!profile || user.id === profile.id)
+      ? data
+      : data?.filter(
+          (v) =>
+            v.properties.Client?.type === "select" &&
+            v.properties.Client.select?.name === profile?.nickname,
+        );
 
   if (isLoading) {
     return (
-      <div className="mt-24 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <FileText className="h-8 w-8 animate-pulse text-primary" />
-            <p className="text-sm text-muted-foreground">Loading reports...</p>
-          </motion.div>
-        </div>
+      <div className="mt-20 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <FileText className="h-10 w-10 animate-pulse text-primary" />
+          <p className="text-sm text-muted-foreground">Loading meetings...</p>
+        </motion.div>
       </div>
     );
   }

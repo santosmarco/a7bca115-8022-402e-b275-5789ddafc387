@@ -19,8 +19,8 @@ export default async function MainLayout({
   return (
     <>
       <AppSidebar user={user} />
-      <div className="pl-64">
-        <main className="p-12">{children}</main>
+      <div className="pt-6 lg:pl-64 lg:pt-0">
+        <main className="p-4 py-12 lg:p-12">{children}</main>
       </div>
     </>
   );
