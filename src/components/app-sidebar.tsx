@@ -28,7 +28,7 @@ import {
 } from "~/components/ui/dropdown-menu";
 import { useProfile } from "~/hooks/use-profile";
 import { createClient } from "~/lib/supabase/client";
-import { type Tables } from "~/lib/supabase/database.types";
+import type { Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -65,6 +65,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
     }
 
     void fetchProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSignOut = async () => {
