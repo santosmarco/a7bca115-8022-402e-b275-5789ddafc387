@@ -1,8 +1,8 @@
 import vidstack from "@vidstack/react/tailwind.cjs";
-import { type Config } from "tailwindcss
-import tailwindAnimate} from tailwindcsssanimateaultTheme";
-import tafontFamilyte from "tailwindcss/defaultTheme-animate";
-scrollbarHide.scrollbar-hide
+import type { Config } from "tailwindcss";
+import { fontFamily } from "tailwindcss/defaultTheme";
+import tailwindAnimate from "tailwindcss-animate";
+
 import scrollbarHide from "./scrollbar-hide";
 
 const tailwindConfig = {
