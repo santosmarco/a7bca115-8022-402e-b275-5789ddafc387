@@ -8,16 +8,8 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     // Vercel
-    VERCEL_URL: z
-      .string()
-      .url()
-      .optional()
-      .refine((url) => process.env.NODE_ENV !== "production" || url),
-    SITE_URL: z
-      .string()
-      .url()
-      .optional()
-      .refine((url) => process.env.NODE_ENV !== "production" || url),
+    VERCEL_URL: z.string().optional(),
+    SITE_URL: z.string().optional(),
     // API Video
     API_VIDEO_API_KEY: z.string(),
     // Meeting Baas
@@ -29,16 +21,8 @@ export const env = createEnv({
 
   client: {
     // Vercel
-    NEXT_PUBLIC_VERCEL_URL: z
-      .string()
-      .url()
-      .optional()
-      .refine((url) => process.env.NODE_ENV !== "production" || url),
-    NEXT_PUBLIC_SITE_URL: z
-      .string()
-      .url()
-      .optional()
-      .refine((url) => process.env.NODE_ENV !== "production" || url),
+    NEXT_PUBLIC_VERCEL_URL: z.string().optional(),
+    NEXT_PUBLIC_SITE_URL: z.string().optional(),
     // Supabase
     NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string(),
