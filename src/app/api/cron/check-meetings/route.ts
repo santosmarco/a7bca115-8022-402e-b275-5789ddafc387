@@ -9,7 +9,7 @@ export const runtime = "edge";
 export const preferredRegion = "fra1";
 export const maxDuration = 300;
 
-export async function GET(request: Request) {
+export default async function handler(request: Request) {
   // Verify cron secret to ensure request is from Vercel
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
