@@ -2,11 +2,8 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { getVideo, listVideos } from "~/lib/api-video/videos";
-import {
-  type VideoMoment,
-  type VideoMoments,
-} from "~/lib/schemas/video-moment";
-import { type Tables } from "~/lib/supabase/database.types";
+import type { VideoMoment, VideoMoments } from "~/lib/schemas/video-moment";
+import type { Tables } from "~/lib/supabase/database.types";
 import { createClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -80,6 +77,7 @@ export const videosRouter = createTRPCRouter({
 
           return {
             ...video,
+            meeting,
             vtt: meeting?.original_vtt_file,
             metadata: [
               ...video.metadata.filter(
@@ -105,10 +103,14 @@ export const videosRouter = createTRPCRouter({
     .query(async ({ input }) => {
       try {
         const video = await getVideo(input.videoId);
-        const { summary, moments } = await fetchVideoData(video.videoId);
+        const { meeting, summary, moments } = await fetchVideoData(
+          video.videoId,
+        );
 
         return {
           ...video,
+          meeting,
+          vtt: meeting?.original_vtt_file,
           metadata: [
             ...video.metadata.filter(
               (m) => m.key !== "summary" && m.key !== "activities",
