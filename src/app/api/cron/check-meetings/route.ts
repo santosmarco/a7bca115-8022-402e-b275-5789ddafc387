@@ -10,9 +10,12 @@ export const preferredRegion = "fra1";
 export const maxDuration = 300;
 
 export default async function handler(request: Request) {
+  console.log("Starting cron job to check meetings...");
+
   // Verify cron secret to ensure request is from Vercel
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${env.CRON_SECRET}`) {
+    console.warn("Unauthorized cron job attempt");
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
@@ -20,22 +23,33 @@ export default async function handler(request: Request) {
 
   try {
     // 1. Get all calendar integrations
+    console.log("Fetching calendar integrations...");
     const { data: integrations, error: integrationsError } = await supabase
       .from("calendar_integrations")
       .select("*, credentials:integration_credentials(*)");
 
     if (integrationsError) throw integrationsError;
+    console.log(`Found ${integrations.length} calendar integrations`);
 
     // 2. For each calendar, get upcoming meetings and store them
     for (const integration of integrations) {
+      console.log(`Processing calendar: ${integration.google_id}`);
       const accessToken = integration.credentials.find(
         (credential) => credential.provider === "google",
       )?.access_token;
 
-      if (!accessToken) continue;
+      if (!accessToken) {
+        console.warn(
+          `No access token found for calendar ${integration.google_id}`,
+        );
+        continue;
+      }
 
       try {
         const events = await getEvents(accessToken, integration.google_id);
+        console.log(
+          `Found ${events.length} events for calendar ${integration.google_id}`,
+        );
 
         for (const event of events) {
           if (
@@ -43,6 +57,9 @@ export default async function handler(request: Request) {
             !event.start?.dateTime ||
             !event.conferenceData?.conferenceId
           ) {
+            console.log(
+              `Skipping event ${event.id} due to missing required data`,
+            );
             continue;
           }
 
@@ -51,6 +68,7 @@ export default async function handler(request: Request) {
             startTime.getTime() - 4 * 60 * 1000,
           );
 
+          console.log(`Storing/updating meeting: ${event.id}`);
           // Store or update the meeting
           await supabase.from("scheduled_meetings").upsert({
             event_id: event.id,
@@ -72,6 +90,7 @@ export default async function handler(request: Request) {
     }
 
     // 3. Get meetings that need notification now
+    console.log("Checking for meetings that need notification...");
     const { data: meetings, error: meetingsError } = await supabase
       .from("scheduled_meetings")
       .select("*")
@@ -83,11 +102,16 @@ export default async function handler(request: Request) {
       );
 
     if (meetingsError) throw meetingsError;
+    console.log(`Found ${meetings.length} meetings that need notification`);
 
     // 4. Process each meeting that needs notification
     for (const meeting of meetings) {
+      console.log(`Processing meeting ${meeting.id}`);
       try {
         // Send notification to recording service
+        console.log(
+          `Sending notification to recording service for meeting ${meeting.id}`,
+        );
         await axios.post(
           "https://api.meetingbaas.com/bots",
           {
@@ -113,6 +137,7 @@ export default async function handler(request: Request) {
         );
 
         // Update meeting status
+        console.log(`Updating meeting ${meeting.id} status to notified`);
         await supabase
           .from("scheduled_meetings")
           .update({ status: "notified" })
@@ -125,6 +150,7 @@ export default async function handler(request: Request) {
       }
     }
 
+    console.log("Cron job completed successfully");
     return NextResponse.json({
       success: true,
       calendarsProcessed: integrations.length,
