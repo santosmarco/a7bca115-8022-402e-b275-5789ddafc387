@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 import {
   ClockIcon,
@@ -9,6 +11,7 @@ import {
 import { useState } from "react";
 import { z } from "zod";
 
+import { toast } from "sonner";
 import { ExpandingText } from "~/components/expanding-text";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Badge } from "~/components/ui/badge";
@@ -22,10 +25,9 @@ import {
 import { Form, FormControl, FormField, FormItem } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
-import { toast } from "~/hooks/use-toast";
 import { useValidatedForm } from "~/hooks/use-validated-form";
 import { getMomentStyles } from "~/lib/moments";
-import { type VideoMoment } from "~/lib/schemas/video-moment";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
@@ -67,7 +69,6 @@ export function MomentCard({
   const { data: reactions } = api.moments.getReactions.useQuery({
     momentId: moment.id,
   });
-  console.log(moment);
   const { data: comments } = api.moments.getComments.useQuery({
     momentId: moment.id,
   });
@@ -113,11 +114,7 @@ export function MomentCard({
         { momentId: moment.id },
         context?.previousReactions,
       );
-      toast({
-        title: "Error",
-        description: "Failed to add reaction. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to add reaction. Please try again.");
     },
   });
 
@@ -161,11 +158,7 @@ export function MomentCard({
         { momentId: moment.id },
         context?.previousComments,
       );
-      toast({
-        title: "Error",
-        description: "Failed to add comment. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to add comment. Please try again.");
     },
   });
 
@@ -174,30 +167,20 @@ export function MomentCard({
   const handleCopyUrl = () => {
     const url = `${window.location.origin}/embed/moments/${encodeURIComponent(moment.index)}`;
     void navigator.clipboard.writeText(url);
-    toast({
-      title: "URL Copied",
-      description: "The moment URL has been copied to your clipboard.",
-    });
+    toast.success("The moment URL has been copied to your clipboard.");
     setIsOpen(false);
   };
 
   const handleCopyEmbed = () => {
     const embedCode = `<iframe src="${window.location.origin}/embed/moments/${encodeURIComponent(moment.index)}" width="100%" height="400" frameborder="0"></iframe>`;
     void navigator.clipboard.writeText(embedCode);
-    toast({
-      title: "Embed Code Copied",
-      description: "The embed code has been copied to your clipboard.",
-    });
+    toast.success("The embed code has been copied to your clipboard.");
     setIsOpen(false);
   };
 
   const handleReaction = (type: "thumbs_up" | "thumbs_down") => {
     if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to react to moments.",
-        variant: "destructive",
-      });
+      toast.error("Please sign in to react to moments.");
       return;
     }
     addReaction({ momentId: moment.id, type });
@@ -205,11 +188,7 @@ export function MomentCard({
 
   const onSubmitComment = (data: z.infer<typeof commentSchema>) => {
     if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "Please sign in to comment.",
-        variant: "destructive",
-      });
+      toast.error("Please sign in to comment.");
       return;
     }
     addComment({ momentId: moment.id, content: data.content });
@@ -239,7 +218,14 @@ export function MomentCard({
       }}
     >
       <div className="mb-3 flex flex-col md:mb-2 md:flex-row md:items-center md:justify-between">
-        <h2 className="font-bold">{moment.title}</h2>
+        <h2 className="flex items-baseline font-bold">
+          {moment.title}
+          {user?.is_admin && (
+            <span className="ml-2 text-xs text-muted-foreground">
+              ID: {moment.id}
+            </span>
+          )}
+        </h2>
         <div className="mt-0.5 flex items-center gap-x-2 text-muted-foreground md:mt-0">
           <span className="flex items-center gap-x-1.5 text-sm">
             <ClockIcon className="h-3.5 w-3.5" />

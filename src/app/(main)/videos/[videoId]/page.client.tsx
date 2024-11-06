@@ -59,7 +59,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => router.push("/")}
+              onClick={router.back}
               aria-label="Go back"
               className="h-[3.25rem] w-14 hover:bg-transparent lg:h-16"
             >
