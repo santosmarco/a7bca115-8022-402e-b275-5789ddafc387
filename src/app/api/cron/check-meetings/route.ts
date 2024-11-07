@@ -76,9 +76,9 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const accessToken = integrationCredentials.access_token;
+      const refreshToken = integrationCredentials.refresh_token;
 
-      if (!accessToken) {
+      if (!refreshToken) {
         console.warn(
           `No access token found for calendar ${calendarIntegration.google_id}`,
         );
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
 
       try {
         const events = await getEvents(
-          accessToken,
+          refreshToken,
           calendarIntegration.google_id,
         );
 
@@ -100,6 +100,16 @@ export async function GET(request: Request) {
 
         console.log(
           `Found ${events.length} events for calendar ${calendarIntegration.google_id}`,
+        );
+
+        // Get existing meetings for this calendar to avoid duplicates
+        const { data: existingMeetings } = await supabase
+          .from("scheduled_meetings")
+          .select("event_id")
+          .eq("calendar_id", calendarIntegration.google_id);
+
+        const existingEventIds = new Set(
+          existingMeetings?.map((m) => m.event_id),
         );
 
         for (const event of events) {
@@ -126,23 +136,30 @@ export async function GET(request: Request) {
             startTime.getTime() - 4 * 60 * 1000,
           );
 
-          console.log(`Storing/updating meeting: ${event.id}`);
-          // Store or update the meeting
-          const { error: upsertError } = await supabase
-            .from("scheduled_meetings")
-            .upsert({
-              event_id: event.id,
-              calendar_id: calendarIntegration.google_id,
-              start_time: startTime.toISOString(),
-              notification_time: notificationTime.toISOString(),
-              summary: event.summary ?? "",
-              meet_link: event.conferenceData.entryPoints[0].uri,
-              conference_id: event.conferenceData.conferenceId,
-              status: "scheduled",
-            });
+          // Only insert if event doesn't already exist
+          if (!existingEventIds.has(event.id)) {
+            console.log(`Storing new meeting: ${event.id}`);
+            const { error: insertError } = await supabase
+              .from("scheduled_meetings")
+              .insert({
+                event_id: event.id,
+                calendar_id: calendarIntegration.google_id,
+                start_time: startTime.toISOString(),
+                notification_time: notificationTime.toISOString(),
+                summary: event.summary ?? "",
+                meet_link: event.conferenceData.entryPoints[0].uri,
+                conference_id: event.conferenceData.conferenceId,
+                status: "scheduled",
+              });
 
-          if (upsertError) {
-            console.error(`Failed to upsert meeting ${event.id}:`, upsertError);
+            if (insertError) {
+              console.error(
+                `Failed to insert meeting ${event.id}:`,
+                insertError,
+              );
+            }
+          } else {
+            console.log(`Meeting ${event.id} already exists, skipping`);
           }
         }
       } catch (error) {

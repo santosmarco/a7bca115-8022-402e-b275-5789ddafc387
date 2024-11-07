@@ -71,13 +71,13 @@ async function handleIntegrationCredentials(
 async function synchronizeGoogleCalendar(
   credentials: Tables<"integration_credentials">,
 ) {
-  if (!credentials.access_token) return;
+  if (!credentials.refresh_token) return;
 
   const supabase = await createClient();
 
   try {
     // Get all calendars for the user
-    const calendars = await listCalendars(credentials.access_token);
+    const calendars = await listCalendars(credentials.refresh_token);
 
     // Store each calendar
     for (const calendar of calendars) {

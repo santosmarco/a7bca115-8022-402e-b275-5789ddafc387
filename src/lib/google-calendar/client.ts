@@ -29,8 +29,8 @@ export async function getTokens(code: string) {
   return tokens;
 }
 
-export async function getEvents(accessToken: string, calendarId = "primary") {
-  oauth2Client.setCredentials({ access_token: accessToken });
+export async function getEvents(refreshToken: string, calendarId = "primary") {
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
 
   const response = await calendar.events.list({
     calendarId,
@@ -49,8 +49,8 @@ export async function getEvents(accessToken: string, calendarId = "primary") {
   );
 }
 
-export async function listCalendars(accessToken: string) {
-  oauth2Client.setCredentials({ access_token: accessToken });
+export async function listCalendars(refreshToken: string) {
+  oauth2Client.setCredentials({ refresh_token: refreshToken });
 
   const response = await calendar.calendarList.list({
     minAccessRole: "reader",
