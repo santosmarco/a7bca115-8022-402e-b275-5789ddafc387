@@ -102,16 +102,6 @@ export async function GET(request: Request) {
           `Found ${events.length} events for calendar ${calendarIntegration.google_id}`,
         );
 
-        // Get existing meetings for this calendar to avoid duplicates
-        const { data: existingMeetings } = await supabase
-          .from("scheduled_meetings")
-          .select("event_id")
-          .eq("calendar_id", calendarIntegration.google_id);
-
-        const existingEventIds = new Set(
-          existingMeetings?.map((m) => m.event_id),
-        );
-
         for (const event of events) {
           if (
             !event.id ||
@@ -136,30 +126,26 @@ export async function GET(request: Request) {
             startTime.getTime() - 4 * 60 * 1000,
           );
 
-          // Only insert if event doesn't already exist
-          if (!existingEventIds.has(event.id)) {
-            console.log(`Storing new meeting: ${event.id}`);
-            const { error: insertError } = await supabase
-              .from("scheduled_meetings")
-              .insert({
+          const { error: upsertError } = await supabase
+            .from("scheduled_meetings")
+            .upsert(
+              {
                 event_id: event.id,
-                calendar_id: calendarIntegration.google_id,
+                calendar_id: calendarIntegration.id,
                 start_time: startTime.toISOString(),
                 notification_time: notificationTime.toISOString(),
                 summary: event.summary ?? "",
                 meet_link: event.conferenceData.entryPoints[0].uri,
                 conference_id: event.conferenceData.conferenceId,
                 status: "scheduled",
-              });
+              },
+              { onConflict: "event_id" },
+            );
 
-            if (insertError) {
-              console.error(
-                `Failed to insert meeting ${event.id}:`,
-                insertError,
-              );
-            }
+          if (upsertError) {
+            console.error(`Failed to upsert meeting ${event.id}:`, upsertError);
           } else {
-            console.log(`Meeting ${event.id} already exists, skipping`);
+            console.log(`Successfully upserted meeting: ${event.id}`);
           }
         }
       } catch (error) {
