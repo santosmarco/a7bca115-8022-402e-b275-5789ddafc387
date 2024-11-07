@@ -117,11 +117,13 @@ async function handleTranscript(
     await supabase
       .from("transcript_slices")
       .insert(
-        transcript.map((slice, index) => ({
-          bot_id: botId,
-          speaker_name: slice.speaker,
-          index,
-        })),
+        transcript.map(
+          (slice, index): TablesInsert<"transcript_slices"> => ({
+            bot_id: botId,
+            speaker_name: slice.speaker,
+            index,
+          }),
+        ),
       )
       .select("*");
 
@@ -133,14 +135,17 @@ async function handleTranscript(
   }
 
   const { error: wordsError } = await supabase.from("transcript_words").insert(
-    transcript.flatMap((slice, index) =>
-      slice.words.map((word) => ({
-        bot_id: botId,
-        transcript_slice_id: transcriptSlices[index]?.id,
-        start_time: word.start,
-        end_time: word.end,
-        content: word.word,
-      })),
+    transcript.flatMap((slice, transcriptSliceIndex) =>
+      slice.words.map(
+        (word, wordIndex): TablesInsert<"transcript_words"> => ({
+          bot_id: botId,
+          transcript_slice_id: transcriptSlices[transcriptSliceIndex]?.id,
+          start_time: word.start,
+          end_time: word.end,
+          content: word.word,
+          index: wordIndex,
+        }),
+      ),
     ),
   );
 
