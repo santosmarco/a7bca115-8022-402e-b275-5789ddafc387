@@ -323,7 +323,6 @@ export async function POST(request: Request) {
             mp4_source_url: storageUrl,
             api_video_id: apiVideoId,
             speakers: event.data.speakers,
-            status: "call_ended",
             raw_data: { event, bot_data } as Json,
           });
 
@@ -339,7 +338,6 @@ export async function POST(request: Request) {
         case "failed":
           await updateMeetingBot(supabase, meetingBot.id, {
             error_code: event.data.error,
-            status: "call_ended",
           });
           break;
       }
