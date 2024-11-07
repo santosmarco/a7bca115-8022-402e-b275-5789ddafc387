@@ -91,6 +91,42 @@ export type Database = {
           },
         ]
       }
+      meeting_bots: {
+        Row: {
+          created_at: string
+          error_code:
+            | Database["public"]["Enums"]["meeting_bot_error_code_type"]
+            | null
+          id: string
+          mp4_source_url: string | null
+          raw_data: Json | null
+          speakers: string[] | null
+          status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?:
+            | Database["public"]["Enums"]["meeting_bot_error_code_type"]
+            | null
+          id: string
+          mp4_source_url?: string | null
+          raw_data?: Json | null
+          speakers?: string[] | null
+          status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+        }
+        Update: {
+          created_at?: string
+          error_code?:
+            | Database["public"]["Enums"]["meeting_bot_error_code_type"]
+            | null
+          id?: string
+          mp4_source_url?: string | null
+          raw_data?: Json | null
+          speakers?: string[] | null
+          status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+        }
+        Relationships: []
+      }
       meetings: {
         Row: {
           clean_vtt_file: string | null
@@ -483,9 +519,109 @@ export type Database = {
         }
         Relationships: []
       }
+      transcript_slices: {
+        Row: {
+          bot_id: string
+          created_at: string
+          id: string
+          index: number
+          speaker_name: string | null
+        }
+        Insert: {
+          bot_id: string
+          created_at?: string
+          id?: string
+          index: number
+          speaker_name?: string | null
+        }
+        Update: {
+          bot_id?: string
+          created_at?: string
+          id?: string
+          index?: number
+          speaker_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_bot_transcript_slices_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_bot_transcripts"
+            referencedColumns: ["bot_id"]
+          },
+          {
+            foreignKeyName: "meeting_bot_transcript_slices_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_bots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transcript_words: {
+        Row: {
+          bot_id: string
+          content: string | null
+          created_at: string
+          end_time: number | null
+          id: string
+          index: number | null
+          start_time: number | null
+          transcript_slice_id: string
+        }
+        Insert: {
+          bot_id?: string
+          content?: string | null
+          created_at?: string
+          end_time?: number | null
+          id?: string
+          index?: number | null
+          start_time?: number | null
+          transcript_slice_id?: string
+        }
+        Update: {
+          bot_id?: string
+          content?: string | null
+          created_at?: string
+          end_time?: number | null
+          id?: string
+          index?: number | null
+          start_time?: number | null
+          transcript_slice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcript_words_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_bot_transcripts"
+            referencedColumns: ["bot_id"]
+          },
+          {
+            foreignKeyName: "transcript_words_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_bots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcript_words_transcript_slice_id_fkey"
+            columns: ["transcript_slice_id"]
+            isOneToOne: false
+            referencedRelation: "transcript_slices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      meeting_bot_transcripts: {
+        Row: {
+          bot_id: string | null
+          transcripts: Json[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_moments_with_metadata: {
@@ -516,6 +652,18 @@ export type Database = {
       }
     }
     Enums: {
+      meeting_bot_error_code_type:
+        | "CannotJoinMeeting"
+        | "TimeoutWaitingToStart"
+        | "BotNotAccepted"
+        | "InternalError"
+        | "InvalidMeetingUrl"
+      meeting_bot_status_type:
+        | "joining_call"
+        | "in_waiting_room"
+        | "in_call_not_recording"
+        | "in_call_recording"
+        | "call_ended"
       moment_reaction_type: "thumbs_up" | "thumbs_down"
     }
     CompositeTypes: {
