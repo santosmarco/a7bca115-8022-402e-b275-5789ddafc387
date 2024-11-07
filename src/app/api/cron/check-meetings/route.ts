@@ -106,7 +106,6 @@ export async function GET(request: Request) {
           if (
             !event.id ||
             !event.start?.dateTime ||
-            !event.conferenceData?.conferenceId ||
             !event.conferenceData?.entryPoints?.[0]?.uri
           ) {
             console.log(
