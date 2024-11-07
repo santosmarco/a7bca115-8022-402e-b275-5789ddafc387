@@ -138,7 +138,7 @@ export const checkMeetings = schedules.task({
   id: "check-meetings-v2",
   maxDuration: 300,
   cron: "*/5 * * * *",
-
+  machine: { preset: "small-2x" },
   run: async (payload, { ctx }) => {
     const supabase = createClient();
 
