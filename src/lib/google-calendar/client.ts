@@ -45,11 +45,7 @@ export async function getEvents(refreshToken: string, calendarId = "primary") {
     JSON.stringify(response.data, null, 2),
   );
 
-  return (
-    response.data.items?.filter(
-      (event) => event.conferenceData?.conferenceId,
-    ) ?? []
-  );
+  return response.data.items?.filter((event) => event.conferenceData) ?? [];
 }
 
 export async function listCalendars(refreshToken: string) {
