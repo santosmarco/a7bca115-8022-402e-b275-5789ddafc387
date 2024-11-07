@@ -9,7 +9,7 @@ import type {
 } from "~/lib/meeting-baas/schemas";
 import { createClient } from "~/lib/supabase/client";
 
-const EVENTS_BATCH_SIZE = 100;
+const EVENTS_BATCH_SIZE = 300;
 
 function getBotConfig(event: MeetingBaasEvent) {
   return {
@@ -27,15 +27,30 @@ function getBotConfig(event: MeetingBaasEvent) {
 async function handleCalendarEvents(
   calendar: { id?: string | null | undefined },
   meetingBaasCalendar: { uuid: string },
-  ctx: { attempt: { number: number } },
-  lastTimestamp?: Date,
+  _ctx: { attempt: { number: number } },
+  _lastTimestamp?: Date,
 ) {
-  const events = await meetingBaas.events.list({
-    calendarId: meetingBaasCalendar.uuid,
-    offset: ctx.attempt.number * EVENTS_BATCH_SIZE,
-    limit: EVENTS_BATCH_SIZE,
-    updatedAtGte: lastTimestamp?.toISOString(),
-  });
+  let allEvents: Awaited<ReturnType<typeof meetingBaas.events.list>> = [];
+  let hasMore = true;
+  let offset = 0;
+
+  while (hasMore) {
+    const batch = await meetingBaas.events.list({
+      calendarId: meetingBaasCalendar.uuid,
+      offset,
+      limit: EVENTS_BATCH_SIZE,
+    });
+
+    allEvents = [...allEvents, ...batch];
+
+    if (batch.length < EVENTS_BATCH_SIZE) {
+      hasMore = false;
+    } else {
+      offset += EVENTS_BATCH_SIZE;
+    }
+  }
+
+  const events = allEvents;
 
   logger.info(`Found ${events.length} event(s) in meeting baas calendar`, {
     calendar,
