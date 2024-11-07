@@ -110,7 +110,7 @@ async function uploadVideoToStorage(
     if (!response.ok) throw new Error("Failed to fetch video from AWS S3");
 
     const blob = await response.blob();
-    const fileName = `meetings/${botId}/recording.mp4`;
+    const fileName = `${botId}.mp4`;
 
     // Upload to Supabase Storage
     const { error } = await supabase.storage
@@ -163,9 +163,6 @@ async function uploadToApiVideo(
         { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
       ],
     });
-
-    // Upload the video from source URL
-    await apiVideo.videos.upload(video.videoId, videoUrl);
 
     return video.videoId;
   } catch (error) {
