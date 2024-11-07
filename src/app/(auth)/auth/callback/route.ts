@@ -2,7 +2,7 @@ import type { AuthTokenResponse } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { env } from "~/env";
-import { listCalendars } from "~/lib/google-calendar/client";
+import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
 import type { Tables } from "~/lib/supabase/database.types";
 import { createClient } from "~/lib/supabase/server";
 
@@ -71,13 +71,20 @@ async function handleIntegrationCredentials(
 async function synchronizeGoogleCalendar(
   credentials: Tables<"integration_credentials">,
 ) {
-  if (!credentials.refresh_token) return;
+  if (!credentials.access_token || !credentials.refresh_token) return;
 
   const supabase = await createClient();
 
   try {
-    // Get all calendars for the user
-    const calendars = await listCalendars(credentials.refresh_token);
+    oauth2Client.setCredentials({
+      access_token: credentials.access_token,
+      refresh_token: credentials.refresh_token,
+    });
+    const {
+      data: { items: calendars = [] },
+    } = await googleCalendar.calendarList.list({
+      minAccessRole: "reader",
+    });
 
     // Store each calendar
     for (const calendar of calendars) {
