@@ -13,6 +13,9 @@ export const env = createEnv({
     CRON_SECRET: z.string(),
     // Internal API Key
     INTERNAL_API_KEY: z.string(),
+    // Trigger
+    TRIGGER_API_URL: z.string(),
+    TRIGGER_SECRET_KEY: z.string(),
     // OAuth
     GOOGLE_OAUTH_CLIENT_ID: z.string(),
     GOOGLE_OAUTH_CLIENT_SECRET: z.string(),
@@ -41,6 +44,8 @@ export const env = createEnv({
     SITE_URL: process.env.SITE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
     INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
+    TRIGGER_API_URL: process.env.TRIGGER_API_URL,
+    TRIGGER_SECRET_KEY: process.env.TRIGGER_SECRET_KEY,
     GOOGLE_OAUTH_CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID,
     GOOGLE_OAUTH_CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
     API_VIDEO_API_KEY: process.env.API_VIDEO_API_KEY,
