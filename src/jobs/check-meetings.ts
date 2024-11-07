@@ -25,7 +25,7 @@ function getBotConfig(event: MeetingBaasEvent) {
 }
 
 async function handleCalendarEvents(
-  calendar: { id: string },
+  calendar: { id?: string | null | undefined },
   meetingBaasCalendar: { uuid: string },
   ctx: { attempt: { number: number } },
   lastTimestamp?: Date,
@@ -62,7 +62,7 @@ async function handleCalendarEvents(
 }
 
 async function setupMeetingBaasCalendar(
-  calendar: { id: string },
+  calendar: { id?: string | null | undefined },
   refreshToken: string,
 ) {
   try {
@@ -85,8 +85,8 @@ async function setupMeetingBaasCalendar(
 }
 
 async function processCalendar(
-  calendar: { id: string },
-  credential: { user_id: string; refresh_token: string },
+  calendar: { id?: string | null | undefined },
+  credential: { user_id: string; refresh_token: string | null },
   meetingBaasCalendars: Array<{ uuid: string; google_id: string }>,
   ctx: { attempt: { number: number } },
   lastTimestamp?: Date,
