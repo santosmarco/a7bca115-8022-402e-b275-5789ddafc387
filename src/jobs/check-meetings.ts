@@ -9,7 +9,7 @@ import type {
 } from "~/lib/meeting-baas/schemas";
 import { createClient } from "~/lib/supabase/client";
 
-const EVENTS_BATCH_SIZE = 300;
+const EVENTS_BATCH_SIZE = 100;
 
 function getBotConfig(event: MeetingBaasEvent) {
   return {
@@ -27,12 +27,12 @@ function getBotConfig(event: MeetingBaasEvent) {
 async function handleCalendarEvents(
   calendar: { id?: string | null | undefined },
   meetingBaasCalendar: { uuid: string },
-  _ctx: { attempt: { number: number } },
+  ctx: { attempt: { number: number } },
   lastTimestamp?: Date,
 ) {
   const events = await meetingBaas.events.list({
     calendarId: meetingBaasCalendar.uuid,
-    offset: 0,
+    offset: ctx.attempt.number * EVENTS_BATCH_SIZE,
     limit: EVENTS_BATCH_SIZE,
     updatedAtGte: lastTimestamp?.toISOString(),
   });
