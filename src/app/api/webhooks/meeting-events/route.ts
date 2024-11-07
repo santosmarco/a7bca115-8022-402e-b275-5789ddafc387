@@ -136,7 +136,7 @@ async function handleTranscript(
     transcript.flatMap((slice, index) =>
       slice.words.map((word) => ({
         bot_id: botId,
-        transcript_slice_id: transcriptSlices[index].id,
+        transcript_slice_id: transcriptSlices[index]?.id,
         start_time: word.start,
         end_time: word.end,
         content: word.word,
