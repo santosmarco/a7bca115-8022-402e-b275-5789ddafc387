@@ -1,7 +1,14 @@
+import _ from "lodash";
 import { z } from "zod";
 
-import type { TablesInsert } from "~/lib/supabase/database.types";
+import { meetingBaas } from "~/lib/meeting-baas/client";
+import {
+  type MeetingBaasBotData,
+  MeetingBaasEvent,
+} from "~/lib/meeting-baas/schemas";
+import type { Json, TablesInsert } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
+import { apiVideo } from "~/server/api/services/api-video";
 
 const BotStatusEvent = z.object({
   event: z.literal("bot.status_change"),
@@ -91,6 +98,81 @@ const WebhookEvent = z.discriminatedUnion("event", [
   FailedEvent,
 ]);
 type WebhookEvent = z.infer<typeof WebhookEvent>;
+
+async function uploadVideoToStorage(
+  supabase: SupabaseServerClient,
+  botId: string,
+  videoUrl: string,
+): Promise<string> {
+  try {
+    // Fetch the video from the temporary AWS S3 URL
+    const response = await fetch(videoUrl);
+    if (!response.ok) throw new Error("Failed to fetch video from AWS S3");
+
+    const blob = await response.blob();
+    const fileName = `meetings/${botId}/recording.mp4`;
+
+    // Upload to Supabase Storage
+    const { error } = await supabase.storage
+      .from("meetings")
+      .upload(fileName, blob, {
+        contentType: "video/mp4",
+        upsert: true,
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("meetings").getPublicUrl(fileName);
+
+    return publicUrl;
+  } catch (error) {
+    console.error("Error uploading video:", error);
+    throw new Error("Failed to upload video to storage");
+  }
+}
+
+async function uploadToApiVideo(
+  botId: string,
+  videoUrl: string,
+  botData: MeetingBaasBotData,
+): Promise<string> {
+  const {
+    bot: { extra },
+    transcripts,
+  } = botData;
+
+  const { data: parsedExtra } = z
+    .object({ event: MeetingBaasEvent })
+    .safeParse(extra);
+
+  const event = parsedExtra?.event;
+
+  try {
+    // Create a video container
+    const video = await apiVideo.videos.create({
+      title: event?.name ?? `Meeting Recording - ${botId}`,
+      source: videoUrl,
+      mp4Support: true,
+      transcript: true,
+      transcriptSummary: true,
+      tags: _.uniq(transcripts.map(({ speaker }) => speaker.trim())),
+      metadata: [
+        { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
+      ],
+    });
+
+    // Upload the video from source URL
+    await apiVideo.videos.upload(video.videoId, videoUrl);
+
+    return video.videoId;
+  } catch (error) {
+    console.error("Error uploading to api.video:", error);
+    throw new Error("Failed to upload video to api.video");
+  }
+}
 
 async function updateMeetingBot(
   supabase: SupabaseServerClient,
@@ -222,11 +304,27 @@ export async function POST(request: Request) {
           break;
 
         case "complete":
+          const { bot_data } = await meetingBaas.meetings.getMeetingData(
+            event.data.bot_id,
+          );
+
+          let storageUrl: string | undefined;
+          let apiVideoId: string | undefined;
+
+          if (event.data.mp4) {
+            // Upload to both storage systems in parallel
+            [storageUrl, apiVideoId] = await Promise.all([
+              uploadVideoToStorage(supabase, meetingBot.id, event.data.mp4),
+              uploadToApiVideo(meetingBot.id, event.data.mp4, bot_data),
+            ]);
+          }
+
           await updateMeetingBot(supabase, meetingBot.id, {
-            mp4_source_url: event.data.mp4,
+            mp4_source_url: storageUrl,
+            api_video_id: apiVideoId,
             speakers: event.data.speakers,
             status: "call_ended",
-            raw_data: event.data,
+            raw_data: { event, bot_data } as Json,
           });
 
           if (event.data.transcript?.length) {

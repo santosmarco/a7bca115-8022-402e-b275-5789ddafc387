@@ -58,8 +58,8 @@ export const MeetingBaasJoinRequest = z.object({
   automatic_leave: MeetingBaasAutomaticLeaveRequest.nullish(),
   deduplication_key: z.string().nullish(),
   recording_mode: MeetingBaasRecordingMode.nullish(),
-  extra: z.unknown().nullish(),
   start_time: z.number().int().nonnegative().nullish(),
+  extra: z.unknown().nullish(),
 });
 export type MeetingBaasJoinRequest = z.infer<typeof MeetingBaasJoinRequest>;
 
@@ -114,7 +114,7 @@ export const MeetingBaasBotData = z.object({
     waiting_room_timeout: z.number().int().nullish(),
     noone_joined_timeout: z.number().int().nullish(),
     deduplication_key: z.string().nullish(),
-    extra: z.unknown(),
+    extra: z.unknown().nullish(),
   }),
   transcripts: z.array(MeetingBaasTranscript),
 });
@@ -170,7 +170,7 @@ export const MeetingBaasBotParam = z.object({
   waiting_room_timeout: z.number().int().nullish(),
   noone_joined_timeout: z.number().int().nullish(),
   deduplication_key: z.string().nullish(),
-  extra: z.unknown(),
+  extra: z.unknown().nullish(),
 });
 export type MeetingBaasBotParam = z.infer<typeof MeetingBaasBotParam>;
 

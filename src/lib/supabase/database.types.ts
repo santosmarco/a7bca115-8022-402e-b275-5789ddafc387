@@ -93,6 +93,7 @@ export type Database = {
       }
       meeting_bots: {
         Row: {
+          api_video_id: string | null
           created_at: string
           error_code:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
@@ -104,6 +105,7 @@ export type Database = {
           status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
         }
         Insert: {
+          api_video_id?: string | null
           created_at?: string
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
@@ -115,6 +117,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
         }
         Update: {
+          api_video_id?: string | null
           created_at?: string
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
