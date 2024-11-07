@@ -373,7 +373,7 @@ export type Database = {
       scheduled_meetings: {
         Row: {
           calendar_id: string
-          conference_id: string
+          conference_id: string | null
           created_at: string | null
           event_id: string
           id: string
@@ -386,7 +386,7 @@ export type Database = {
         }
         Insert: {
           calendar_id: string
-          conference_id: string
+          conference_id?: string | null
           created_at?: string | null
           event_id: string
           id?: string
@@ -399,7 +399,7 @@ export type Database = {
         }
         Update: {
           calendar_id?: string
-          conference_id?: string
+          conference_id?: string | null
           created_at?: string | null
           event_id?: string
           id?: string
@@ -410,7 +410,15 @@ export type Database = {
           summary?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_meetings_calendar_id_fkey"
+            columns: ["calendar_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       segments: {
         Row: {
