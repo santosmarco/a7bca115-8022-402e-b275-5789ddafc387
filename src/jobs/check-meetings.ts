@@ -1,4 +1,5 @@
 import { logger, schedules } from "@trigger.dev/sdk/v3";
+import dayjs from "dayjs";
 
 import { env } from "~/env";
 import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
@@ -41,9 +42,20 @@ async function handleCalendarEvents(
       limit: EVENTS_BATCH_SIZE,
     });
 
-    allEvents = [...allEvents, ...batch];
+    logger.info(`Fetched ${batch.length} events from meeting baas`, {
+      calendarId: meetingBaasCalendar.uuid,
+      offset,
+      limit: EVENTS_BATCH_SIZE,
+    });
 
-    if (batch.length < EVENTS_BATCH_SIZE) {
+    allEvents = [...allEvents, ...batch.filter((e) => !e.bot_param)];
+
+    if (
+      batch.length < EVENTS_BATCH_SIZE ||
+      allEvents.some((e) =>
+        dayjs(e.start_time).isAfter(dayjs().add(1, "month")),
+      )
+    ) {
       hasMore = false;
     } else {
       offset += EVENTS_BATCH_SIZE;
