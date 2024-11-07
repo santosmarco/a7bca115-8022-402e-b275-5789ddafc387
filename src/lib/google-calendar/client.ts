@@ -40,7 +40,10 @@ export async function getEvents(refreshToken: string, calendarId = "primary") {
     orderBy: "startTime",
   });
 
-  console.log(`Found ${response.data.items?.length} events`, response.data);
+  console.log(
+    `[google-calendar][getEvents][${calendarId}] Found ${response.data.items?.length} events`,
+    JSON.stringify(response.data, null, 2),
+  );
 
   return (
     response.data.items?.filter(
@@ -55,6 +58,11 @@ export async function listCalendars(refreshToken: string) {
   const response = await calendar.calendarList.list({
     minAccessRole: "reader",
   });
+
+  console.log(
+    `[google-calendar][listCalendars] Found ${response.data.items?.length} calendars`,
+    JSON.stringify(response.data, null, 2),
+  );
 
   return response.data.items ?? [];
 }
