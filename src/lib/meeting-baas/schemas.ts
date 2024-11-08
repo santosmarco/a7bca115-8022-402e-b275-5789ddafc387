@@ -59,7 +59,7 @@ export const MeetingBaasJoinRequest = z.object({
   deduplication_key: z.string().nullish(),
   recording_mode: MeetingBaasRecordingMode.nullish(),
   start_time: z.number().int().nonnegative().nullish(),
-  extra: z.record(z.record(z.unknown())).nullish(),
+  extra: z.any().nullish(),
 });
 export type MeetingBaasJoinRequest = z.infer<typeof MeetingBaasJoinRequest>;
 
@@ -114,7 +114,7 @@ export const MeetingBaasBotData = z.object({
     waiting_room_timeout: z.number().int().nullish(),
     noone_joined_timeout: z.number().int().nullish(),
     deduplication_key: z.string().nullish(),
-    extra: z.record(z.record(z.unknown())).nullish(),
+    extra: z.any().nullish(),
   }),
   transcripts: z.array(MeetingBaasTranscript),
 });
@@ -170,7 +170,7 @@ export const MeetingBaasBotParam = z.object({
   waiting_room_timeout: z.number().int().nullish(),
   noone_joined_timeout: z.number().int().nullish(),
   deduplication_key: z.string().nullish(),
-  extra: z.record(z.record(z.unknown())).nullish(),
+  extra: z.any().nullish(),
 });
 export type MeetingBaasBotParam = z.infer<typeof MeetingBaasBotParam>;
 
@@ -185,7 +185,7 @@ export const MeetingBaasBotParam2 = z.object({
   waiting_room_timeout: z.number().int().nullish(),
   noone_joined_timeout: z.number().int().nullish(),
   deduplication_key: z.string().nullish(),
-  extra: z.record(z.record(z.unknown())).nullish(),
+  extra: z.any().nullish(),
 });
 export type MeetingBaasBotParam2 = z.infer<typeof MeetingBaasBotParam2>;
 
