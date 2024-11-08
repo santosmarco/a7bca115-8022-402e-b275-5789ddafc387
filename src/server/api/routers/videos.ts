@@ -75,13 +75,25 @@ async function fetchVideoData(
 export const videosRouter = createTRPCRouter({
   listAll: publicProcedure
     .input(
-      z.object({ includeDeprecated: z.boolean().default(false) }).default({}),
+      z
+        .object({
+          cursor: z.number().nullish(),
+          limit: z.number().min(1).max(100).default(10),
+          includeDeprecated: z.boolean().default(false),
+        })
+        .default({}),
     )
     .query(async ({ input }) => {
       try {
-        const videos = await listVideos({ pageSize: 25 });
+        const { cursor, limit } = input;
+        const videos = await listVideos({
+          pageSize: limit,
+          currentPage: cursor ? Math.floor(cursor / limit) + 1 : 1,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+        });
 
-        return await Promise.all(
+        const enrichedVideos = await Promise.all(
           videos.map(async (video) => {
             const { meeting, summary, moments } = await fetchVideoData(
               video.videoId,
@@ -102,6 +114,14 @@ export const videosRouter = createTRPCRouter({
             };
           }),
         );
+
+        const nextCursor =
+          enrichedVideos.length === limit ? (cursor ?? 0) + limit : undefined;
+
+        return {
+          videos: enrichedVideos,
+          nextCursor,
+        };
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
