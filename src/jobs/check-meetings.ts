@@ -5,7 +5,29 @@ import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
 import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
 import { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
 import { meetingBaas } from "~/lib/meeting-baas/client";
-import { createClient } from "~/lib/supabase/client";
+import {
+  createClient,
+  type SupabaseBrowserClient,
+} from "~/lib/supabase/client";
+import type { Json } from "~/lib/supabase/database.types";
+
+async function hasExistingMeetingBot(
+  supabase: SupabaseBrowserClient,
+  eventId: string,
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("meeting_bots")
+    .select("id")
+    .eq("raw_data->google_calendar_raw_data->id", eventId)
+    .maybeSingle();
+
+  if (error) {
+    logger.error("Error checking for existing meeting bot", { error });
+    throw error;
+  }
+
+  return !!data;
+}
 
 export const checkMeetings = schedules.task({
   id: "check-meetings-v2",
@@ -108,6 +130,7 @@ export const checkMeetings = schedules.task({
                 entryPoint.entryPointType ===
                 GoogleCalendarConferenceEntryPointType.VIDEO,
             )?.uri;
+
             if (!meetingUrl) {
               logger.warn(
                 "No video entry point found for google calendar event",
@@ -120,7 +143,22 @@ export const checkMeetings = schedules.task({
               continue;
             }
 
-            await meetingBaas.meetings.join({
+            const { data: maybeMeetingBot } = await supabase
+              .from("meeting_bots")
+              .select("id")
+              .eq("raw_data->google_calendar_raw_data->id", conference.id)
+              .maybeSingle();
+
+            if (maybeMeetingBot) {
+              logger.info("Skipping event - already has a meeting bot", {
+                userId: credential.user_id,
+                calendar,
+                eventId: conference.id,
+              });
+              continue;
+            }
+
+            const { bot_id: meetingBotId } = await meetingBaas.meetings.join({
               bot_name: "Notetaker",
               reserved: true,
               meeting_url: meetingUrl,
@@ -132,6 +170,19 @@ export const checkMeetings = schedules.task({
                 noone_joined_timeout: 900,
               },
               extra: { userId: credential.user_id, event: conference },
+            });
+
+            await supabase.from("meeting_bots").insert({
+              id: meetingBotId,
+              raw_data: {
+                google_calendar_raw_data: conference,
+              } as Json,
+            });
+
+            logger.info("Successfully joined meeting", {
+              userId: credential.user_id,
+              calendar,
+              eventId: conference.id,
             });
           }
         }
