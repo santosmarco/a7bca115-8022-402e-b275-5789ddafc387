@@ -12,7 +12,7 @@ async function getNotionPage(pageId: string) {
 async function getEnrichedReportPages<
   T extends Awaited<ReturnType<typeof notion.databases.query>>,
 >(results: T["results"]) {
-  return Promise.all(
+  return Promise.allSettled(
     results
       .filter(
         (
@@ -26,6 +26,13 @@ async function getEnrichedReportPages<
         ...result,
         ...(await getNotionPage(result.id)),
       })),
+  ).then((results) =>
+    results
+      .filter(
+        (result): result is typeof result & { status: "fulfilled" } =>
+          result.status === "fulfilled",
+      )
+      .map((result) => result.value),
   );
 }
 
