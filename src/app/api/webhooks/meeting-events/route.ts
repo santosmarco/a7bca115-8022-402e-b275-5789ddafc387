@@ -7,6 +7,7 @@ import { meetingBaas } from "~/lib/meeting-baas/client";
 import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
 import type { Json, TablesInsert } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
+import { isTruthy } from "~/lib/utils";
 import { apiVideo } from "~/server/api/services/api-video";
 
 const MeetingBaasWebhookRequestBody = z.discriminatedUnion("event", [
@@ -133,6 +134,12 @@ async function uploadToApiVideo(
   const event = (extra as { event?: calendar_v3.Schema$Event } | undefined)
     ?.event;
 
+  const metadata = [
+    botId && { key: "meeting_bot_id", value: botId },
+    botData && { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
+    event && { key: "google_calendar_raw_data", value: JSON.stringify(event) },
+  ].filter(isTruthy);
+
   try {
     const video = await apiVideo.videos.create({
       title: event?.summary ?? `Meeting Recording - ${botId}`,
@@ -142,11 +149,7 @@ async function uploadToApiVideo(
       transcript: true,
       transcriptSummary: true,
       tags: _.uniq(transcripts.map(({ speaker }) => speaker.trim())),
-      metadata: [
-        { key: "meeting_bot_id", value: botId },
-        { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
-        { key: "google_calendar_raw_data", value: JSON.stringify(event) },
-      ],
+      metadata,
     });
 
     return video.videoId;

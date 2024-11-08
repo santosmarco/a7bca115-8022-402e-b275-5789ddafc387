@@ -3,31 +3,10 @@ import dayjs from "dayjs";
 
 import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
 import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
-import { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
+import type { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
 import { meetingBaas } from "~/lib/meeting-baas/client";
-import {
-  createClient,
-  type SupabaseBrowserClient,
-} from "~/lib/supabase/client";
+import { createClient } from "~/lib/supabase/client";
 import type { Json } from "~/lib/supabase/database.types";
-
-async function hasExistingMeetingBot(
-  supabase: SupabaseBrowserClient,
-  eventId: string,
-): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("meeting_bots")
-    .select("id")
-    .eq("raw_data->google_calendar_raw_data->id", eventId)
-    .maybeSingle();
-
-  if (error) {
-    logger.error("Error checking for existing meeting bot", { error });
-    throw error;
-  }
-
-  return !!data;
-}
 
 export const checkMeetings = schedules.task({
   id: "check-meetings-v2",
@@ -94,13 +73,25 @@ export const checkMeetings = schedules.task({
             data: { items: eventsInTheNextFourMinutes = [] },
           } = await googleCalendar.events.list({
             calendarId: calendar.id,
-            timeMin: dayjs(payload.timestamp).add(4, "minutes").toISOString(),
+            timeMin: dayjs(payload.timestamp).toISOString(),
+            timeMax: dayjs(payload.timestamp).add(4, "minutes").toISOString(),
+            singleEvents: true,
+            timeZone: "UTC",
           });
 
           const videoConferencesInTheNextFourMinutes =
             eventsInTheNextFourMinutes.filter(
               (event): event is typeof event & GoogleCalendarVideoConference =>
-                GoogleCalendarVideoConference.safeParse(event).success,
+                !!(
+                  event.id &&
+                  event.start?.dateTime &&
+                  event.conferenceData?.entryPoints?.some(
+                    (entryPoint) =>
+                      entryPoint.entryPointType ===
+                        GoogleCalendarConferenceEntryPointType.VIDEO &&
+                      entryPoint.uri,
+                  )
+                ),
             );
 
           if (!videoConferencesInTheNextFourMinutes.length) {
@@ -143,13 +134,20 @@ export const checkMeetings = schedules.task({
               continue;
             }
 
-            const { data: maybeMeetingBot } = await supabase
-              .from("meeting_bots")
-              .select("id")
-              .eq("raw_data->google_calendar_raw_data->id", conference.id)
-              .maybeSingle();
+            const { data: maybeMeetingBots, error: maybeMeetingBotsError } =
+              await supabase
+                .from("meeting_bots")
+                .select("id")
+                .eq("raw_data->google_calendar_raw_data->id", conference.id);
 
-            if (maybeMeetingBot) {
+            if (maybeMeetingBotsError) {
+              logger.error("Error checking for existing meeting bot", {
+                error: maybeMeetingBotsError,
+              });
+              continue;
+            }
+
+            if (maybeMeetingBots?.length) {
               logger.info("Skipping event - already has a meeting bot", {
                 userId: credential.user_id,
                 calendar,
@@ -166,8 +164,8 @@ export const checkMeetings = schedules.task({
               recording_mode: "speaker_view",
               speech_to_text: { provider: "Default" },
               automatic_leave: {
-                waiting_room_timeout: 900,
-                noone_joined_timeout: 900,
+                waiting_room_timeout: 600,
+                noone_joined_timeout: 600,
               },
               extra: { userId: credential.user_id, event: conference },
             });
