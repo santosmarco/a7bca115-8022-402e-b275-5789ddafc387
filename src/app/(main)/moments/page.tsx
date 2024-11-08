@@ -3,7 +3,9 @@ import { api } from "~/trpc/server";
 import { MomentsPageClient } from "./page.client";
 
 export default async function MomentsPage() {
-  const videos = await api.videos.listAll();
+  const data = await api.videos.listAll({
+    limit: 50, // @todo: optimize
+  });
 
-  return <MomentsPageClient videos={videos} />;
+  return <MomentsPageClient data={data} />;
 }

@@ -38,10 +38,12 @@ import {
 import { api, type RouterOutputs } from "~/trpc/react";
 
 type MomentsPageProps = {
-  videos: RouterOutputs["videos"]["listAll"];
+  data: RouterOutputs["videos"]["listAll"];
 };
 
-export function MomentsPageClient({ videos: videosProp }: MomentsPageProps) {
+export function MomentsPageClient({
+  data: { videos: videosProp },
+}: MomentsPageProps) {
   const router = useRouter();
 
   const [searchQuery, setSearchQuery] = useQueryState("search", parseAsString);

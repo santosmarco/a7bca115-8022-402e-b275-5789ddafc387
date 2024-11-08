@@ -117,8 +117,8 @@ export default function HomePage() {
           <div className="max-w-sm space-y-2">
             <p className="font-semibold">No meetings found</p>
             <p className="text-sm text-muted-foreground">
-              We couldn't find any meetings. Try checking back later or contact
-              support if you think this is an error.
+              We couldn&apos;t find any meetings. Try checking back later or
+              contact support if you think this is an error.
             </p>
           </div>
         </motion.div>
