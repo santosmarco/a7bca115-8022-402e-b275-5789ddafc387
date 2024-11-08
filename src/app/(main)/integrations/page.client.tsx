@@ -107,7 +107,7 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
               prompt: "consent",
             },
             scopes:
-              "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events.readonly",
+              "https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/calendar.calendars.readonly https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/calendar.readonly",
           }),
         },
       });
