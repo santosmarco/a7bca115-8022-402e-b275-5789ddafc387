@@ -1,172 +1,18 @@
 import { logger, schedules } from "@trigger.dev/sdk/v3";
 import dayjs from "dayjs";
 
-import { env } from "~/env";
 import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
+import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
+import { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
 import { meetingBaas } from "~/lib/meeting-baas/client";
-import type {
-  MeetingBaasBotParam2,
-  MeetingBaasEvent,
-} from "~/lib/meeting-baas/schemas";
 import { createClient } from "~/lib/supabase/client";
-
-const EVENTS_BATCH_SIZE = 300;
-
-function getBotConfig(event: MeetingBaasEvent) {
-  return {
-    bot_name: "Notetaker",
-    recording_mode: "speaker_view",
-    bot_image:
-      "https://files.slack.com/files-pri/T07J0D5HJJZ-F07V5BU7L75/titan_image.png",
-    speech_to_text: { provider: "Default" },
-    waiting_room_timeout: 900,
-    noone_joined_timeout: 900,
-    extra: { event },
-  } as const satisfies MeetingBaasBotParam2;
-}
-
-async function handleCalendarEvents(
-  calendar: { id?: string | null | undefined },
-  meetingBaasCalendar: { uuid: string },
-  _ctx: { attempt: { number: number } },
-  _lastTimestamp?: Date,
-) {
-  let allEvents: Awaited<ReturnType<typeof meetingBaas.events.list>> = [];
-  let hasMore = true;
-  let offset = 0;
-
-  while (hasMore) {
-    const batch = await meetingBaas.events.list({
-      calendarId: meetingBaasCalendar.uuid,
-      offset,
-      limit: EVENTS_BATCH_SIZE,
-    });
-
-    logger.info(`Fetched ${batch.length} events from meeting baas`, {
-      calendarId: meetingBaasCalendar.uuid,
-      offset,
-      limit: EVENTS_BATCH_SIZE,
-    });
-
-    allEvents = [...allEvents, ...batch.filter((e) => !e.bot_param)];
-
-    if (
-      batch.length < EVENTS_BATCH_SIZE ||
-      allEvents.some((e) =>
-        dayjs(e.start_time).isAfter(dayjs().add(1, "month")),
-      )
-    ) {
-      hasMore = false;
-    } else {
-      offset += EVENTS_BATCH_SIZE;
-    }
-  }
-
-  const events = allEvents;
-
-  logger.info(`Found ${events.length} event(s) in meeting baas calendar`, {
-    calendar,
-    meetingBaasCalendar,
-    events,
-  });
-
-  const unscheduledEvents = events.filter((e) => !e.bot_param);
-
-  await Promise.all(
-    unscheduledEvents.map((event) =>
-      meetingBaas.events
-        .schedule(event.uuid, getBotConfig(event))
-        .catch((error) => {
-          logger.error("Failed to schedule event", {
-            eventId: event.uuid,
-            error,
-          });
-        }),
-    ),
-  );
-
-  return events.length;
-}
-
-async function setupMeetingBaasCalendar(
-  calendar: { id?: string | null | undefined },
-  refreshToken: string,
-) {
-  try {
-    await meetingBaas.calendars.create({
-      oauth_client_id: env.GOOGLE_OAUTH_CLIENT_ID,
-      oauth_client_secret: env.GOOGLE_OAUTH_CLIENT_SECRET,
-      oauth_refresh_token: refreshToken,
-      platform: "Google",
-      raw_calendar_id: calendar.id,
-    });
-    logger.info("Created meeting baas calendar", { calendar });
-    return true;
-  } catch (error) {
-    logger.error("Failed to create meeting baas calendar", {
-      calendar,
-      error,
-    });
-    return false;
-  }
-}
-
-async function processCalendar(
-  calendar: { id?: string | null | undefined },
-  credential: { user_id: string; refresh_token: string | null },
-  meetingBaasCalendars: Array<{ uuid: string; google_id: string }>,
-  ctx: { attempt: { number: number } },
-  lastTimestamp?: Date,
-) {
-  if (!calendar.id) {
-    logger.warn("No calendar id found for google calendar, skipping...", {
-      userId: credential.user_id,
-      calendar,
-    });
-    return;
-  }
-
-  const existingCalendar = meetingBaasCalendars.find(
-    (c) => c.google_id === calendar.id,
-  );
-
-  if (!existingCalendar) {
-    if (!credential.refresh_token) {
-      logger.error("No refresh token available for calendar creation", {
-        userId: credential.user_id,
-        calendar,
-      });
-      return;
-    }
-
-    const created = await setupMeetingBaasCalendar(
-      calendar,
-      credential.refresh_token,
-    );
-    if (!created) return;
-  }
-
-  const meetingBaasCalendar = meetingBaasCalendars.find(
-    (c) => c.google_id === calendar.id,
-  );
-
-  if (!meetingBaasCalendar) {
-    logger.warn("No meeting baas calendar found, skipping...", {
-      userId: credential.user_id,
-      calendar,
-    });
-    return;
-  }
-
-  await handleCalendarEvents(calendar, meetingBaasCalendar, ctx, lastTimestamp);
-}
 
 export const checkMeetings = schedules.task({
   id: "check-meetings-v2",
   maxDuration: 300,
-  cron: "*/5 * * * *",
+  cron: "*/1 * * * *",
   machine: { preset: "small-2x" },
-  run: async (payload, { ctx }) => {
+  run: async (payload) => {
     const supabase = createClient();
 
     const { data: googleCredentials, error: googleCredentialsError } =
@@ -210,25 +56,90 @@ export const checkMeetings = schedules.task({
           continue;
         }
 
-        const meetingBaasCalendars = await meetingBaas.calendars.list();
+        for (const calendar of calendars) {
+          if (!calendar.id) {
+            logger.warn(
+              "No calendar id found for google calendar, skipping...",
+              {
+                userId: credential.user_id,
+                calendar,
+              },
+            );
+            continue;
+          }
 
-        await Promise.all(
-          calendars.map((calendar) =>
-            processCalendar(
+          const {
+            data: { items: eventsInTheNextFourMinutes = [] },
+          } = await googleCalendar.events.list({
+            calendarId: calendar.id,
+            timeMin: dayjs(payload.timestamp).add(4, "minutes").toISOString(),
+          });
+
+          const videoConferencesInTheNextFourMinutes =
+            eventsInTheNextFourMinutes.filter(
+              (event): event is typeof event & GoogleCalendarVideoConference =>
+                GoogleCalendarVideoConference.safeParse(event).success,
+            );
+
+          if (!videoConferencesInTheNextFourMinutes.length) {
+            logger.info(
+              `Found ${eventsInTheNextFourMinutes.length} events in the next 4 minutes for google calendar, but none of them are video conferences`,
+              {
+                userId: credential.user_id,
+                calendar,
+                events: eventsInTheNextFourMinutes,
+              },
+            );
+            continue;
+          }
+
+          logger.info(
+            `Found ${videoConferencesInTheNextFourMinutes.length} video conferences in the next 4 minutes for google calendar`,
+            {
+              userId: credential.user_id,
               calendar,
-              credential,
-              meetingBaasCalendars,
-              ctx,
-              payload.lastTimestamp,
-            ),
-          ),
-        );
+              events: videoConferencesInTheNextFourMinutes,
+            },
+          );
+
+          for (const conference of videoConferencesInTheNextFourMinutes) {
+            const meetingUrl = conference.conferenceData.entryPoints.find(
+              (entryPoint) =>
+                entryPoint.entryPointType ===
+                GoogleCalendarConferenceEntryPointType.VIDEO,
+            )?.uri;
+            if (!meetingUrl) {
+              logger.warn(
+                "No video entry point found for google calendar event",
+                {
+                  userId: credential.user_id,
+                  calendar,
+                  event: conference,
+                },
+              );
+              continue;
+            }
+
+            await meetingBaas.meetings.join({
+              bot_name: "Notetaker",
+              reserved: true,
+              meeting_url: meetingUrl,
+              bot_image: "https://i.ibb.co/X7QvTBN/Titan-Image-1600x900.png",
+              recording_mode: "speaker_view",
+              speech_to_text: { provider: "Default" },
+              automatic_leave: {
+                waiting_room_timeout: 900,
+                noone_joined_timeout: 900,
+              },
+              extra: { userId: credential.user_id, event: conference },
+            });
+          }
+        }
       } catch (error) {
         logger.error("Error processing google credential", {
           error,
           userId: credential.user_id,
         });
-        continue;
       }
     }
   },

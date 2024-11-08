@@ -1,108 +1,94 @@
+import type { calendar_v3 } from "googleapis";
 import _ from "lodash";
+import type { SetRequired } from "type-fest";
 import { z } from "zod";
 
 import { meetingBaas } from "~/lib/meeting-baas/client";
-import {
-  type MeetingBaasBotData,
-  MeetingBaasEvent,
-} from "~/lib/meeting-baas/schemas";
+import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
 import type { Json, TablesInsert } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
 import { apiVideo } from "~/server/api/services/api-video";
 
-const BotStatusEvent = z.object({
-  event: z.literal("bot.status_change"),
-  data: z.object({
-    bot_id: z.string().describe("The identifier of the bot"),
-    status: z.object({
-      code: z
-        .enum([
-          "joining_call", // Bot acknowledged request to join
-          "in_waiting_room", // Bot is in meeting waiting room
-          "in_call_not_recording", // Bot joined but not recording
-          "in_call_recording", // Bot is recording audio/video
-          "call_ended", // Bot has left the call
-        ])
-        .describe("The current status of the bot in the meeting"),
-      created_at: z
+const MeetingBaasWebhookRequestBody = z.discriminatedUnion("event", [
+  z.object({
+    event: z.literal("bot.status_change"),
+    data: z.object({
+      bot_id: z.string().describe("The identifier of the bot"),
+      status: z.object({
+        code: z
+          .enum([
+            "joining_call", // Bot acknowledged request to join
+            "in_waiting_room", // Bot is in meeting waiting room
+            "in_call_not_recording", // Bot joined but not recording
+            "in_call_recording", // Bot is recording audio/video
+            "call_ended", // Bot has left the call
+          ])
+          .describe("The current status of the bot in the meeting"),
+        created_at: z
+          .string()
+          .datetime()
+          .describe("ISO timestamp of the status change"),
+      }),
+    }),
+  }),
+  z.object({
+    event: z.literal("complete"),
+    data: z.object({
+      bot_id: z.string().describe("The identifier of the bot"),
+      mp4: z
         .string()
-        .datetime()
-        .describe("ISO timestamp of the status change"),
+        .url()
+        .describe("AWS S3 URL of the meeting recording (valid for 1 hour)"),
+      speakers: z
+        .array(z.string())
+        .describe("List of speakers identified in the meeting"),
+      transcript: z
+        .array(
+          z.object({
+            speaker: z.string().describe("Name of the speaker"),
+            words: z
+              .array(
+                z.object({
+                  start: z
+                    .number()
+                    .describe("Start time of the word in seconds"),
+                  end: z.number().describe("End time of the word in seconds"),
+                  word: z.string().describe("The transcribed word"),
+                }),
+              )
+              .describe("Array of words spoken by this speaker"),
+          }),
+        )
+        .default([])
+        .describe(
+          "Complete transcript of the meeting with speaker identification",
+        ),
     }),
   }),
-});
-type BotStatusEvent = z.infer<typeof BotStatusEvent>;
-
-// Schema for individual words in the transcript
-const TranscriptWord = z.object({
-  start: z.number().describe("Start time of the word in seconds"),
-  end: z.number().describe("End time of the word in seconds"),
-  word: z.string().describe("The transcribed word"),
-});
-type TranscriptWord = z.infer<typeof TranscriptWord>;
-
-// Schema for the meeting transcript
-const Transcript = z
-  .array(
-    z.object({
-      speaker: z.string().describe("Name of the speaker"),
-      words: z
-        .array(TranscriptWord)
-        .describe("Array of words spoken by this speaker"),
+  z.object({
+    event: z.literal("failed"),
+    data: z.object({
+      bot_id: z.string().describe("The identifier of the bot"),
+      error: z
+        .enum([
+          "CannotJoinMeeting", // Bot unable to join the provided meeting URL
+          "TimeoutWaitingToStart", // Bot quit after waiting room timeout
+          "BotNotAccepted", // Bot was refused entry to meeting
+          "InternalError", // Unexpected error occurred
+          "InvalidMeetingUrl", // Invalid meeting URL provided
+        ])
+        .describe("Type of error that caused the meeting to fail"),
     }),
-  )
-  .describe("Complete transcript of the meeting with speaker identification");
-type Transcript = z.infer<typeof Transcript>;
-
-// Schema for successful meeting completion
-const CompleteEvent = z.object({
-  event: z.literal("complete"),
-  data: z.object({
-    bot_id: z.string().describe("The identifier of the bot"),
-    mp4: z
-      .string()
-      .url()
-      .describe("AWS S3 URL of the meeting recording (valid for 1 hour)"),
-    speakers: z
-      .array(z.string())
-      .describe("List of speakers identified in the meeting"),
-    transcript: Transcript.optional().describe(
-      "Optional transcript when speech_to_text is enabled",
-    ),
   }),
-});
-type CompleteEvent = z.infer<typeof CompleteEvent>;
-
-// Schema for failed meeting events
-const FailedEvent = z.object({
-  event: z.literal("failed"),
-  data: z.object({
-    bot_id: z.string().describe("The identifier of the bot"),
-    error: z
-      .enum([
-        "CannotJoinMeeting", // Bot unable to join the provided meeting URL
-        "TimeoutWaitingToStart", // Bot quit after waiting room timeout
-        "BotNotAccepted", // Bot was refused entry to meeting
-        "InternalError", // Unexpected error occurred
-        "InvalidMeetingUrl", // Invalid meeting URL provided
-      ])
-      .describe("Type of error that caused the meeting to fail"),
-  }),
-});
-type FailedEvent = z.infer<typeof FailedEvent>;
-
-// Combined schema for all possible webhook events
-const WebhookEvent = z.discriminatedUnion("event", [
-  BotStatusEvent,
-  CompleteEvent,
-  FailedEvent,
 ]);
-type WebhookEvent = z.infer<typeof WebhookEvent>;
+type MeetingBaasWebhookRequestBody = z.infer<
+  typeof MeetingBaasWebhookRequestBody
+>;
 
 async function uploadVideoToStorage(
-  supabase: SupabaseServerClient,
   botId: string,
   videoUrl: string,
+  supabase: SupabaseServerClient,
 ): Promise<string> {
   try {
     // Fetch the video from the temporary AWS S3 URL
@@ -144,23 +130,22 @@ async function uploadToApiVideo(
     transcripts,
   } = botData;
 
-  const { data: parsedExtra } = z
-    .object({ event: MeetingBaasEvent })
-    .safeParse(extra);
-
-  const event = parsedExtra?.event;
+  const event = (extra as { event?: calendar_v3.Schema$Event } | undefined)
+    ?.event;
 
   try {
-    // Create a video container
     const video = await apiVideo.videos.create({
-      title: event?.name ?? `Meeting Recording - ${botId}`,
+      title: event?.summary ?? `Meeting Recording - ${botId}`,
+      description: event?.description ?? undefined,
       source: videoUrl,
       mp4Support: true,
       transcript: true,
       transcriptSummary: true,
       tags: _.uniq(transcripts.map(({ speaker }) => speaker.trim())),
       metadata: [
+        { key: "meeting_bot_id", value: botId },
         { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
+        { key: "google_calendar_raw_data", value: JSON.stringify(event) },
       ],
     });
 
@@ -173,13 +158,12 @@ async function uploadToApiVideo(
 
 async function updateMeetingBot(
   supabase: SupabaseServerClient,
-  botId: string,
-  data: Partial<TablesInsert<"meeting_bots">>,
+  data: SetRequired<Partial<TablesInsert<"meeting_bots">>, "id">,
 ) {
   const { error } = await supabase
     .from("meeting_bots")
     .update(data)
-    .eq("id", botId);
+    .eq("id", data.id);
 
   if (error) {
     console.error("Update error:", error);
@@ -189,9 +173,12 @@ async function updateMeetingBot(
 
 async function handleTranscript(
   supabase: SupabaseServerClient,
-  botId: string,
-  transcript: Transcript,
+  data: Extract<MeetingBaasWebhookRequestBody, { event: "complete" }>,
 ) {
+  const {
+    data: { bot_id: botId, transcript },
+  } = data;
+
   const { data: transcriptSlices, error: transcriptSlicesError } =
     await supabase
       .from("transcript_slices")
@@ -237,7 +224,7 @@ async function handleTranscript(
 export async function POST(request: Request) {
   try {
     const body = (await request.json()) as unknown;
-    const bodyParseResult = WebhookEvent.safeParse(body);
+    const bodyParseResult = MeetingBaasWebhookRequestBody.safeParse(body);
 
     if (!bodyParseResult.success) {
       console.error("Validation error:", bodyParseResult.error);
@@ -247,96 +234,49 @@ export async function POST(request: Request) {
     const event = bodyParseResult.data;
     const supabase = await createClient();
 
-    // Get or create meeting bot
-    let meetingBot = await supabase
-      .from("meeting_bots")
-      .select("*")
-      .eq("id", event.data.bot_id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error) throw error;
-        return data;
-      });
-
-    if (!meetingBot) {
-      const meetingBotInsertData: TablesInsert<"meeting_bots"> = {
-        id: event.data.bot_id,
-        status: "call_ended",
-        ...(event.event === "bot.status_change" && {
-          status: event.data.status.code,
-        }),
-        ...(event.event === "complete" && {
-          mp4_source_url: event.data.mp4,
-          speakers: event.data.speakers,
-          raw_data: event.data,
-        }),
-        ...(event.event === "failed" && {
-          error_code: event.data.error,
-        }),
-      };
-
-      meetingBot = await supabase
-        .from("meeting_bots")
-        .insert(meetingBotInsertData)
-        .select("*")
-        .single()
-        .then(({ data, error }) => {
-          if (error) throw error;
-          return data;
-        });
-    }
-
-    if (!meetingBot) {
-      console.error("Failed to create meeting bot");
-      return new Response("Failed to create meeting bot", { status: 500 });
-    }
-
     // Handle different event types
     try {
-      switch (event.event) {
-        case "bot.status_change":
-          await updateMeetingBot(supabase, meetingBot.id, {
-            status: event.data.status.code,
-          });
-          break;
-
-        case "complete":
-          const { bot_data } = await meetingBaas.meetings.getMeetingData(
-            event.data.bot_id,
+      if (event.event === "bot.status_change") {
+        const { error } = await supabase
+          .from("meeting_bots")
+          .upsert(
+            { id: event.data.bot_id, status: event.data.status.code },
+            { onConflict: "id" },
           );
 
-          let storageUrl: string | undefined;
-          let apiVideoId: string | undefined;
+        if (error) {
+          console.error("Status change error:", error);
+          throw new Error(error.message);
+        }
+      } else if (event.event === "failed") {
+        await updateMeetingBot(supabase, {
+          id: event.data.bot_id,
+          error_code: event.data.error,
+        });
+      } else if (event.event === "complete") {
+        const { bot_data, mp4 } = await meetingBaas.meetings.getMeetingData(
+          event.data.bot_id,
+        );
 
-          if (event.data.mp4) {
-            // Upload to both storage systems in parallel
-            [storageUrl, apiVideoId] = await Promise.all([
-              uploadVideoToStorage(supabase, meetingBot.id, event.data.mp4),
-              uploadToApiVideo(meetingBot.id, event.data.mp4, bot_data),
-            ]);
-          }
+        const [storageUrl, apiVideoId] = await Promise.all([
+          uploadVideoToStorage(event.data.bot_id, mp4, supabase),
+          uploadToApiVideo(event.data.bot_id, mp4, bot_data),
+        ]);
 
-          await updateMeetingBot(supabase, meetingBot.id, {
-            mp4_source_url: storageUrl,
-            api_video_id: apiVideoId,
-            speakers: event.data.speakers,
-            raw_data: { event, bot_data } as Json,
-          });
+        await updateMeetingBot(supabase, {
+          id: event.data.bot_id,
+          mp4_source_url: storageUrl,
+          api_video_id: apiVideoId,
+          speakers: event.data.speakers,
+          raw_data: {
+            meeting_baas_raw_data: { bot_data, event },
+            google_calendar_raw_data: bot_data.bot.extra?.event,
+          } as Json,
+        });
 
-          if (event.data.transcript?.length) {
-            await handleTranscript(
-              supabase,
-              meetingBot.id,
-              event.data.transcript,
-            );
-          }
-          break;
-
-        case "failed":
-          await updateMeetingBot(supabase, meetingBot.id, {
-            error_code: event.data.error,
-          });
-          break;
+        if (event.data.transcript?.length) {
+          await handleTranscript(supabase, event);
+        }
       }
 
       return new Response(null, { status: 200 });
