@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Script from "next/script";
 
 import { getVTT } from "~/lib/api-video/videos";
 import { getVideoMomentById } from "~/lib/videos";
@@ -38,23 +37,7 @@ export default async function EmbedMomentPage({
       return notFound();
     }
 
-    return (
-      <>
-        <EmbedMomentPageClient moment={moment} />
-        <Script
-          strategy="afterInteractive"
-          src={`
-            function sendHeight() {
-              const height = document.body.scrollHeight;
-              window.parent.postMessage({ type: 'resize', height }, '*');
-            }
-            
-            window.addEventListener('load', sendHeight);
-            new ResizeObserver(sendHeight).observe(document.body);
-          `}
-        />
-      </>
-    );
+    return <EmbedMomentPageClient moment={moment} />;
   } catch (error) {
     console.error(error);
     return notFound();
