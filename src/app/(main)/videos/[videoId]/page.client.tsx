@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ChevronLeft } from "lucide-react";
+import { CameraIcon, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
@@ -9,34 +9,55 @@ import { PlayerProvider } from "~/components/player/provider";
 import { VideoPlayer } from "~/components/player/video";
 import { Button } from "~/components/ui/button";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
-import {
-  emotionToMoment,
-  getVideoEmotions,
-  getVideoMoments,
-  getVideoSummary,
-} from "~/lib/videos";
-import type { RouterOutputs } from "~/trpc/react";
+import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
 
+import _ from "lodash";
+import { useProfile } from "~/hooks/use-profile";
+import { api } from "~/trpc/react";
 import { MeetingSummary } from "./_components/meeting-summary";
 import { VideoMoments } from "./_components/video-moments";
 import { VideoTags } from "./_components/video-tags";
 
 export type VideoPageClientProps = {
-  video: RouterOutputs["videos"]["getOne"];
-  vtt: string;
+  videoId: string;
 };
 
-export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
+export function VideoPageClient({ videoId }: VideoPageClientProps) {
   const router = useRouter();
+  const { profile } = useProfile();
+  const { data: user } = api.auth.getUser.useQuery();
+  const { data: video } = api.videos.getOne.useQuery({
+    videoId,
+    options: {
+      moments: {
+        includeNonRelevant:
+          user?.is_admin && (!profile || user.id === profile.id),
+      },
+    },
+  });
   const [category, setCategory] = useQueryState("category", parseAsString);
   const [startAt, setStartAt] = useQueryState("startAt", parseAsInteger);
-  const summary = getVideoSummary(video);
-  const moments = getVideoMoments(video);
-  const emotions = getVideoEmotions(video);
-  const emotionMoments = (emotions ?? []).map((emotion) =>
-    emotionToMoment(emotion, video, vtt),
-  );
+  const vtt = video?.vtt ?? "";
+  const summary = video?.summary;
+  const moments = video?.moments ?? [];
+  const emotions = video ? getVideoEmotions(video) : [];
+  const emotionMoments = video
+    ? (emotions ?? []).map((emotion) => emotionToMoment(emotion, video, vtt))
+    : [];
   const allMoments = [...moments, ...emotionMoments];
+  const sortedMoments = _.sortBy(
+    _.sortBy(allMoments, (moment) => moment.segment_start_timestamp_in_seconds),
+    (moment) => (moment.relevant ? 0 : 1),
+    (m) =>
+      m.reactions.reduce(
+        (acc, r) =>
+          acc +
+          (r.reaction_type === "thumbs_up" ? -1 : 1) *
+            (user?.is_admin && (!profile || user.id === profile.id) ? -1 : 1),
+        0,
+      ),
+  );
+  console.log(sortedMoments);
 
   const handleCategoryChange = (category: string) => {
     void setCategory(category);
@@ -45,6 +66,22 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
   const handleSkipToMoment = (moment: VideoMoment) => {
     void setStartAt(moment.segment_start_timestamp_in_seconds);
   };
+
+  if (!video) {
+    return (
+      <div className="mt-20 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <CameraIcon className="h-10 w-10 animate-pulse text-primary" />
+          <p className="text-sm text-muted-foreground">Loading meeting...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <PlayerProvider>
@@ -84,7 +121,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
           <div className="space-y-4 lg:col-span-2 lg:space-y-6">
             <VideoPlayer
               video={video}
-              momentsShown={allMoments.filter(
+              momentsShown={sortedMoments.filter(
                 ({ activity }) => !category || activity === category,
               )}
               startAt={startAt ?? undefined}
@@ -95,7 +132,7 @@ export function VideoPageClient({ video, vtt }: VideoPageClientProps) {
               </div>
             )}
             <VideoMoments
-              moments={allMoments}
+              moments={sortedMoments}
               selectedCategory={category ?? undefined}
               onCategoryChange={handleCategoryChange}
               onSkipToMoment={handleSkipToMoment}
