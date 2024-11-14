@@ -55,7 +55,15 @@ export default function HomePage() {
     hasNextPage,
     isFetchingNextPage,
   } = api.videos.listAll.useInfiniteQuery(
-    { limit: 12 },
+    {
+      limit: 12,
+      options: {
+        tags:
+          user?.is_admin && (!profile || user.id === profile.id)
+            ? undefined
+            : [profile?.nickname ?? user?.nickname ?? ""],
+      },
+    },
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       refetchOnWindowFocus: false,
