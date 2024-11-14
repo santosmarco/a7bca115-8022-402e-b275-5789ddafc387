@@ -1,16 +1,10 @@
-import { z } from "zod";
-
 import type { ParsedVTT } from "~/lib/schemas/parsed-vtt";
 
 import type { getVideo } from "./api-video/videos";
 import { EmotionAnalysis, type EmotionSequence } from "./schemas/emotion";
 import type { Video } from "./schemas/video";
-import { VideoMoment } from "./schemas/video-moment";
+import type { VideoMoment } from "./schemas/video-moment";
 import type { Tables } from "./supabase/database.types";
-
-export function getVideoSummary(video: Video) {
-  return video.metadata.find((m) => m.key === "summary")?.value;
-}
 
 export function getVideoEmotions(video: Video) {
   const { emotion_sequences: emotionSequences = [] } =
@@ -21,22 +15,6 @@ export function getVideoEmotions(video: Video) {
     );
 
   return emotionSequences;
-}
-
-export function getVideoMoments(video: Video, category?: string) {
-  const moments = z
-    .array(VideoMoment)
-    .parse(
-      JSON.parse(
-        video.metadata.find((m) => m.key === "activities")?.value ?? "[]",
-      ),
-    );
-
-  if (category) {
-    return moments.filter((m) => m.activity === category);
-  }
-
-  return moments;
 }
 
 export function emotionToMoment(
@@ -76,7 +54,7 @@ export function emotionToMoment(
 }
 
 export function getVideoMomentById(
-  video: Video,
+  video: VideoOutput,
   momentId: string,
   vtt: string,
 ) {
@@ -84,7 +62,7 @@ export function getVideoMomentById(
   const emotionMoments = emotions.map((emotion) =>
     emotionToMoment(emotion, video, vtt),
   );
-  const moments = getVideoMoments(video);
+  const moments = video.moments;
   return moments.concat(emotionMoments).find((m) => m.index === momentId);
 }
 
@@ -191,3 +169,5 @@ export function toVideoOutput<T extends Awaited<ReturnType<typeof getVideo>>>(
 
   return { ...video, meeting, moments, summary, vtt, metadata };
 }
+
+export type VideoOutput = Awaited<ReturnType<typeof toVideoOutput>>;

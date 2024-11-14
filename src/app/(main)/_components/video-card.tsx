@@ -9,19 +9,18 @@ import React from "react";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import type { VideoWithDetails } from "~/lib/schemas/video";
 import { cn } from "~/lib/utils";
-import { getVideoMoments } from "~/lib/videos";
+import type { RouterOutputs } from "~/trpc/react";
 
 export type VideoCardProps = React.ComponentProps<typeof motion.div> & {
-  video: VideoWithDetails;
+  video: RouterOutputs["videos"]["listAll"][number];
 };
 
 export const VideoCard = React.forwardRef<
   React.ElementRef<typeof motion.div>,
   VideoCardProps
 >(({ video, className, ...props }, ref) => {
-  const moments = getVideoMoments(video);
+  const moments = video.moments;
   const momentsByCategory = _.groupBy(moments, (moment) => moment.activity);
 
   return (
