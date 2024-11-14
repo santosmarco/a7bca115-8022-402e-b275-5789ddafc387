@@ -7,6 +7,17 @@ import type { Tables } from "~/lib/supabase/database.types";
 import { createClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
+export const VideoOptions = z.object({
+  tags: z.array(z.string()).optional(),
+  moments: z
+    .object({
+      includeDeprecated: z.boolean().default(false),
+      includeNonRelevant: z.boolean().default(false),
+    })
+    .default({}),
+});
+export type VideoOptions = z.infer<typeof VideoOptions>;
+
 function transformMoment(moment: Tables<"moments">, idx: number) {
   return {
     id: moment.id,
@@ -35,7 +46,7 @@ function transformMoment(moment: Tables<"moments">, idx: number) {
 
 async function fetchVideoData(
   videoId: string,
-  { includeDeprecated }: { includeDeprecated: boolean },
+  videoOptions: VideoOptions | undefined,
 ) {
   try {
     const supabase = await createClient();
@@ -45,8 +56,11 @@ async function fetchVideoData(
       .select("*")
       .eq("video_api_id", videoId);
 
-    if (!includeDeprecated) {
+    if (!videoOptions?.moments.includeDeprecated) {
       momentsQuery = momentsQuery.eq("latest", true);
+    }
+    if (!videoOptions?.moments.includeNonRelevant) {
+      momentsQuery = momentsQuery.eq("relevant", true);
     }
 
     const [meetingResult, momentsResult] = await Promise.all([
@@ -57,8 +71,21 @@ async function fetchVideoData(
     if (meetingResult.error) throw meetingResult.error;
     if (momentsResult.error) throw momentsResult.error;
 
-    const transformedMoments: VideoMoments =
-      momentsResult.data.map(transformMoment);
+    const momentReactionsResult = await supabase
+      .from("moment_reactions")
+      .select("*")
+      .in("moment_id", momentsResult.data?.map((m) => m.id) ?? []);
+
+    if (momentReactionsResult.error) throw momentReactionsResult.error;
+
+    const transformedMoments = momentsResult.data
+      .map(transformMoment)
+      .map((m) => ({
+        ...m,
+        reactions: momentReactionsResult.data?.filter(
+          (r) => r.moment_id === m.id,
+        ),
+      }));
 
     return {
       meeting: meetingResult.data?.[0],
@@ -80,32 +107,35 @@ export const videosRouter = createTRPCRouter({
       z
         .object({
           cursor: z.number().nullish(),
-          limit: z.number().min(1).max(100).default(10),
-          includeDeprecated: z.boolean().default(false),
+          limit: z.number().min(1).max(100).default(50),
+          options: VideoOptions.optional(),
         })
         .default({}),
     )
     .query(async ({ input }) => {
       try {
-        const { cursor, limit } = input;
+        const { cursor, limit, options } = input;
         const videos = await listVideos({
           pageSize: limit,
           currentPage: cursor ? Math.floor(cursor / limit) + 1 : 1,
           sortBy: "createdAt",
           sortOrder: "desc",
+          tags: options?.tags,
         });
 
         const enrichedVideos = await Promise.all(
           videos.map(async (video) => {
             const { meeting, summary, moments } = await fetchVideoData(
               video.videoId,
-              { includeDeprecated: input.includeDeprecated },
+              options,
             );
 
             return {
               ...video,
               meeting,
               vtt: meeting?.original_vtt_file,
+              summary,
+              moments,
               metadata: [
                 ...video.metadata.filter(
                   (m) => m.key !== "summary" && m.key !== "activities",
@@ -137,7 +167,7 @@ export const videosRouter = createTRPCRouter({
     .input(
       z.object({
         videoId: z.string(),
-        includeDeprecated: z.boolean().default(false),
+        options: VideoOptions.optional(),
       }),
     )
     .query(async ({ input }) => {
@@ -145,13 +175,15 @@ export const videosRouter = createTRPCRouter({
         const video = await getVideo(input.videoId);
         const { meeting, summary, moments } = await fetchVideoData(
           video.videoId,
-          { includeDeprecated: input.includeDeprecated },
+          input.options,
         );
 
         return {
           ...video,
           meeting,
           vtt: meeting?.original_vtt_file,
+          summary,
+          moments,
           metadata: [
             ...video.metadata.filter(
               (m) => m.key !== "summary" && m.key !== "activities",
