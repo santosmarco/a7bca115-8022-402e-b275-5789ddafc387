@@ -2,16 +2,8 @@
 
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { motion } from "framer-motion";
-import _, { map } from "lodash";
-import {
-  CrossIcon,
-  FileVideo,
-  Filter,
-  FrownIcon,
-  Search,
-  TrendingUpIcon,
-  XOctagonIcon,
-} from "lucide-react";
+import _ from "lodash";
+import { Filter, FrownIcon, Search, TrendingUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
@@ -24,28 +16,24 @@ import {
   Select,
   SelectContent,
   SelectItem,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { useProfile } from "~/hooks/use-profile";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
-import {
-  emotionToMoment,
-  getVideoEmotions,
-  getVideoMoments,
-} from "~/lib/videos";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
+import { type RouterOutputs, api } from "~/trpc/react";
 
-type MomentsPageProps = {
-  data: RouterOutputs["videos"]["listAll"];
-};
-
-export function MomentsPageClient({
-  data: { videos: videosProp },
-}: MomentsPageProps) {
+export function MomentsPageClient() {
   const router = useRouter();
-
   const [searchQuery, setSearchQuery] = useQueryState("search", parseAsString);
   const [searchQueryDebounced, setSearchQueryDebounced] = useState(searchQuery);
   const [selectedVideo, setSelectedVideo] = useQueryState(
@@ -56,23 +44,30 @@ export function MomentsPageClient({
     "category",
     parseAsString,
   );
-
   const { profile } = useProfile();
-  const { data: user } = api.auth.getUser.useQuery();
-  const videos =
-    user?.is_admin && (!profile || user.id === profile.id)
-      ? videosProp
-      : videosProp.filter((v) =>
+  const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery();
+  const { data: videosData, isLoading: videosLoading } =
+    api.videos.listAll.useQuery({
+      options: {
+        moments: {
+          includeNonRelevant:
+            user?.is_admin && (!profile || user.id === profile.id),
+        },
+      },
+    });
+  const filteredVideos =
+    (user?.is_admin && (!profile || user.id === profile.id)
+      ? videosData?.videos
+      : videosData?.videos?.filter((v) =>
           v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-        );
-
+        )) ?? [];
   const { data: searchMomentIds } = api.moments.search.useQuery({
     query: searchQueryDebounced ?? "",
     limit: 100,
   });
 
-  const videosEnriched = videos.map((video) => {
-    const moments = getVideoMoments(video);
+  const videosEnriched = filteredVideos.map((video) => {
+    const moments = video.moments;
     const emotions = getVideoEmotions(video) ?? [];
     const emotionMoments = emotions
       .map((emotion) => video.vtt && emotionToMoment(emotion, video, video.vtt))
@@ -103,9 +98,21 @@ export function MomentsPageClient({
         !searchMomentIds || searchMomentIds.find((x) => x.id === moment.id),
     );
 
+  const sortedMoments = _.sortBy(filteredMoments, (m) =>
+    m.reactions.reduce(
+      (acc, r) => acc + (r.reaction_type === "thumbs_up" ? -1 : 1),
+      0,
+    ),
+  );
+
   const categories = _.sortBy(
-    Array.from(new Set(moments.map((m) => m.activity))),
+    Array.from(new Set(sortedMoments.map((m) => m.activity))),
     (x) => x,
+  );
+
+  const videosSorted = _.sortBy(
+    _.sortBy(videosEnriched, (v) => v.video.title),
+    (v) => !v.allMoments.length,
   );
 
   const handleSkipToMoment = (moment: VideoMoment) => () => {
@@ -141,7 +148,23 @@ export function MomentsPageClient({
     [setSelectedVideo, setSelectedCategory],
   );
 
-  if (!videos.length) {
+  if (videosLoading || userLoading) {
+    return (
+      <div className="mt-20 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-4"
+        >
+          <TrendingUpDown className="h-10 w-10 animate-pulse text-primary" />
+          <p className="text-sm text-muted-foreground">Loading moments...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (!videosSorted.length) {
     return (
       <div className="mt-20 flex items-center justify-center">
         <motion.div
@@ -191,13 +214,31 @@ export function MomentsPageClient({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Videos</SelectItem>
-              {videosEnriched.map((video) => (
-                <SelectItem
-                  key={video.video.videoId}
-                  value={video.video.videoId}
-                >
-                  {video.video.title}
-                </SelectItem>
+              <SelectSeparator />
+              {videosSorted.map((video) => (
+                <TooltipProvider key={video.video.videoId} delayDuration={0}>
+                  <Tooltip
+                    open={video.allMoments.length === 0 ? undefined : false}
+                  >
+                    <TooltipTrigger asChild>
+                      <SelectItem
+                        value={video.video.videoId}
+                        disabled={video.allMoments.length === 0}
+                        className="!pointer-events-auto"
+                      >
+                        {video.video.title}
+                      </SelectItem>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      align="start"
+                      side="bottom"
+                      alignOffset={8}
+                      className="bg-accent"
+                    >
+                      {video.allMoments.length === 0 && "No moments to display"}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               ))}
             </SelectContent>
           </Select>
