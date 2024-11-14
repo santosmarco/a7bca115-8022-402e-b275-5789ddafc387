@@ -28,6 +28,8 @@ function transformMoment(moment: Tables<"moments">, idx: number) {
     target_person_type: moment.target_person_type ?? "",
     target_person_reasoning: null,
     activity: moment.activity ?? "",
+    relevant: moment.relevant,
+    reactions: [],
   } satisfies VideoMoment;
 }
 

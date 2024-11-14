@@ -11,7 +11,7 @@ export function getVideoSummary(video: Video) {
 }
 
 export function getVideoEmotions(video: Video) {
-  const { emotion_sequences: emotionSequences } =
+  const { emotion_sequences: emotionSequences = [] } =
     EmotionAnalysis.partial().parse(
       JSON.parse(
         video.metadata.find((m) => m.key === "emotions")?.value ?? "{}",
@@ -68,6 +68,8 @@ export function emotionToMoment(
     target_person_type: emotion.speaker_name,
     target_person_reasoning: null,
     activity: "Emotion",
+    relevant: true,
+    reactions: [],
   };
 }
 
