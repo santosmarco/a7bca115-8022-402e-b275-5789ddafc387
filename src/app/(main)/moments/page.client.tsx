@@ -48,17 +48,15 @@ export function MomentsPageClient() {
   const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery();
   const { data: videosData, isLoading: videosLoading } =
     api.videos.listAll.useQuery({
-      options: {
-        moments: {
-          includeNonRelevant:
-            user?.is_admin && (!profile || user.id === profile.id),
-        },
+      moments: {
+        includeNonRelevant:
+          user?.is_admin && (!profile || user.id === profile.id),
       },
     });
   const filteredVideos =
     (user?.is_admin && (!profile || user.id === profile.id)
-      ? videosData?.videos
-      : videosData?.videos?.filter((v) =>
+      ? videosData
+      : videosData?.filter((v) =>
           v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
         )) ?? [];
   const { data: searchMomentIds } = api.moments.search.useQuery({
@@ -67,7 +65,7 @@ export function MomentsPageClient() {
   });
 
   const videosEnriched = filteredVideos.map((video) => {
-    const moments = video.moments;
+    const moments = video.moments ?? [];
     const emotions = getVideoEmotions(video) ?? [];
     const emotionMoments = emotions
       .map((emotion) => video.vtt && emotionToMoment(emotion, video, video.vtt))
@@ -98,11 +96,14 @@ export function MomentsPageClient() {
         !searchMomentIds || searchMomentIds.find((x) => x.id === moment.id),
     );
 
-  const sortedMoments = _.sortBy(filteredMoments, (m) =>
-    m.reactions.reduce(
-      (acc, r) => acc + (r.reaction_type === "thumbs_up" ? -1 : 1),
-      0,
-    ),
+  const sortedMoments = _.sortBy(
+    filteredMoments,
+    (m) =>
+      m.reactions.reduce(
+        (acc, r) => acc + (r.reaction_type === "thumbs_up" ? -1 : 1),
+        0,
+      ),
+    (m) => !m.relevant,
   );
 
   const categories = _.sortBy(
@@ -274,7 +275,7 @@ export function MomentsPageClient() {
 
         {/* Moments Grid */}
         <div className="grid gap-6 pt-4 sm:pt-0">
-          {filteredMoments.map((moment, index) => (
+          {sortedMoments.map((moment, index) => (
             <MomentCard
               key={moment.index}
               moment={moment}

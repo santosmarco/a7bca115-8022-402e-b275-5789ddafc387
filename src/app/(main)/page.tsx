@@ -54,7 +54,7 @@ export default function HomePage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = api.videos.listAll.useInfiniteQuery(
+  } = api.videos.list.useInfiniteQuery(
     {
       limit: 12,
       options: {

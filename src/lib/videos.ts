@@ -1,10 +1,12 @@
 import { z } from "zod";
 
-import { type ParsedVTT } from "~/lib/schemas/parsed-vtt";
+import type { ParsedVTT } from "~/lib/schemas/parsed-vtt";
 
 import { EmotionAnalysis, type EmotionSequence } from "./schemas/emotion";
-import { type Video } from "./schemas/video";
+import type { Video } from "./schemas/video";
 import { VideoMoment } from "./schemas/video-moment";
+import type { getVideo } from "./api-video/videos";
+import type { Tables } from "./supabase/database.types";
 
 export function getVideoSummary(video: Video) {
   return video.metadata.find((m) => m.key === "summary")?.value;
@@ -163,4 +165,29 @@ export function parseTimestamp(timestamp: string): number {
 export function handleMomentCategorySort(categoryA: string, categoryB: string) {
   if (categoryA === "Emotion") return 1;
   return categoryA.localeCompare(categoryB);
+}
+
+// ---
+
+export function toVideoOutput<T extends Awaited<ReturnType<typeof getVideo>>>(
+  video: T,
+  additionalData: {
+    meeting?: Tables<"meetings">;
+    moments?: VideoMoment[];
+    summary?: string;
+  },
+) {
+  const meeting = additionalData.meeting;
+  const moments = additionalData.moments ?? [];
+  const summary = additionalData.summary ?? "";
+  const vtt = meeting?.original_vtt_file;
+  const metadata = [
+    ...video.metadata.filter(
+      (m) => m.key !== "summary" && m.key !== "activities",
+    ),
+    { key: "summary", value: summary },
+    { key: "activities", value: JSON.stringify(moments) },
+  ];
+
+  return { ...video, meeting, moments, summary, vtt, metadata };
 }

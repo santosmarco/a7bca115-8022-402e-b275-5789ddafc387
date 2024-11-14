@@ -85,14 +85,14 @@ export function MomentCard({
       // Cancel outgoing refetches
       await utils.moments.getReactions.cancel({ momentId: moment.id });
       await utils.videos.getOne.cancel();
-      await utils.videos.listAll.cancel();
+      await utils.videos.list.cancel();
 
       // Snapshot the previous values
       const previousReactions = utils.moments.getReactions.getData({
         momentId: moment.id,
       });
       const previousVideo = utils.videos.getOne.getData();
-      const previousVideos = utils.videos.listAll.getData();
+      const previousVideos = utils.videos.list.getData();
 
       // Optimistically update videos.getOne
       utils.videos.getOne.setData(
@@ -104,7 +104,7 @@ export function MomentCard({
           if (!old) return old;
           return {
             ...old,
-            moments: old.moments.map((m) => {
+            moments: old.moments?.map((m) => {
               if (m.id !== moment.id) return m;
               return {
                 ...m,
@@ -132,7 +132,7 @@ export function MomentCard({
           if (!old) return old;
           return {
             ...old,
-            moments: old.moments.map((m) => {
+            moments: old.moments?.map((m) => {
               if (m.id !== moment.id) return m;
               return {
                 ...m,
@@ -153,7 +153,7 @@ export function MomentCard({
       );
 
       // Optimistically update videos.listAll
-      utils.videos.listAll.setData(
+      utils.videos.list.setData(
         { options: { moments: { includeNonRelevant: true } } },
         (old) => {
           if (!old?.videos) return old;
@@ -163,7 +163,7 @@ export function MomentCard({
               if (video.videoId !== moment.video_id) return video;
               return {
                 ...video,
-                moments: video.moments.map((m) => {
+                moments: video.moments?.map((m) => {
                   if (m.id !== moment.id) return m;
                   return {
                     ...m,
@@ -185,7 +185,7 @@ export function MomentCard({
           };
         },
       );
-      utils.videos.listAll.setData(
+      utils.videos.list.setData(
         { options: { moments: { includeNonRelevant: false } } },
         (old) => {
           if (!old?.videos) return old;
@@ -256,7 +256,7 @@ export function MomentCard({
         },
         context?.previousVideo,
       );
-      utils.videos.listAll.setData(
+      utils.videos.list.setData(
         { options: { moments: { includeNonRelevant: true } } },
         context?.previousVideos,
       );

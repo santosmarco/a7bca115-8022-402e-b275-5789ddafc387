@@ -2,9 +2,10 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { getVideo, listVideos } from "~/lib/api-video/videos";
-import type { VideoMoment, VideoMoments } from "~/lib/schemas/video-moment";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 import type { Tables } from "~/lib/supabase/database.types";
 import { createClient } from "~/lib/supabase/server";
+import { toVideoOutput } from "~/lib/videos";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
 export const VideoOptions = z.object({
@@ -103,6 +104,37 @@ async function fetchVideoData(
 
 export const videosRouter = createTRPCRouter({
   listAll: publicProcedure
+    .input(VideoOptions.optional())
+    .query(async ({ input }) => {
+      const PAGE_SIZE = 100;
+      const allVideos = [];
+      let currentPage = 1;
+      let hasMore = true;
+
+      while (hasMore) {
+        const videos = await listVideos({
+          pageSize: PAGE_SIZE,
+          currentPage,
+          sortBy: "createdAt",
+          sortOrder: "desc",
+          tags: input?.tags,
+        });
+
+        allVideos.push(...videos);
+
+        // If we got less videos than the page size, we've reached the end
+        hasMore = videos.length === PAGE_SIZE;
+        currentPage++;
+      }
+
+      return await Promise.all(
+        allVideos.map(async (video) =>
+          toVideoOutput(video, await fetchVideoData(video.videoId, input)),
+        ),
+      );
+    }),
+
+  list: publicProcedure
     .input(
       z
         .object({
@@ -124,27 +156,9 @@ export const videosRouter = createTRPCRouter({
         });
 
         const enrichedVideos = await Promise.all(
-          videos.map(async (video) => {
-            const { meeting, summary, moments } = await fetchVideoData(
-              video.videoId,
-              options,
-            );
-
-            return {
-              ...video,
-              meeting,
-              vtt: meeting?.original_vtt_file,
-              summary,
-              moments,
-              metadata: [
-                ...video.metadata.filter(
-                  (m) => m.key !== "summary" && m.key !== "activities",
-                ),
-                { key: "summary", value: summary },
-                { key: "activities", value: JSON.stringify(moments) },
-              ],
-            };
-          }),
+          videos.map(async (video) =>
+            toVideoOutput(video, await fetchVideoData(video.videoId, options)),
+          ),
         );
 
         const nextCursor =
@@ -173,25 +187,10 @@ export const videosRouter = createTRPCRouter({
     .query(async ({ input }) => {
       try {
         const video = await getVideo(input.videoId);
-        const { meeting, summary, moments } = await fetchVideoData(
-          video.videoId,
-          input.options,
+        return toVideoOutput(
+          video,
+          await fetchVideoData(video.videoId, input.options),
         );
-
-        return {
-          ...video,
-          meeting,
-          vtt: meeting?.original_vtt_file,
-          summary,
-          moments,
-          metadata: [
-            ...video.metadata.filter(
-              (m) => m.key !== "summary" && m.key !== "activities",
-            ),
-            { key: "summary", value: summary },
-            { key: "activities", value: JSON.stringify(moments) },
-          ],
-        };
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
