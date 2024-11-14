@@ -144,6 +144,7 @@ export type Database = {
           source_url: string | null
           speaker: string | null
           summary: string | null
+          tags: string | null
           thumbnail_url: string | null
           video_api_id: string
         }
@@ -160,6 +161,7 @@ export type Database = {
           source_url?: string | null
           speaker?: string | null
           summary?: string | null
+          tags?: string | null
           thumbnail_url?: string | null
           video_api_id: string
         }
@@ -176,6 +178,7 @@ export type Database = {
           source_url?: string | null
           speaker?: string | null
           summary?: string | null
+          tags?: string | null
           thumbnail_url?: string | null
           video_api_id?: string
         }
@@ -271,6 +274,7 @@ export type Database = {
           id: string
           latest: boolean
           moment_url: string | null
+          relevant: boolean
           search_vector: unknown | null
           segment_end_timestamp: string | null
           segment_end_timestamp_in_seconds: number | null
@@ -282,6 +286,7 @@ export type Database = {
           target_person_reasoning: string | null
           target_person_type: string | null
           title: string | null
+          updated_at: string | null
           version: number
           video_api_id: string | null
         }
@@ -293,6 +298,7 @@ export type Database = {
           id: string
           latest?: boolean
           moment_url?: string | null
+          relevant?: boolean
           search_vector?: unknown | null
           segment_end_timestamp?: string | null
           segment_end_timestamp_in_seconds?: number | null
@@ -304,6 +310,7 @@ export type Database = {
           target_person_reasoning?: string | null
           target_person_type?: string | null
           title?: string | null
+          updated_at?: string | null
           version?: number
           video_api_id?: string | null
         }
@@ -315,6 +322,7 @@ export type Database = {
           id?: string
           latest?: boolean
           moment_url?: string | null
+          relevant?: boolean
           search_vector?: unknown | null
           segment_end_timestamp?: string | null
           segment_end_timestamp_in_seconds?: number | null
@@ -326,6 +334,7 @@ export type Database = {
           target_person_reasoning?: string | null
           target_person_type?: string | null
           title?: string | null
+          updated_at?: string | null
           version?: number
           video_api_id?: string | null
         }
@@ -390,6 +399,42 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      profile_meetings: {
+        Row: {
+          created_at: string
+          id: string
+          meetings_id: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meetings_id?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meetings_id?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_metings_meetings_id_fkey"
+            columns: ["meetings_id"]
+            isOneToOne: false
+            referencedRelation: "meetings"
+            referencedColumns: ["video_api_id"]
+          },
+          {
+            foreignKeyName: "profiles_metings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
