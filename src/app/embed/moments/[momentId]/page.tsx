@@ -25,7 +25,10 @@ export default async function EmbedMomentPage({
   }
 
   try {
-    const video = await api.videos.getOne({ videoId, includeDeprecated: true });
+    const video = await api.videos.getOne({
+      videoId,
+      options: { moments: { includeDeprecated: true } },
+    });
     const vtt = await getVTT(video.videoId, "en");
 
     const moment = getVideoMomentById(
