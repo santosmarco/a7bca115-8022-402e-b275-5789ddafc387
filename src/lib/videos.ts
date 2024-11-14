@@ -2,10 +2,10 @@ import { z } from "zod";
 
 import type { ParsedVTT } from "~/lib/schemas/parsed-vtt";
 
+import type { getVideo } from "./api-video/videos";
 import { EmotionAnalysis, type EmotionSequence } from "./schemas/emotion";
 import type { Video } from "./schemas/video";
 import { VideoMoment } from "./schemas/video-moment";
-import type { getVideo } from "./api-video/videos";
 import type { Tables } from "./supabase/database.types";
 
 export function getVideoSummary(video: Video) {

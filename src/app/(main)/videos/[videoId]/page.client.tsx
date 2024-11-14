@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import _ from "lodash";
 import { CameraIcon, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
@@ -8,12 +9,11 @@ import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 import { PlayerProvider } from "~/components/player/provider";
 import { VideoPlayer } from "~/components/player/video";
 import { Button } from "~/components/ui/button";
+import { useProfile } from "~/hooks/use-profile";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
-
-import _ from "lodash";
-import { useProfile } from "~/hooks/use-profile";
 import { api } from "~/trpc/react";
+
 import { MeetingSummary } from "./_components/meeting-summary";
 import { VideoMoments } from "./_components/video-moments";
 import { VideoTags } from "./_components/video-tags";

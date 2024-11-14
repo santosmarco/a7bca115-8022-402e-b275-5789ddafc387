@@ -30,7 +30,7 @@ import {
 import { useProfile } from "~/hooks/use-profile";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
-import { type RouterOutputs, api } from "~/trpc/react";
+import { api,type RouterOutputs } from "~/trpc/react";
 
 export function MomentsPageClient() {
   const router = useRouter();
