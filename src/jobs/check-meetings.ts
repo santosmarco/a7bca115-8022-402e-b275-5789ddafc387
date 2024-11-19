@@ -138,7 +138,11 @@ export const checkMeetings = schedules.task({
               await supabase
                 .from("meeting_bots")
                 .select("id")
-                .eq("raw_data->google_calendar_raw_data->id", conference.id);
+                .contains("raw_data", {
+                  google_calendar_raw_data: {
+                    id: conference.id,
+                  },
+                });
 
             if (maybeMeetingBotsError) {
               logger.error("Error checking for existing meeting bot", {
@@ -167,7 +171,11 @@ export const checkMeetings = schedules.task({
                 waiting_room_timeout: 600,
                 noone_joined_timeout: 600,
               },
-              extra: { userId: credential.user_id, event: conference },
+              extra: {
+                userId: credential.user_id,
+                event: conference,
+                google_calendar_raw_data: conference,
+              },
             });
 
             await supabase.from("meeting_bots").insert({
