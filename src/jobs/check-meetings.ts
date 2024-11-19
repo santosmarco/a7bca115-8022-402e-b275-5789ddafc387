@@ -106,16 +106,37 @@ export const checkMeetings = schedules.task({
             continue;
           }
 
+          const videoConferencesInTheNextFourMinutesWithNotetakerInvited =
+            videoConferencesInTheNextFourMinutes.filter((conference) =>
+              conference.attendees?.some(
+                (attendee) => attendee.email === "notetaker@withtitan.com",
+              ),
+            );
+
+          if (
+            !videoConferencesInTheNextFourMinutesWithNotetakerInvited.length
+          ) {
+            logger.info(
+              `Found ${videoConferencesInTheNextFourMinutes.length} video conferences in the next 4 minutes for google calendar, but none of them have the notetaker invited`,
+              {
+                userId: credential.user_id,
+                calendar,
+                events: videoConferencesInTheNextFourMinutes,
+              },
+            );
+            continue;
+          }
+
           logger.info(
-            `Found ${videoConferencesInTheNextFourMinutes.length} video conferences in the next 4 minutes for google calendar`,
+            `Found ${videoConferencesInTheNextFourMinutesWithNotetakerInvited.length} video conferences with the notetaker invited in the next 4 minutes for google calendar`,
             {
               userId: credential.user_id,
               calendar,
-              events: videoConferencesInTheNextFourMinutes,
+              events: videoConferencesInTheNextFourMinutesWithNotetakerInvited,
             },
           );
 
-          for (const conference of videoConferencesInTheNextFourMinutes) {
+          for (const conference of videoConferencesInTheNextFourMinutesWithNotetakerInvited) {
             const meetingUrl = conference.conferenceData.entryPoints.find(
               (entryPoint) =>
                 entryPoint.entryPointType ===
