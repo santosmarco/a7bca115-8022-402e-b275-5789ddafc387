@@ -109,7 +109,9 @@ export const checkMeetings = schedules.task({
           const videoConferencesInTheNextFourMinutesWithNotetakerInvited =
             videoConferencesInTheNextFourMinutes.filter((conference) =>
               conference.attendees?.some(
-                (attendee) => attendee.email === "notetaker@withtitan.com",
+                (attendee) =>
+                  attendee.email?.trim()?.toLowerCase() ===
+                  "notetaker@withtitan.com",
               ),
             );
 
@@ -189,8 +191,8 @@ export const checkMeetings = schedules.task({
               recording_mode: "speaker_view",
               speech_to_text: { provider: "Default" },
               automatic_leave: {
-                waiting_room_timeout: 600,
-                noone_joined_timeout: 600,
+                waiting_room_timeout: 60 * 60, // 1 hour
+                noone_joined_timeout: 60 * 60, // 1 hour
               },
               extra: {
                 userId: credential.user_id,
