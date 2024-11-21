@@ -19,6 +19,8 @@ export const env = createEnv({
     // OAuth
     GOOGLE_OAUTH_CLIENT_ID: z.string(),
     GOOGLE_OAUTH_CLIENT_SECRET: z.string(),
+    // OpenAI
+    OPENAI_API_KEY: z.string(),
     // API Video
     API_VIDEO_API_KEY: z.string(),
     // Meeting Baas
@@ -48,6 +50,7 @@ export const env = createEnv({
     TRIGGER_SECRET_KEY: process.env.TRIGGER_SECRET_KEY,
     GOOGLE_OAUTH_CLIENT_ID: process.env.GOOGLE_OAUTH_CLIENT_ID,
     GOOGLE_OAUTH_CLIENT_SECRET: process.env.GOOGLE_OAUTH_CLIENT_SECRET,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     API_VIDEO_API_KEY: process.env.API_VIDEO_API_KEY,
     NOTION_INTEGRATION_SECRET: process.env.NOTION_INTEGRATION_SECRET,
     NOTION_REPORTS_DATABASE_ID: process.env.NOTION_REPORTS_DATABASE_ID,
