@@ -64,14 +64,14 @@ export const momentsRouter = createTRPCRouter({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).optional().default(50),
+          limit: z.number().min(1).max(100).optional(),
           cursor: z.number().optional(),
         })
         .default({}),
     )
     .query(async ({ input }) => {
       try {
-        return await fetchPaginatedMoments(input.limit, input.cursor);
+        return await fetchPaginatedMoments(input);
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

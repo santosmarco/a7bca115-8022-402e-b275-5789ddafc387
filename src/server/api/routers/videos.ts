@@ -120,18 +120,20 @@ export const videosRouter = createTRPCRouter({
           tags: input?.tags,
         });
 
-        allVideos.push(...videos);
+        allVideos.push(
+          ...(await Promise.all(
+            videos.map(async (video) =>
+              toVideoOutput(video, await fetchVideoData(video.videoId, input)),
+            ),
+          )),
+        );
 
         // If we got less videos than the page size, we've reached the end
         hasMore = videos.length === PAGE_SIZE;
         currentPage++;
       }
 
-      return await Promise.all(
-        allVideos.map(async (video) =>
-          toVideoOutput(video, await fetchVideoData(video.videoId, input)),
-        ),
-      );
+      return allVideos;
     }),
 
   list: publicProcedure

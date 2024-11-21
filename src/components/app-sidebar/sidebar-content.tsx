@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
 import {
   BarChart3,
+  Brain,
   LogOut,
   Puzzle,
   TrendingUpIcon,
@@ -86,6 +87,12 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
       icon: <Video className="h-5 w-5" />,
       label: "Meetings",
       isActive: pathname === "/" || pathname.startsWith("/videos"),
+    },
+    {
+      href: "/insights",
+      icon: <Brain className="h-5 w-5" />,
+      label: "Insights",
+      isActive: pathname.startsWith("/insights"),
     },
     {
       href: "/moments",
