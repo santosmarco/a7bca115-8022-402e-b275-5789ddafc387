@@ -50,6 +50,33 @@ export type Database = {
           },
         ]
       }
+      chats: {
+        Row: {
+          created_at: string
+          id: string
+          messages: Json
+          topic: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          messages: Json
+          topic?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          messages?: Json
+          topic?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       integration_credentials: {
         Row: {
           access_token: string | null
@@ -272,6 +299,7 @@ export type Database = {
           activity_type: string | null
           created_at: string
           id: string
+          intensity: number | null
           latest: boolean
           moment_url: string | null
           relevant: boolean
@@ -296,6 +324,7 @@ export type Database = {
           activity_type?: string | null
           created_at?: string
           id: string
+          intensity?: number | null
           latest?: boolean
           moment_url?: string | null
           relevant?: boolean
@@ -320,6 +349,7 @@ export type Database = {
           activity_type?: string | null
           created_at?: string
           id?: string
+          intensity?: number | null
           latest?: boolean
           moment_url?: string | null
           relevant?: boolean
