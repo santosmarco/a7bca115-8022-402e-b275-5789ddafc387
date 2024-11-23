@@ -10,12 +10,14 @@ import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
 import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
 import { convertToUIMessages } from "~/lib/ai/messages";
+import type { RouterOutputs } from "~/trpc/react";
 
 type ChatInterfaceProps = {
-  userId?: string;
-  selectedTopic?: string;
+  userId: string;
+  selectedTopic: string;
   topics: string[];
-  initialMessages?: CoreMessage[];
+  relevantMoments: RouterOutputs["moments"]["listAll"]["moments"];
+  initialMessages: CoreMessage[];
   onTopicSelect: (topic: string) => void;
 };
 
@@ -23,6 +25,7 @@ export function ChatInterface({
   userId,
   selectedTopic,
   topics,
+  relevantMoments,
   initialMessages,
   onTopicSelect,
 }: ChatInterfaceProps) {
@@ -35,8 +38,9 @@ export function ChatInterface({
     isLoading,
     stop,
   } = useChat({
-    body: { userId, topic: selectedTopic },
-    initialMessages: initialMessages && convertToUIMessages(initialMessages),
+    body: { userId, topic: selectedTopic, relevantMoments },
+    initialMessages: convertToUIMessages(initialMessages),
+    maxSteps: 5,
   });
 
   const lastMessage = messages.at(-1);
@@ -59,7 +63,7 @@ export function ChatInterface({
 
   return (
     <ChatContainer className="-mt-2 h-[calc(100vh-7rem)] lg:-mt-12 lg:h-[calc(100vh-3rem)]">
-      {isEmpty && (
+      {isEmpty && !selectedTopic && (
         <div className="space-y-6 pt-12">
           <h2 className="text-center text-2xl font-bold">
             Start by selecting a topic
@@ -86,6 +90,7 @@ export function ChatInterface({
           </div>
         </div>
       )}
+
       {!isEmpty && (
         <ChatMessages messages={messages}>
           <MessageList messages={messages} isTyping={isTyping} />

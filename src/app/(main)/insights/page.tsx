@@ -32,9 +32,13 @@ export default function InsightsPage() {
           user?.is_admin && (!profile || user.id === profile.id),
       },
     });
+
+  const userId = profile?.id ?? user?.id ?? "";
+  const topic = selectedTopic ?? "";
+
   const { data: chat, isFetching: chatLoading } = api.chats.get.useQuery({
-    userId: profile?.id ?? user?.id ?? "",
-    topic: selectedTopic ?? "",
+    userId,
+    topic,
   });
 
   const filteredVideos =
@@ -76,7 +80,7 @@ export default function InsightsPage() {
     (x) => x,
   );
 
-  if (userLoading || videosLoading) {
+  if (userLoading || videosLoading || chatLoading || !userId) {
     return (
       <div className="mt-20 flex items-center justify-center">
         <motion.div
@@ -94,10 +98,13 @@ export default function InsightsPage() {
 
   return (
     <ChatInterface
-      userId={profile?.id ?? user?.id}
-      selectedTopic={!chatLoading ? (selectedTopic ?? undefined) : undefined}
+      userId={userId}
+      selectedTopic={topic}
       topics={topics}
-      initialMessages={chat?.data?.messages as CoreMessage[] | undefined}
+      relevantMoments={filteredMoments}
+      initialMessages={
+        (chat?.data?.messages as CoreMessage[] | undefined) ?? []
+      }
       onTopicSelect={(topic) => void setSelectedTopic(topic)}
     />
   );

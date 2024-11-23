@@ -171,3 +171,24 @@ export function toVideoOutput<T extends Awaited<ReturnType<typeof getVideo>>>(
 }
 
 export type VideoOutput = Awaited<ReturnType<typeof toVideoOutput>>;
+
+export function getMomentText(
+  moment: {
+    segment_id_sequence_start: number;
+    segment_id_sequence_end: number;
+  },
+  parsedVTT: ParsedVTT[],
+): string {
+  const relevantSegments = parsedVTT.filter(
+    (segment) =>
+      segment.index >= moment.segment_id_sequence_start &&
+      segment.index <= moment.segment_id_sequence_end,
+  );
+
+  return relevantSegments
+    .map((segment) => {
+      if (segment.speaker) return `${segment.speaker}: ${segment.text}`;
+      return segment.text;
+    })
+    .join("\n");
+}

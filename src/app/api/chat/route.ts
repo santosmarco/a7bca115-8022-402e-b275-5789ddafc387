@@ -3,6 +3,10 @@ import { convertToCoreMessages, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { insightsPrompt } from "prompts/insights";
+
+import { ACTIVITY_EXPLANATIONS } from "~/lib/activities";
+import { getMomentsTool } from "~/lib/ai/tools";
 import { UIMessage } from "~/lib/schemas/ai";
 import { api } from "~/trpc/server";
 
@@ -10,6 +14,7 @@ export const ChatRequestBody = z
   .object({
     userId: z.string(),
     topic: z.string(),
+    relevantMoments: z.array(z.any()),
     messages: z.array(UIMessage),
   })
   .partial();
@@ -28,13 +33,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { userId, topic, messages } = bodyParseResult.data;
+    const { userId, topic, relevantMoments, messages } = bodyParseResult.data;
 
     const coreMessages = convertToCoreMessages(messages);
 
     const result = streamText({
-      model: openai("gpt-4"),
-      system: "you are a friendly assistant!",
+      model: openai("gpt-4o"),
+      system: insightsPrompt({
+        relevantMoments: JSON.stringify(relevantMoments, null, 2),
+        selectedActivity: topic,
+        selectedActivityExplanation: ACTIVITY_EXPLANATIONS[topic],
+      }),
       messages: coreMessages,
       onFinish: async ({ response: { messages: responseMessages } }) => {
         try {
