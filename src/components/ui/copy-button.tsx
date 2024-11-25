@@ -1,20 +1,20 @@
-"use client"
-import { CheckIcon, CopyIcon } from "@radix-ui/react-icons"
+"use client";
+import { CheckIcon, CopyIcon } from "@radix-ui/react-icons";
 
-import { Button } from "~/components/ui/button"
-import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard"
-import { cn } from "~/lib/utils"
+import { Button } from "~/components/ui/button";
+import { useCopyToClipboard } from "~/hooks/use-copy-to-clipboard";
+import { cn } from "~/lib/utils";
 
 type CopyButtonProps = {
-  content: string
-  copyMessage?: string
-}
+  content: string;
+  copyMessage?: string;
+};
 
 export function CopyButton({ content, copyMessage }: CopyButtonProps) {
   const { isCopied, handleCopy } = useCopyToClipboard({
     text: content,
     copyMessage,
-  })
+  });
 
   return (
     <Button
@@ -28,16 +28,16 @@ export function CopyButton({ content, copyMessage }: CopyButtonProps) {
         <CheckIcon
           className={cn(
             "h-4 w-4 transition-transform ease-in-out",
-            isCopied ? "scale-100" : "scale-0"
+            isCopied ? "scale-100" : "scale-0",
           )}
         />
       </div>
       <CopyIcon
         className={cn(
           "h-4 w-4 transition-transform ease-in-out",
-          isCopied ? "scale-0" : "scale-100"
+          isCopied ? "scale-0" : "scale-100",
         )}
       />
     </Button>
-  )
+  );
 }

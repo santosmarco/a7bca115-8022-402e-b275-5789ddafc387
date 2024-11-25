@@ -69,7 +69,7 @@ export function VideoMoments({
 
       {Object.entries(momentsByCategory).map(([category, moments]) => (
         <TabsContent key={category} value={category}>
-          <ScrollArea className="py-0 scrollbar-hide lg:border-t lg:border-border lg:py-4 lg:pt-0">
+          <ScrollArea className="scrollbar-hide py-0 lg:border-t lg:border-border lg:py-4 lg:pt-0">
             {moments.map((moment, index) => (
               <MomentCard
                 key={moment.index}
