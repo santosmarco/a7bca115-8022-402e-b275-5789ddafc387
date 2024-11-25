@@ -3,18 +3,14 @@ import { convertToCoreMessages, streamText } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { insightsPrompt } from "prompts/insights";
-
-import { ACTIVITY_EXPLANATIONS } from "~/lib/activities";
-import { getMomentsTool } from "~/lib/ai/tools";
+import { getObservationPrompt } from "~/lib/api/observation";
 import { UIMessage } from "~/lib/schemas/ai";
 import { api } from "~/trpc/server";
 
 export const ChatRequestBody = z
   .object({
     userId: z.string(),
-    topic: z.string(),
-    relevantMoments: z.array(z.any()),
+    selectedActivity: z.string(),
     messages: z.array(UIMessage),
   })
   .partial();
@@ -33,23 +29,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { userId, topic, relevantMoments, messages } = bodyParseResult.data;
+    const { userId, selectedActivity, messages } = bodyParseResult.data;
+
+    const { prompt } = await getObservationPrompt({
+      userId,
+      selectedActivity,
+    });
 
     const coreMessages = convertToCoreMessages(messages);
 
     const result = streamText({
-      model: openai("gpt-4o"),
-      system: insightsPrompt({
-        relevantMoments: JSON.stringify(relevantMoments, null, 2),
-        selectedActivity: topic,
-        selectedActivityExplanation: ACTIVITY_EXPLANATIONS[topic],
-      }),
-      messages: coreMessages,
+      model: openai("gpt-4o-mini-2024-07-18"),
+      messages: [{ role: "system", content: prompt }, ...coreMessages],
+      onChunk: ({ chunk }) => {
+        console.log(chunk);
+      },
       onFinish: async ({ response: { messages: responseMessages } }) => {
+        console.log(responseMessages.map((m) => m.content));
         try {
           await api.chats.save({
             userId,
-            topic,
+            topic: selectedActivity,
             messages: [...coreMessages, ...responseMessages],
           });
         } catch (error) {

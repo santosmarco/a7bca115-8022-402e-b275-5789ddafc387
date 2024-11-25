@@ -19,9 +19,13 @@ export default async function EmbedMomentPage({
 }: EmbedMomentPageProps) {
   const { momentId } = params;
 
-  const [videoId] = momentId.split("_");
+  const [videoId] = momentId.includes("_") ? momentId.split("_") : [undefined];
   if (!videoId) {
-    return notFound();
+    const moment = await api.moments.getOneById({ momentId });
+    if (!moment) {
+      return notFound();
+    }
+    return <EmbedMomentPageClient moment={moment} />;
   }
 
   try {
