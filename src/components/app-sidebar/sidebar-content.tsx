@@ -83,16 +83,16 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
 
   const menuItems = [
     {
-      href: "/",
-      icon: <Video className="h-5 w-5" />,
-      label: "Meetings",
-      isActive: pathname === "/" || pathname.startsWith("/videos"),
-    },
-    {
       href: "/insights",
       icon: <Brain className="h-5 w-5" />,
       label: "Insights",
       isActive: pathname.startsWith("/insights"),
+    },
+    {
+      href: "/",
+      icon: <Video className="h-5 w-5" />,
+      label: "Meetings",
+      isActive: pathname === "/" || pathname.startsWith("/videos"),
     },
     {
       href: "/moments",
