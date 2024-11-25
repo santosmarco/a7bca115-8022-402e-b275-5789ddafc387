@@ -5,6 +5,7 @@ import {
   fetchMomentByActivity,
   fetchPaginatedMoments,
   fetchVideoMoments,
+  transformMoment,
 } from "~/lib/db/moments";
 import { createClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -12,6 +13,20 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 const reactionTypeSchema = z.enum(["thumbs_up", "thumbs_down"]);
 
 export const momentsRouter = createTRPCRouter({
+  getOneById: publicProcedure
+    .input(z.object({ momentId: z.string() }))
+    .query(async ({ input }) => {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from("moments")
+        .select("*")
+        .eq("id", input.momentId);
+
+      if (error) throw error;
+      if (!data?.[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      return transformMoment(data[0], 0);
+    }),
+
   listByVideo: publicProcedure
     .input(z.object({ videoId: z.string() }))
     .query(async ({ input }) => {
