@@ -11,9 +11,10 @@ export const ChatRequestBody = z
   .object({
     userId: z.string(),
     selectedActivity: z.string(),
-    messages: z.array(UIMessage),
+    messages: z.array(UIMessage.passthrough()),
   })
-  .partial();
+  .partial()
+  .passthrough();
 export type ChatRequestBody = z.infer<typeof ChatRequestBody>;
 
 export async function POST(request: NextRequest) {
