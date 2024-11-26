@@ -3,8 +3,7 @@ import dayjs from "dayjs";
 import type { calendar_v3 } from "googleapis";
 
 import {
-  googleCalendar,
-  refreshAccessToken,
+  getGoogleCalendar,
   setGoogleCredentials,
 } from "~/lib/google-calendar/client";
 import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
@@ -39,6 +38,16 @@ export const checkMeetings = schedules.task({
     }
 
     for (const credential of googleCredentials) {
+      if (credential.requires_reauth) {
+        await slack.warn({
+          text: `Skipping user ${credential.user_id} - Google reauthorization required`,
+        });
+        logger.warn("Google reauthorization required, skipping...", {
+          userId: credential.user_id,
+        });
+        continue;
+      }
+
       if (!credential.access_token || !credential.refresh_token) {
         await slack.warn({
           text: `No access token or refresh token found for Google credential (User ID: ${credential.user_id})`,
@@ -53,40 +62,37 @@ export const checkMeetings = schedules.task({
       try {
         await setGoogleCredentials(
           credential.user_id,
-          credential.access_token,
           credential.refresh_token,
         );
 
         let calendars: calendar_v3.Schema$CalendarListEntry[] = [];
         try {
-          const response = await googleCalendar.calendarList.list({
+          const calendarClient = getGoogleCalendar(credential.user_id);
+          const response = await calendarClient.calendarList.list({
             minAccessRole: "reader",
           });
           calendars = response.data.items ?? [];
         } catch (apiError) {
           if ((apiError as Error).message.includes("invalid_grant")) {
             await slack.warn({
-              text: `Attempting to refresh expired Google token for user ${credential.user_id}`,
+              text: `User ${credential.user_id} needs to reauthorize their Google account`,
             });
 
-            const newCredentials = await refreshAccessToken(
-              credential.user_id,
-              credential.refresh_token,
-            );
+            await supabase
+              .from("integration_credentials")
+              .update({
+                requires_reauth: true,
+                last_refresh_attempt: new Date().toISOString(),
+                refresh_error: (apiError as Error).message,
+                access_token: null,
+                refresh_token: null,
+              })
+              .eq("user_id", credential.user_id)
+              .eq("provider", "google");
 
-            await setGoogleCredentials(
-              credential.user_id,
-              newCredentials.access_token ?? credential.access_token,
-              newCredentials.refresh_token ?? credential.refresh_token,
-            );
-
-            const retryResponse = await googleCalendar.calendarList.list({
-              minAccessRole: "reader",
-            });
-            calendars = retryResponse.data.items ?? [];
-          } else {
-            throw apiError;
+            continue;
           }
+          throw apiError;
         }
 
         if (!calendars.length) {
@@ -114,9 +120,10 @@ export const checkMeetings = schedules.task({
             continue;
           }
 
+          const calendarClient = getGoogleCalendar(credential.user_id);
           const {
             data: { items: eventsInTheNextFourMinutes = [] },
-          } = await googleCalendar.events.list({
+          } = await calendarClient.events.list({
             calendarId: calendar.id,
             timeMin: dayjs(payload.timestamp).toISOString(),
             timeMax: dayjs(payload.timestamp).add(4, "minutes").toISOString(),

@@ -2,7 +2,10 @@ import type { AuthTokenResponse } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { env } from "~/env";
-import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
+import {
+  getGoogleCalendar,
+  setGoogleCredentials,
+} from "~/lib/google-calendar/client";
 import type { Tables } from "~/lib/supabase/database.types";
 import { createClient } from "~/lib/supabase/server";
 
@@ -38,33 +41,76 @@ async function handleIntegrationCredentials(
   provider: string | null,
 ) {
   if (!authTokenResponse.data.user || !provider) return;
+
   const supabase = await createClient();
   const user_id = authTokenResponse.data.user.id;
   const access_token = authTokenResponse.data.session.provider_token;
   const refresh_token = authTokenResponse.data.session.provider_refresh_token;
   const expires_at = authTokenResponse.data.session.expires_at;
+
+  if (!access_token || !refresh_token) {
+    console.error("Missing access_token or refresh_token from auth response");
+    return;
+  }
+
   const expiry_date = expires_at
     ? new Date(expires_at * 1000).toISOString()
     : null;
+
+  // Delete any existing credentials for this user/provider
   const { data: maybeExistingCredentials } = await supabase
     .from("integration_credentials")
     .select("id")
     .eq("user_id", user_id)
     .eq("provider", provider)
     .maybeSingle();
+
   if (maybeExistingCredentials) {
     await supabase
       .from("integration_credentials")
       .delete()
       .eq("id", maybeExistingCredentials.id);
   }
-  const { data } = await supabase
+
+  // Insert new credentials with all required fields
+  const { data, error } = await supabase
     .from("integration_credentials")
-    .insert({ user_id, provider, access_token, refresh_token, expiry_date })
+    .insert({
+      user_id,
+      provider,
+      access_token,
+      refresh_token,
+      expiry_date,
+      requires_reauth: false,
+      last_refresh_attempt: new Date().toISOString(),
+      refresh_error: null,
+    })
     .select()
-    .maybeSingle();
+    .single();
+
+  if (error) {
+    console.error("Failed to insert integration credentials:", error);
+    return;
+  }
+
+  // For Google specifically, set up the credentials and sync calendars
   if (data && provider === "google") {
-    await synchronizeGoogleCalendar(data);
+    try {
+      // Set up the Google credentials
+      await setGoogleCredentials(user_id, refresh_token);
+      // Sync calendars
+      await synchronizeGoogleCalendar(data);
+    } catch (error) {
+      console.error("Failed to setup Google integration:", error);
+      // Update the credentials to indicate failure
+      await supabase
+        .from("integration_credentials")
+        .update({
+          requires_reauth: true,
+          refresh_error: (error as Error).message,
+        })
+        .eq("id", data.id);
+    }
   }
 }
 
@@ -76,10 +122,7 @@ async function synchronizeGoogleCalendar(
   const supabase = await createClient();
 
   try {
-    oauth2Client.setCredentials({
-      access_token: credentials.access_token,
-      refresh_token: credentials.refresh_token,
-    });
+    const googleCalendar = getGoogleCalendar(credentials.user_id);
     const {
       data: { items: calendars = [] },
     } = await googleCalendar.calendarList.list({

@@ -3,108 +3,51 @@ import { google } from "googleapis";
 import { env } from "~/env";
 import { slack } from "~/lib/slack";
 import { createClient } from "~/lib/supabase/client";
-import { exponentialBackoff } from "~/lib/utils";
 
-export const oauth2Client = new google.auth.OAuth2(
-  env.GOOGLE_OAUTH_CLIENT_ID,
-  env.GOOGLE_OAUTH_CLIENT_SECRET,
-  "https://db.withtitan.com/auth/v1/callback",
-);
+// Create a map to store OAuth clients per user
+const oauth2ClientMap = new Map<
+  string,
+  InstanceType<typeof google.auth.OAuth2>
+>();
 
-export const googleCalendar = google.calendar({
-  version: "v3",
-  auth: oauth2Client,
-});
-
-async function refreshAccessToken(userId: string, refreshToken: string) {
-  const supabase = createClient();
-
-  // Try up to 3 times with exponential backoff
-  return await exponentialBackoff(
-    async () => {
-      try {
-        oauth2Client.setCredentials({
-          refresh_token: refreshToken,
-        });
-
-        const { credentials } = await oauth2Client.refreshAccessToken();
-
-        // Update the credentials in the database
-        const { error: updateError } = await supabase
-          .from("integration_credentials")
-          .update({
-            access_token: credentials.access_token,
-            refresh_token: credentials.refresh_token ?? refreshToken,
-            expiry_date: credentials.expiry_date
-              ? new Date(credentials.expiry_date).toISOString()
-              : null,
-            last_refresh_attempt: new Date().toISOString(),
-          })
-          .eq("user_id", userId)
-          .eq("provider", "google");
-
-        if (updateError) {
-          await slack.error({
-            text: `Failed to update Google credentials for user ${userId}: ${updateError.message}`,
-          });
-          throw updateError;
-        }
-
-        return credentials;
-      } catch (error) {
-        const isInvalidGrant = (error as Error).message.includes(
-          "invalid_grant",
-        );
-
-        if (isInvalidGrant) {
-          // Mark the credentials as requiring reauthorization
-          await supabase
-            .from("integration_credentials")
-            .update({
-              requires_reauth: true,
-              last_refresh_attempt: new Date().toISOString(),
-              refresh_error: (error as Error).message,
-            })
-            .eq("user_id", userId)
-            .eq("provider", "google");
-
-          // TODO: Send email to user about needing to reauthorize
-          await slack.warn({
-            text: `User ${userId} needs to reauthorize their Google account - token refresh failed with invalid_grant`,
-          });
-        }
-
-        throw error;
-      }
-    },
-    {
-      maxAttempts: 3,
-      initialDelay: 1000,
-      maxDelay: 10000,
-    },
-  );
+function createOAuth2Client() {
+  return new google.auth.OAuth2({
+    clientId: env.GOOGLE_OAUTH_CLIENT_ID,
+    clientSecret: env.GOOGLE_OAUTH_CLIENT_SECRET,
+    redirectUri: "https://db.withtitan.com/auth/v1/callback",
+  });
 }
 
-export async function setGoogleCredentials(
-  userId: string,
-  accessToken: string,
-  refreshToken: string,
-) {
-  try {
-    oauth2Client.setCredentials({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
+async function getRefreshToken(userId: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("integration_credentials")
+    .select("refresh_token")
+    .eq("user_id", userId)
+    .eq("provider", "google")
+    .single();
 
-    // Add event listener for token refresh
-    oauth2Client.on("tokens", async (tokens) => {
+  if (error || !data?.refresh_token) {
+    throw new Error(`Refresh token not found for user ${userId}`);
+  }
+
+  return data.refresh_token;
+}
+
+// Get or create an OAuth2 client for a specific user
+function getOAuth2Client(userId: string) {
+  if (!oauth2ClientMap.has(userId)) {
+    const client = createOAuth2Client();
+
+    // Set up token refresh handler for this client
+    client.on("tokens", async (tokens) => {
       const supabase = createClient();
-
-      await supabase
+      const { error } = await supabase
         .from("integration_credentials")
         .update({
           access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token ?? refreshToken,
+          refresh_token:
+            tokens.refresh_token || (await getRefreshToken(userId)),
           expiry_date: tokens.expiry_date
             ? new Date(tokens.expiry_date).toISOString()
             : null,
@@ -114,6 +57,31 @@ export async function setGoogleCredentials(
         })
         .eq("user_id", userId)
         .eq("provider", "google");
+
+      if (error) {
+        await slack.error({
+          text: `Failed to update tokens after refresh for user ${userId}: ${error.message}`,
+        });
+      }
+    });
+
+    oauth2ClientMap.set(userId, client);
+  }
+
+  const client = oauth2ClientMap.get(userId);
+  if (!client) throw new Error(`OAuth2 client not found for user ${userId}`);
+
+  return client;
+}
+
+export async function setGoogleCredentials(
+  userId: string,
+  refreshToken: string,
+) {
+  try {
+    const oauth2Client = getOAuth2Client(userId);
+    oauth2Client.setCredentials({
+      refresh_token: refreshToken,
     });
   } catch (error) {
     await slack.error({
@@ -123,4 +91,8 @@ export async function setGoogleCredentials(
   }
 }
 
-export { refreshAccessToken };
+// Create a calendar client for a specific user
+export function getGoogleCalendar(userId: string) {
+  const oauth2Client = getOAuth2Client(userId);
+  return google.calendar({ version: "v3", auth: oauth2Client });
+}
