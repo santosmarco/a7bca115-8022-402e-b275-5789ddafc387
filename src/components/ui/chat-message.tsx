@@ -93,51 +93,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             {actions}
           </div>
         ) : null}
-
-        {role === "data" &&
-          (() => {
-            const { title, momentId, subtitle } = JSON.parse(content) as {
-              title: string;
-              momentId: string;
-              subtitle: string;
-            };
-
-            return (
-              <>
-                <div
-                  className={
-                    isUser ? "text-primary-foreground" : "text-foreground"
-                  }
-                >
-                  <MarkdownRenderer>{`### ${title}`}</MarkdownRenderer>
-                </div>
-
-                <iframe
-                  src={`/embed/moments/${momentId}`}
-                  title={title}
-                  className="my-2 w-full rounded-md"
-                  onLoad={(e) => {
-                    const iframe = e.currentTarget;
-                    const resizeObserver = new ResizeObserver(() => {
-                      const height =
-                        iframe.contentWindow?.document.documentElement
-                          .scrollHeight;
-                      if (height) iframe.style.height = `${height}px`;
-                    });
-                    if (iframe.contentWindow?.document.documentElement) {
-                      resizeObserver.observe(
-                        iframe.contentWindow?.document.documentElement,
-                      );
-                    }
-                  }}
-                />
-
-                <div className="text-xs italic text-muted-foreground">
-                  {subtitle}
-                </div>
-              </>
-            );
-          })()}
       </div>
 
       {showTimeStamp && createdAt ? (

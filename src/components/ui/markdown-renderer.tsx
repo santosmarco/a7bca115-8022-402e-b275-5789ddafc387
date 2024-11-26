@@ -205,7 +205,7 @@ const COMPONENTS = {
           const resizeObserver = new ResizeObserver(() => {
             const height =
               iframe.contentWindow?.document.documentElement.scrollHeight;
-            if (height) iframe.style.height = `${height}px`;
+            if (height && height <= 400) iframe.style.height = `${height}px`;
           });
           if (iframe.contentWindow?.document.documentElement) {
             resizeObserver.observe(
