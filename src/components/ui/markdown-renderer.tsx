@@ -1,8 +1,10 @@
 import React, { Suspense } from "react";
 import Markdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
 import { CopyButton } from "~/components/ui/copy-button";
+import { rehypeMoment } from "~/lib/markdown/rehype-moment";
 import { cn } from "~/lib/utils";
 
 interface MarkdownRendererProps {
@@ -13,6 +15,7 @@ export function MarkdownRenderer({ children }: MarkdownRendererProps) {
   return (
     <Markdown
       remarkPlugins={[remarkGfm]}
+      rehypePlugins={[rehypeRaw, rehypeMoment]}
       components={COMPONENTS}
       className="space-y-3"
     >
@@ -184,6 +187,41 @@ const COMPONENTS = {
   tr: withClass("tr", "m-0 border-t p-0 even:bg-muted"),
   p: withClass("p", "whitespace-pre-wrap"),
   hr: withClass("hr", "border-foreground/20"),
+  moment: ({
+    "data-moment-id": momentId,
+    "data-moment-reasoning": momentReasoning,
+    ...props
+  }: React.HTMLAttributes<HTMLDivElement> & {
+    "data-moment-id": string;
+    "data-moment-reasoning": string;
+  }) => (
+    <>
+      <iframe
+        src={`/embed/moments/${momentId}`}
+        title={momentReasoning}
+        className="my-2 w-full rounded-md"
+        onLoad={(e) => {
+          const iframe = e.currentTarget;
+          const resizeObserver = new ResizeObserver(() => {
+            const height =
+              iframe.contentWindow?.document.documentElement.scrollHeight;
+            if (height) iframe.style.height = `${height}px`;
+          });
+          if (iframe.contentWindow?.document.documentElement) {
+            resizeObserver.observe(
+              iframe.contentWindow?.document.documentElement,
+            );
+          }
+        }}
+      />
+
+      <div className="text-xs italic text-muted-foreground">
+        {momentReasoning}
+      </div>
+
+      {props.children}
+    </>
+  ),
 };
 
 function withClass(Tag: keyof JSX.IntrinsicElements, classes: string) {

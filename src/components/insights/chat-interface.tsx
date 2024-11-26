@@ -47,59 +47,6 @@ export function ChatInterface({
   const isEmpty = messages.length === 0;
   const isTyping = lastMessage?.role === "user";
 
-  const messagesWithMoments = messages.reduce<Message[]>((acc, message) => {
-    const content = message.content;
-    const momentMatches = content.match(
-      /#### ([^\n]+)\n- <moment id=([a-f0-9-]+) \/>\s*\n- ([^\n]+)(?:\n|$)/g,
-    );
-
-    if (!momentMatches) {
-      acc.push(message);
-      return acc;
-    }
-
-    const parts = content.split(
-      /#### [^\n]+\n- <moment id=[a-f0-9-]+ \/>\s*\n- [^\n]+(?:\n|$)/,
-    );
-    const firstPart = parts[0];
-
-    if (firstPart) {
-      acc.push({
-        ...message,
-        content: firstPart,
-      });
-    }
-
-    momentMatches.forEach((match, i) => {
-      const regex =
-        /#### ([^\n]+)\n- <moment id=([a-f0-9-]+) \/>\s*\n- ([^\n]+)(?:\n|$)/;
-      const matches = regex.exec(match);
-      const [, title, momentId, subtitle] = matches ?? [];
-
-      // Add the moment message
-      acc.push({
-        id: `moment-${i}`,
-        role: "data",
-        content: JSON.stringify({
-          title,
-          momentId,
-          subtitle,
-        }),
-      });
-
-      // Add the next part if it exists
-      const nextPart = parts[i + 1];
-      if (nextPart) {
-        acc.push({
-          ...message,
-          content: nextPart,
-        });
-      }
-    });
-
-    return acc;
-  }, []);
-
   const handleTopicClick = (topic: string) => () => {
     onTopicSelect(topic);
   };
@@ -145,8 +92,8 @@ export function ChatInterface({
       )}
 
       {!isEmpty && (
-        <ChatMessages messages={messagesWithMoments}>
-          <MessageList messages={messagesWithMoments} isTyping={isTyping} />
+        <ChatMessages messages={messages}>
+          <MessageList messages={messages} isTyping={isTyping} />
         </ChatMessages>
       )}
 
