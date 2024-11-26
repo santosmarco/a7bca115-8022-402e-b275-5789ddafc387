@@ -1,5 +1,6 @@
 "use client";
 
+import type { ToolInvocation } from "ai";
 import { cva, type VariantProps } from "class-variance-authority";
 import type React from "react";
 
@@ -54,6 +55,7 @@ export interface Message {
   content: string;
   createdAt?: Date;
   attachments?: File[];
+  toolInvocations?: ToolInvocation[];
 }
 
 export interface ChatMessageProps extends Message {
@@ -69,6 +71,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   showTimeStamp = false,
   animation = "scale",
   actions,
+  toolInvocations,
 }) => {
   const isUser = role === "user";
 
@@ -93,6 +96,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             {actions}
           </div>
         ) : null}
+
+        {toolInvocations?.map((toolInvocation) => {
+          if (toolInvocation.state !== "result") {
+            return <div key={toolInvocation.toolCallId}>Loading...</div>;
+          }
+
+          if (toolInvocation.toolName === "displayMoment") {
+            return <div key={toolInvocation.toolCallId}>Analyzed moment</div>;
+          }
+        })}
       </div>
 
       {showTimeStamp && createdAt ? (
