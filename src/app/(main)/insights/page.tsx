@@ -24,22 +24,37 @@ export default function InsightsPage() {
   );
 
   const { profile } = useProfile();
-  const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery();
+  const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery(
+    undefined,
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
   const { data: videosData, isLoading: videosLoading } =
-    api.videos.listAll.useQuery({
-      moments: {
-        includeNonRelevant:
-          user?.is_admin && (!profile || user.id === profile.id),
+    api.videos.listAll.useQuery(
+      {
+        moments: {
+          includeNonRelevant:
+            user?.is_admin && (!profile || user.id === profile.id),
+        },
       },
-    });
+      {
+        refetchOnWindowFocus: false,
+      },
+    );
 
   const userId = profile?.id ?? user?.id ?? "";
   const topic = selectedTopic ?? "";
 
-  const { data: chat, isFetching: chatLoading } = api.chats.get.useQuery({
-    userId,
-    topic,
-  });
+  const { data: chat, isFetching: chatLoading } = api.chats.get.useQuery(
+    {
+      userId,
+      topic,
+    },
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
 
   const filteredVideos =
     (user?.is_admin && (!profile || user.id === profile.id)
