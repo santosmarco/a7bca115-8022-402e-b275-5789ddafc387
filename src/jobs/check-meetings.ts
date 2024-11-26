@@ -5,6 +5,7 @@ import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
 import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
 import type { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
 import { meetingBaas } from "~/lib/meeting-baas/client";
+import { slack } from "~/lib/slack";
 import { createClient } from "~/lib/supabase/client";
 import type { Json } from "~/lib/supabase/database.types";
 
@@ -23,6 +24,9 @@ export const checkMeetings = schedules.task({
         .eq("provider", "google");
 
     if (googleCredentialsError) {
+      await slack.error({
+        text: `Error fetching Google credentials: ${googleCredentialsError.message}`,
+      });
       logger.error("Error fetching google credentials", {
         error: googleCredentialsError,
       });
@@ -31,6 +35,9 @@ export const checkMeetings = schedules.task({
 
     for (const credential of googleCredentials) {
       if (!credential.refresh_token) {
+        await slack.warn({
+          text: `No refresh token found for Google credential (User ID: ${credential.user_id})`,
+        });
         logger.warn(
           "No refresh token found for google credential, skipping...",
           { userId: credential.user_id },
@@ -51,6 +58,9 @@ export const checkMeetings = schedules.task({
         });
 
         if (!calendars.length) {
+          await slack.info({
+            text: `No calendars found for user ${credential.user_id}`,
+          });
           logger.warn("No calendars found for google credential, skipping...", {
             userId: credential.user_id,
           });
@@ -59,6 +69,9 @@ export const checkMeetings = schedules.task({
 
         for (const calendar of calendars) {
           if (!calendar.id) {
+            await slack.warn({
+              text: `No calendar ID found for calendar "${calendar.summary}"`,
+            });
             logger.warn(
               "No calendar id found for google calendar, skipping...",
               {
@@ -129,6 +142,9 @@ export const checkMeetings = schedules.task({
             continue;
           }
 
+          await slack.send({
+            text: `🎯 Found ${videoConferencesInTheNextFourMinutesWithNotetakerInvited.length} video conferences with the notetaker invited in the next 4 minutes for google calendar`,
+          });
           logger.info(
             `Found ${videoConferencesInTheNextFourMinutesWithNotetakerInvited.length} video conferences with the notetaker invited in the next 4 minutes for google calendar`,
             {
@@ -146,6 +162,9 @@ export const checkMeetings = schedules.task({
             )?.uri;
 
             if (!meetingUrl) {
+              await slack.warn({
+                text: `No video URL found for meeting "${conference.summary}" (User: ${credential.user_id})`,
+              });
               logger.warn(
                 "No video entry point found for google calendar event",
                 {
@@ -168,6 +187,9 @@ export const checkMeetings = schedules.task({
                 });
 
             if (maybeMeetingBotsError) {
+              await slack.error({
+                text: `Error checking for existing meeting bot: ${maybeMeetingBotsError.message}`,
+              });
               logger.error("Error checking for existing meeting bot", {
                 error: maybeMeetingBotsError,
               });
@@ -175,6 +197,9 @@ export const checkMeetings = schedules.task({
             }
 
             if (maybeMeetingBots?.length) {
+              await slack.info({
+                text: `Skipping meeting "${conference.summary}" - already has a bot assigned`,
+              });
               logger.info("Skipping event - already has a meeting bot", {
                 userId: credential.user_id,
                 calendar,
@@ -182,6 +207,10 @@ export const checkMeetings = schedules.task({
               });
               continue;
             }
+
+            await slack.send({
+              text: `🤖 Joining meeting "${conference.summary}"...`,
+            });
 
             const { bot_id: meetingBotId } = await meetingBaas.meetings.join({
               bot_name: "Notetaker",
@@ -208,6 +237,9 @@ export const checkMeetings = schedules.task({
               } as Json,
             });
 
+            await slack.success({
+              text: `Successfully joined meeting "${conference.summary}" (Bot ID: ${meetingBotId})`,
+            });
             logger.info("Successfully joined meeting", {
               userId: credential.user_id,
               calendar,
@@ -216,6 +248,9 @@ export const checkMeetings = schedules.task({
           }
         }
       } catch (error) {
+        await slack.error({
+          text: `Error processing Google calendar for user ${credential.user_id}: ${(error as Error).message}`,
+        });
         logger.error("Error processing google credential", {
           error,
           userId: credential.user_id,
