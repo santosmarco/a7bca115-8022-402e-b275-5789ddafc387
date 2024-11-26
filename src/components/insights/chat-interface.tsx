@@ -2,7 +2,16 @@
 
 import type { CoreMessage, Message } from "ai";
 import { useChat } from "ai/react";
+import { motion } from "framer-motion";
 import _ from "lodash";
+import {
+  Brain,
+  GitCommit,
+  Goal,
+  Heart,
+  MessageSquare,
+  Users,
+} from "lucide-react";
 import { useEffect } from "react";
 
 import { Button } from "~/components/ui/button";
@@ -10,6 +19,7 @@ import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
 import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
 import { convertToUIMessages } from "~/lib/ai/messages";
+import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 
 type ChatInterfaceProps = {
@@ -20,6 +30,42 @@ type ChatInterfaceProps = {
   initialMessages: CoreMessage[];
   onTopicSelect: (topic: string) => void;
 };
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.4,
+      ease: "easeOut",
+    },
+  },
+};
+
+const topicIcons: Record<string, React.ElementType> = {
+  "Decision Making": Brain,
+  Delegation: GitCommit,
+  Emotion: Heart,
+  Feedback: MessageSquare,
+  "Goal Setting": Goal,
+  "Team Conflict": Users,
+};
+
+function getTopicIcon(topic: string) {
+  const Icon = topicIcons[topic] ?? Brain;
+  return Icon;
+}
 
 export function ChatInterface({
   userId,
@@ -64,31 +110,55 @@ export function ChatInterface({
   return (
     <ChatContainer className="-mt-2 h-[calc(100vh-7rem)] lg:-mt-12 lg:h-[calc(100vh-3rem)]">
       {isEmpty && !selectedTopic && (
-        <div className="space-y-6 pt-12">
-          <h2 className="text-center text-2xl font-bold">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="space-y-8 pt-12"
+        >
+          <motion.h2
+            variants={itemVariants}
+            className="text-center text-3xl font-bold tracking-tight"
+          >
             Start by selecting a topic
-          </h2>
-          <div className="space-y-4">
-            {_.chunk(topics, Math.ceil(topics.length / 2)).map((chunk) => (
-              <div
-                key={`chunk-${chunk
-                  .map((topic) => _.camelCase(topic))
-                  .join("-")}`}
-                className="flex w-full justify-around gap-4"
-              >
-                {chunk.map((topic) => (
+          </motion.h2>
+          <motion.div
+            variants={containerVariants}
+            className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-4 sm:grid-cols-2"
+          >
+            {topics.map((topic, index) => {
+              const TopicIcon = getTopicIcon(topic);
+              return (
+                <motion.div key={topic} variants={itemVariants}>
                   <Button
-                    key={_.camelCase(topic)}
                     onClick={handleTopicClick(topic)}
-                    className="w-full"
+                    className={cn(
+                      "group relative h-24 w-full overflow-hidden rounded-xl border border-border bg-background p-6 text-left text-primary transition-colors hover:border-primary/50",
+                      index % 2 === 0 && "sm:mr-2",
+                      index % 2 === 1 && "sm:ml-2",
+                    )}
                   >
-                    <p>{topic}</p>
+                    {/* Animated gradient background */}
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                      initial={{ scale: 0, opacity: 0 }}
+                      whileHover={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    />
+
+                    {/* Content */}
+                    <div className="relative z-10 flex w-full items-center justify-between gap-4 group-hover:text-foreground">
+                      <TopicIcon className="h-10 w-10 rounded-lg bg-primary/10 p-2 text-primary transition-colors group-hover:bg-foreground" />
+                      <h4 className="m-0 ml-1 flex-1 text-left text-lg font-semibold">
+                        {topic}
+                      </h4>
+                    </div>
                   </Button>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </motion.div>
       )}
 
       {!isEmpty && (
