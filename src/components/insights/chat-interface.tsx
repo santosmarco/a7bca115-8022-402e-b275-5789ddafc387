@@ -5,6 +5,7 @@ import { useChat } from "ai/react";
 import { motion } from "framer-motion";
 import _ from "lodash";
 import {
+  AlertCircle,
   Brain,
   GitCommit,
   Goal,
@@ -13,7 +14,9 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect } from "react";
+import { toast } from "sonner";
 
+import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
 import { MessageInput } from "~/components/ui/message-input";
@@ -83,10 +86,16 @@ export function ChatInterface({
     append,
     isLoading,
     stop,
+    error,
   } = useChat({
     body: { userId, selectedActivity: selectedTopic, relevantMoments },
     initialMessages: convertToUIMessages(initialMessages),
     maxSteps: 5,
+    onError: (error) => {
+      toast.error("Failed to send message", {
+        description: error.message,
+      });
+    },
   });
 
   const lastMessage = messages.at(-1);
@@ -163,6 +172,13 @@ export function ChatInterface({
 
       {!isEmpty && (
         <ChatMessages messages={messages}>
+          {error && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>{error.message}</AlertDescription>
+            </Alert>
+          )}
           <MessageList messages={messages} isTyping={isTyping} />
         </ChatMessages>
       )}
