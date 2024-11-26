@@ -1,7 +1,12 @@
 import { logger, schedules } from "@trigger.dev/sdk/v3";
 import dayjs from "dayjs";
+import type { calendar_v3 } from "googleapis";
 
-import { googleCalendar, oauth2Client } from "~/lib/google-calendar/client";
+import {
+  googleCalendar,
+  refreshAccessToken,
+  setGoogleCredentials,
+} from "~/lib/google-calendar/client";
 import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
 import type { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
 import { meetingBaas } from "~/lib/meeting-baas/client";
@@ -34,28 +39,55 @@ export const checkMeetings = schedules.task({
     }
 
     for (const credential of googleCredentials) {
-      if (!credential.refresh_token) {
+      if (!credential.access_token || !credential.refresh_token) {
         await slack.warn({
-          text: `No refresh token found for Google credential (User ID: ${credential.user_id})`,
+          text: `No access token or refresh token found for Google credential (User ID: ${credential.user_id})`,
         });
         logger.warn(
-          "No refresh token found for google credential, skipping...",
+          "No access token or refresh token found for google credential, skipping...",
           { userId: credential.user_id },
         );
         continue;
       }
 
       try {
-        oauth2Client.setCredentials({
-          access_token: credential.access_token,
-          refresh_token: credential.refresh_token,
-        });
+        await setGoogleCredentials(
+          credential.user_id,
+          credential.access_token,
+          credential.refresh_token,
+        );
 
-        const {
-          data: { items: calendars = [] },
-        } = await googleCalendar.calendarList.list({
-          minAccessRole: "reader",
-        });
+        let calendars: calendar_v3.Schema$CalendarListEntry[] = [];
+        try {
+          const response = await googleCalendar.calendarList.list({
+            minAccessRole: "reader",
+          });
+          calendars = response.data.items ?? [];
+        } catch (apiError) {
+          if ((apiError as Error).message.includes("invalid_grant")) {
+            await slack.warn({
+              text: `Attempting to refresh expired Google token for user ${credential.user_id}`,
+            });
+
+            const newCredentials = await refreshAccessToken(
+              credential.user_id,
+              credential.refresh_token,
+            );
+
+            await setGoogleCredentials(
+              credential.user_id,
+              newCredentials.access_token ?? credential.access_token,
+              newCredentials.refresh_token ?? credential.refresh_token,
+            );
+
+            const retryResponse = await googleCalendar.calendarList.list({
+              minAccessRole: "reader",
+            });
+            calendars = retryResponse.data.items ?? [];
+          } else {
+            throw apiError;
+          }
+        }
 
         if (!calendars.length) {
           await slack.info({

@@ -83,8 +83,11 @@ export type Database = {
           created_at: string
           expiry_date: string | null
           id: string
+          last_refresh_attempt: string | null
           provider: string | null
+          refresh_error: string | null
           refresh_token: string | null
+          requires_reauth: boolean | null
           updated_at: string
           user_id: string
         }
@@ -93,8 +96,11 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          last_refresh_attempt?: string | null
           provider?: string | null
+          refresh_error?: string | null
           refresh_token?: string | null
+          requires_reauth?: boolean | null
           updated_at?: string
           user_id: string
         }
@@ -103,8 +109,11 @@ export type Database = {
           created_at?: string
           expiry_date?: string | null
           id?: string
+          last_refresh_attempt?: string | null
           provider?: string | null
+          refresh_error?: string | null
           refresh_token?: string | null
+          requires_reauth?: boolean | null
           updated_at?: string
           user_id?: string
         }
