@@ -1,6 +1,7 @@
 import { openai } from "@ai-sdk/openai";
 import { convertToCoreMessages, type CoreMessage, streamText, tool } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
+import { cache } from "react";
 import { z } from "zod";
 
 import { getObservationPrompt } from "~/lib/api/observation";
@@ -8,6 +9,8 @@ import { UIMessage } from "~/lib/schemas/ai";
 import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
+
+const cachedGetObservationPrompt = cache(getObservationPrompt);
 
 export const ChatRequestBody = z
   .object({
@@ -34,30 +37,36 @@ export async function POST(request: NextRequest) {
 
     const { userId, selectedActivity, messages } = bodyParseResult.data;
 
-    const { prompt } = await getObservationPrompt({
+    const { prompt } = await cachedGetObservationPrompt({
       userId,
       selectedActivity,
     });
 
-    const coreMessages = convertToCoreMessages(messages);
+    const tools = {
+      displayMoment: tool({
+        description:
+          "Useful for displaying a moment in the chat. Pass the moment ID and the reasoning for displaying it.",
+        parameters: z
+          .object({
+            id: z.string().describe("The ID of the moment to display."),
+            reasoning: z
+              .string()
+              .describe("The reasoning for displaying the moment."),
+          })
+          .describe("The arguments for the displayMoment tool."),
+        execute: async ({ id, reasoning }) => {
+          const moment = await api.moments.getOneById({ momentId: id });
+          return { id, reasoning, moment };
+        },
+      }),
+    };
+
+    const coreMessages = convertToCoreMessages(messages, { tools });
 
     const result = streamText({
       model: openai("gpt-4o-mini-2024-07-18"),
-      tools: {
-        displayMoment: tool({
-          description: "Useful for displaying a moment in the chat.",
-          parameters: z.object({
-            id: z.string(),
-            reasoning: z.string(),
-          }),
-          execute: async ({ id, reasoning }) => {
-            return `<moment id="${id}" reasoning="${reasoning.replace(
-              /"/g,
-              "'",
-            )}" />`;
-          },
-        }),
-      },
+      tools,
+      temperature: 0.2,
       // messages: [{ role: "system", content: prompt }, ...coreMessages],
       messages: [{ role: "system", content: prompt }, ...coreMessages].map(
         (m) =>

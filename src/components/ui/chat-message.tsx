@@ -2,10 +2,24 @@
 
 import type { ToolInvocation } from "ai";
 import { cva, type VariantProps } from "class-variance-authority";
+import {
+  ChevronDown,
+  MessageCircle,
+  MessageSquare,
+  TrendingUpDownIcon,
+} from "lucide-react";
 import type React from "react";
+import { useState } from "react";
 
+import { Button } from "~/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "~/components/ui/collapsible";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import { cn } from "~/lib/utils";
+import type { RouterOutputs } from "~/trpc/react";
 
 const chatBubbleVariants = cva(
   "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
@@ -64,6 +78,38 @@ export interface ChatMessageProps extends Message {
   actions?: React.ReactNode;
 }
 
+interface MomentDisplayProps {
+  id: string;
+  reasoning: string;
+  moment: RouterOutputs["moments"]["getOneById"];
+}
+
+const MomentDisplay = ({ id, reasoning, moment }: MomentDisplayProps) => {
+  return (
+    <div className="block space-y-2 p-2">
+      <iframe
+        src={`/embed/moments/${id}`}
+        title={reasoning}
+        className="w-full rounded-md"
+        onLoad={(e) => {
+          const iframe = e.currentTarget;
+          const resizeObserver = new ResizeObserver(() => {
+            const height =
+              iframe.contentWindow?.document.documentElement.scrollHeight;
+            if (height && height <= 400) iframe.style.height = `${height}px`;
+          });
+          if (iframe.contentWindow?.document.documentElement) {
+            resizeObserver.observe(
+              iframe.contentWindow?.document.documentElement,
+            );
+          }
+        }}
+      />
+      <p className="text-xs italic text-muted-foreground">{reasoning}</p>
+    </div>
+  );
+};
+
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   content,
@@ -74,11 +120,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   toolInvocations,
 }) => {
   const isUser = role === "user";
+  const [openMoments, setOpenMoments] = useState<Record<string, boolean>>({});
 
   const formattedTime = createdAt?.toLocaleTimeString("en-US", {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  const toggleMoment = (id: string) => {
+    setOpenMoments((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
@@ -97,15 +151,69 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </div>
         ) : null}
 
-        {toolInvocations?.map((toolInvocation) => {
-          if (toolInvocation.state !== "result") {
-            return <div key={toolInvocation.toolCallId}>Loading...</div>;
-          }
+        {!!toolInvocations?.length && (
+          <div className="space-y-2">
+            {toolInvocations?.map((toolInvocation) => {
+              if (toolInvocation.state !== "result") {
+                return (
+                  <div
+                    key={toolInvocation.toolCallId}
+                    className="mt-2 animate-pulse text-sm text-muted-foreground"
+                  >
+                    Analyzing moment...
+                  </div>
+                );
+              }
 
-          if (toolInvocation.toolName === "displayMoment") {
-            return <div key={toolInvocation.toolCallId}>Analyzed moment</div>;
-          }
-        })}
+              if (toolInvocation.toolName === "displayMoment") {
+                const { id, reasoning, moment } = toolInvocation.result as {
+                  id: string;
+                  reasoning: string;
+                  moment: RouterOutputs["moments"]["getOneById"];
+                };
+                const isOpen = openMoments[id] ?? false;
+
+                return (
+                  <Collapsible
+                    key={toolInvocation.toolCallId}
+                    open={isOpen}
+                    onOpenChange={() => toggleMoment(id)}
+                    className="min-w-full overflow-hidden rounded-md border border-border/50 bg-background/50"
+                  >
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="flex w-full min-w-full items-center justify-between gap-3 p-2 text-left hover:bg-accent/50"
+                      >
+                        <div className="flex items-center gap-x-2">
+                          <MessageSquare className="h-4 w-4 text-primary" />
+                          <span className="font-medium leading-none">
+                            {moment.title}
+                          </span>
+                        </div>
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                            isOpen && "rotate-180",
+                          )}
+                        />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <MomentDisplay
+                        id={id}
+                        reasoning={reasoning}
+                        moment={moment}
+                      />
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              }
+
+              return null;
+            })}
+          </div>
+        )}
       </div>
 
       {showTimeStamp && createdAt ? (
