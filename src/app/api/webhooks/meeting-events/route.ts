@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
+import { slack } from "~/lib/slack";
 import type { Json, TablesInsert } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
 import { isTruthy } from "~/lib/utils";
@@ -125,11 +126,21 @@ async function uploadToApiVideo(
   botId: string,
   videoUrl: string,
   botData: MeetingBaasBotData,
-): Promise<string> {
+): Promise<string | null> {
   const {
     bot: { extra },
     transcripts,
   } = botData;
+
+  const tags = _.uniq(transcripts.map(({ speaker }) => speaker.trim()));
+
+  // Skip API video upload if no speakers/tags
+  if (tags.length === 0) {
+    await slack.warn({
+      text: `Skipping API video upload for meeting ${botId} - No speakers detected`,
+    });
+    return null;
+  }
 
   const event = (extra as { event?: calendar_v3.Schema$Event } | undefined)
     ?.event;
@@ -141,6 +152,10 @@ async function uploadToApiVideo(
   ].filter(isTruthy);
 
   try {
+    await slack.send({
+      text: `🎥 Starting video upload to api.video for meeting ${botId}`,
+    });
+
     const video = await apiVideo.videos.create({
       title: event?.summary ?? `Meeting Recording - ${botId}`,
       description: event?.description ?? undefined,
@@ -148,12 +163,19 @@ async function uploadToApiVideo(
       mp4Support: true,
       transcript: true,
       transcriptSummary: true,
-      tags: _.uniq(transcripts.map(({ speaker }) => speaker.trim())),
+      tags,
       metadata,
+    });
+
+    await slack.success({
+      text: `Successfully uploaded video to api.video for meeting ${botId}`,
     });
 
     return video.videoId;
   } catch (error) {
+    await slack.error({
+      text: `Failed to upload video to api.video for meeting ${botId}: ${(error as Error).message}`,
+    });
     console.error("Error uploading to api.video:", error);
     throw new Error("Failed to upload video to api.video");
   }
@@ -257,6 +279,10 @@ export async function POST(request: Request) {
           error_code: event.data.error,
         });
       } else if (event.event === "complete") {
+        await slack.send({
+          text: `🎯 Processing complete event for meeting ${event.data.bot_id}`,
+        });
+
         const { bot_data, mp4 } = await meetingBaas.meetings.getMeetingData(
           event.data.bot_id,
         );
@@ -278,8 +304,15 @@ export async function POST(request: Request) {
         });
 
         if (event.data.transcript?.length) {
+          await slack.send({
+            text: `📝 Processing transcript for meeting ${event.data.bot_id}`,
+          });
           await handleTranscript(supabase, event);
         }
+
+        await slack.done({
+          text: `Successfully processed meeting ${event.data.bot_id}`,
+        });
       }
 
       return new Response(null, { status: 200 });
