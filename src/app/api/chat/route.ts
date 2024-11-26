@@ -7,6 +7,8 @@ import { getObservationPrompt } from "~/lib/api/observation";
 import { UIMessage } from "~/lib/schemas/ai";
 import { api } from "~/trpc/server";
 
+export const dynamic = "force-dynamic";
+
 export const ChatRequestBody = z
   .object({
     userId: z.string(),
