@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { convertToCoreMessages, streamText, tool } from "ai";
+import { convertToCoreMessages, type CoreMessage, streamText, tool } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -57,19 +57,21 @@ export async function POST(request: NextRequest) {
         }),
       },
       messages: [{ role: "system", content: prompt }, ...coreMessages].map(
-        (m) => ({
-          ...m,
-          ...(m.role === "user" &&
-            coreMessages.length > 1 && {
-              content: `
+        (m) =>
+          ({
+            ...m,
+            ...(m.role === "user" &&
+              typeof m.content === "string" &&
+              coreMessages.length > 1 && {
+                content: `
               ${m.content}
   
               ---
   
               Remember: ALWAYS CALL the \`displayMoment\` tool to show a moment in the chat.
             `,
-            }),
-        }),
+              }),
+          }) as CoreMessage,
       ),
       onFinish: async ({ response: { messages: responseMessages } }) => {
         try {
