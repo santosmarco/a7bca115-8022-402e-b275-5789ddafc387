@@ -67,7 +67,7 @@ export const checkMeetings = schedules.task({
 
         let calendars: calendar_v3.Schema$CalendarListEntry[] = [];
         try {
-          const calendarClient = getGoogleCalendar(credential.user_id);
+          const calendarClient = await getGoogleCalendar(credential.user_id);
           const response = await calendarClient.calendarList.list({
             minAccessRole: "reader",
           });
@@ -120,7 +120,7 @@ export const checkMeetings = schedules.task({
             continue;
           }
 
-          const calendarClient = getGoogleCalendar(credential.user_id);
+          const calendarClient = await getGoogleCalendar(credential.user_id);
           const {
             data: { items: eventsInTheNextFourMinutes = [] },
           } = await calendarClient.events.list({
