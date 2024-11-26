@@ -28,6 +28,9 @@ export const env = createEnv({
     // Notion
     NOTION_INTEGRATION_SECRET: z.string(),
     NOTION_REPORTS_DATABASE_ID: z.string(),
+    // Slack
+    SLACK_BOT_TOKEN: z.string(),
+    SLACK_NOTIFICATIONS_CHANNEL: z.string().default("eng-alerts"),
   },
 
   client: {
@@ -55,6 +58,8 @@ export const env = createEnv({
     NOTION_INTEGRATION_SECRET: process.env.NOTION_INTEGRATION_SECRET,
     NOTION_REPORTS_DATABASE_ID: process.env.NOTION_REPORTS_DATABASE_ID,
     MEETING_BAAS_API_KEY: process.env.MEETING_BAAS_API_KEY,
+    SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
+    SLACK_NOTIFICATIONS_CHANNEL: process.env.SLACK_NOTIFICATIONS_CHANNEL,
     // Client
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
