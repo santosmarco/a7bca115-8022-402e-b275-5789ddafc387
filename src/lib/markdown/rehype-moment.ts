@@ -21,7 +21,7 @@ export const rehypeMoment: Plugin<[], Root> = () => {
       if (!isMomentElement(node)) return;
 
       // Transform the moment element properties into a more React-friendly format
-      node.properties = {
+      (node as any).properties = {
         className: "my-2 rounded-lg border bg-muted p-4",
         "data-moment-id": node.properties.id,
         "data-moment-reasoning": node.properties.reasoning,
