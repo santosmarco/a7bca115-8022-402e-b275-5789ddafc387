@@ -1,5 +1,5 @@
 import { openai } from "@ai-sdk/openai";
-import { convertToCoreMessages, streamText } from "ai";
+import { convertToCoreMessages, streamText, tool } from "ai";
 import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -41,12 +41,37 @@ export async function POST(request: NextRequest) {
 
     const result = streamText({
       model: openai("gpt-4o-mini-2024-07-18"),
-      messages: [{ role: "system", content: prompt }, ...coreMessages],
-      onChunk: ({ chunk }) => {
-        console.log(chunk);
+      tools: {
+        displayMoment: tool({
+          description: "Useful for displaying a moment in the chat.",
+          parameters: z.object({
+            id: z.string(),
+            reasoning: z.string(),
+          }),
+          execute: async ({ id, reasoning }) => {
+            return `<moment id="${id}" reasoning="${reasoning.replace(
+              /"/g,
+              "'",
+            )}" />`;
+          },
+        }),
       },
+      messages: [{ role: "system", content: prompt }, ...coreMessages].map(
+        (m) => ({
+          ...m,
+          ...(m.role === "user" &&
+            coreMessages.length > 1 && {
+              content: `
+              ${m.content}
+  
+              ---
+  
+              Remember: ALWAYS CALL the \`displayMoment\` tool to show a moment in the chat.
+            `,
+            }),
+        }),
+      ),
       onFinish: async ({ response: { messages: responseMessages } }) => {
-        console.log(responseMessages.map((m) => m.content));
         try {
           await api.chats.save({
             userId,

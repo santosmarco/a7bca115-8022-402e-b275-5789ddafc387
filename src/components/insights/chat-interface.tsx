@@ -179,11 +179,11 @@ export function ChatInterface({
               <AlertDescription>{error.message}</AlertDescription>
             </Alert>
           )}
-          <MessageList messages={messages} isTyping={isTyping} />
+          <MessageList messages={messages} isTyping={isTyping && !error} />
         </ChatMessages>
       )}
 
-      {!isEmpty && (
+      {!isEmpty && !error && (
         <ChatForm
           className="mt-auto"
           isPending={isLoading || isTyping}
