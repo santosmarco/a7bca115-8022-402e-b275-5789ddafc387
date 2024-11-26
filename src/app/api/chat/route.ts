@@ -41,38 +41,39 @@ export async function POST(request: NextRequest) {
 
     const result = streamText({
       model: openai("gpt-4o-mini-2024-07-18"),
-      tools: {
-        displayMoment: tool({
-          description: "Useful for displaying a moment in the chat.",
-          parameters: z.object({
-            id: z.string(),
-            reasoning: z.string(),
-          }),
-          execute: async ({ id, reasoning }) => {
-            return `<moment id="${id}" reasoning="${reasoning.replace(
-              /"/g,
-              "'",
-            )}" />`;
-          },
-        }),
-      },
-      messages: [{ role: "system", content: prompt }, ...coreMessages].map(
-        (m) =>
-          ({
-            ...m,
-            ...(m.role === "user" &&
-              typeof m.content === "string" &&
-              coreMessages.length > 1 && {
-                content: `
-              ${m.content}
-  
-              ---
-  
-              Remember: ALWAYS CALL the \`displayMoment\` tool to show a moment in the chat.
-            `,
-              }),
-          }) as CoreMessage,
-      ),
+      // tools: {
+      //   displayMoment: tool({
+      //     description: "Useful for displaying a moment in the chat.",
+      //     parameters: z.object({
+      //       id: z.string(),
+      //       reasoning: z.string(),
+      //     }),
+      //     execute: async ({ id, reasoning }) => {
+      //       return `<moment id="${id}" reasoning="${reasoning.replace(
+      //         /"/g,
+      //         "'",
+      //       )}" />`;
+      //     },
+      //   }),
+      // },
+      messages: [{ role: "system", content: prompt }, ...coreMessages],
+      // messages: [{ role: "system", content: prompt }, ...coreMessages].map(
+      //   (m) =>
+      //     ({
+      //       ...m,
+      //       ...(m.role === "user" &&
+      //         typeof m.content === "string" &&
+      //         coreMessages.length > 1 && {
+      //           content: `
+      //         ${m.content}
+
+      //         ---
+
+      //         Remember: ALWAYS CALL the \`displayMoment\` tool to show a moment in the chat.
+      //       `,
+      //         }),
+      //     }) as CoreMessage,
+      // ),
       onFinish: async ({ response: { messages: responseMessages } }) => {
         try {
           await api.chats.save({
