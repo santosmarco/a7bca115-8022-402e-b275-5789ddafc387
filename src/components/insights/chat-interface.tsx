@@ -1,9 +1,8 @@
 "use client";
 
-import type { CoreMessage, Message } from "ai";
+import type { CoreMessage } from "ai";
 import { useChat } from "ai/react";
 import { motion } from "framer-motion";
-import _ from "lodash";
 import {
   AlertCircle,
   Brain,
@@ -22,7 +21,6 @@ import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
 import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
 import { convertToUIMessages } from "~/lib/ai/messages";
-import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 
 type ChatInterfaceProps = {
@@ -131,6 +129,32 @@ export function ChatInterface({
           >
             Start by selecting a topic
           </motion.h2>
+
+          {/* CTA Button */}
+          <motion.div
+            variants={itemVariants}
+            className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-4"
+          >
+            <Button
+              variant="outline"
+              className="group relative w-full overflow-hidden border-primary bg-background px-8 py-6 text-lg font-semibold text-primary transition-colors hover:bg-primary/10"
+              onClick={() => {
+                void append({
+                  role: "user",
+                  content: "What should I talk to my coach about?",
+                });
+              }}
+            >
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                initial={{ x: "-100%" }}
+                whileHover={{ x: "100%" }}
+                transition={{ duration: 0.8, repeat: Number.POSITIVE_INFINITY }}
+              />
+              What should I talk to my coach about?
+            </Button>
+          </motion.div>
+
           <motion.div
             variants={containerVariants}
             className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-4 sm:grid-cols-2"
@@ -141,11 +165,7 @@ export function ChatInterface({
                 <motion.div key={topic} variants={itemVariants}>
                   <Button
                     onClick={handleTopicClick(topic)}
-                    className={cn(
-                      "group relative h-24 w-full overflow-hidden rounded-xl border border-border bg-background p-6 text-left text-primary transition-colors hover:border-primary/50",
-                      index % 2 === 0 && "sm:mr-2",
-                      index % 2 === 1 && "sm:ml-2",
-                    )}
+                    className="group relative h-24 w-full overflow-hidden rounded-xl border border-border bg-background p-6 text-left text-primary transition-colors hover:border-primary/50"
                   >
                     {/* Animated gradient background */}
                     <motion.div
