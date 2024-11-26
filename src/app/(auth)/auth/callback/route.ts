@@ -143,6 +143,6 @@ async function synchronizeGoogleCalendar(
     }
   } catch (error) {
     console.error("Failed to synchronize calendars:", error);
-    throw error;
+    // throw error;
   }
 }
