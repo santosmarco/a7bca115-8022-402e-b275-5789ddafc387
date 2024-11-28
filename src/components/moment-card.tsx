@@ -236,6 +236,7 @@ export function MomentCard({
                   nickname: user.nickname,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
+                  email: user.email,
                 }
               : null,
           },
@@ -289,6 +290,7 @@ export function MomentCard({
                   nickname: user.nickname,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
+                  email: user.email,
                 }
               : null,
           },
