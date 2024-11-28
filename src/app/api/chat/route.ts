@@ -6,9 +6,12 @@ import { z } from "zod";
 
 import { getObservationPrompt } from "~/lib/api/observation";
 import { UIMessage } from "~/lib/schemas/ai";
+import { createClient } from "~/lib/supabase/server";
 import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
+
+export const maxDuration = 60;
 
 const cachedGetObservationPrompt = cache(getObservationPrompt);
 
@@ -37,10 +40,23 @@ export async function POST(request: NextRequest) {
 
     const { userId, selectedActivity, messages } = bodyParseResult.data;
 
-    const { prompt } = await cachedGetObservationPrompt({
-      userId,
-      selectedActivity,
-    });
+    const supabase = await createClient();
+
+    const { data: observationPrompt } = await supabase
+      .from("observation_prompts")
+      .select("*")
+      .eq("profile_id", userId)
+      .eq("type", selectedActivity)
+      .eq("latest", true)
+      .order("created_at", { ascending: false })
+      .maybeSingle();
+
+    const { prompt } =
+      observationPrompt ??
+      (await cachedGetObservationPrompt({
+        userId,
+        selectedActivity,
+      }));
 
     const tools = {
       displayMoment: tool({

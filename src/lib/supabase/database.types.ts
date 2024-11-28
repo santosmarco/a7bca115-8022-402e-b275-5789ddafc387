@@ -54,6 +54,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          latest: boolean
           messages: Json
           topic: string | null
           updated_at: string
@@ -62,6 +63,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          latest?: boolean
           messages: Json
           topic?: string | null
           updated_at?: string
@@ -70,6 +72,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          latest?: boolean
           messages?: Json
           topic?: string | null
           updated_at?: string
@@ -438,6 +441,44 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      observation_prompts: {
+        Row: {
+          created_at: string
+          id: string
+          latest: boolean | null
+          profile_id: string | null
+          prompt: string
+          result: string | null
+          type: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          latest?: boolean | null
+          profile_id?: string | null
+          prompt: string
+          result?: string | null
+          type?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          latest?: boolean | null
+          profile_id?: string | null
+          prompt?: string
+          result?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "observations_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profile_meetings: {
         Row: {
