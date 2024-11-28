@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import _ from "lodash";
 import { MessageCircleMoreIcon, VideoOffIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
+import { useEffect } from "react";
 
 import { ChatInterface } from "~/components/insights/chat-interface";
 import { useProfile } from "~/hooks/use-profile";
@@ -30,40 +31,37 @@ export default function InsightsPage() {
       refetchOnWindowFocus: false,
     },
   );
-  const { data: videosData, isFetching: videosLoading } =
-    api.videos.listAll.useQuery(
-      {
-        moments: {
-          includeNonRelevant:
-            user?.is_admin && (!profile || user.id === profile.id),
-          // @ts-ignore
-          profileId: profile?.id,
-        },
-      },
-      {
-        refetchOnWindowFocus: false,
-      },
-    );
 
-  const userId = profile?.id ?? user?.id ?? "";
-  const topic = selectedTopic ?? "";
-
-  const { data: chat, isFetching: chatLoading } = api.chats.get.useQuery(
+  const {
+    data,
+    isFetching: videosLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = api.videos.list.useInfiniteQuery(
     {
-      userId,
-      topic,
+      limit: 12,
+      options: {
+        tags:
+          user?.is_admin && (!profile || user.id === profile.id)
+            ? undefined
+            : [profile?.nickname ?? user?.nickname ?? ""],
+      },
     },
     {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
       refetchOnWindowFocus: false,
     },
   );
 
   const filteredVideos =
-    (user?.is_admin && (!profile || user.id === profile.id)
-      ? videosData
-      : videosData?.filter((v) =>
-          v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-        )) ?? [];
+    data?.pages.flatMap((page) =>
+      user?.is_admin && (!profile || user.id === profile.id)
+        ? page.videos
+        : page.videos.filter((v) =>
+            v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+          ),
+    ) ?? [];
 
   const videosEnriched = filteredVideos.map((video) => {
     const moments = video.moments ?? [];
@@ -97,6 +95,33 @@ export default function InsightsPage() {
     (x) => x,
   );
 
+  const userId = profile?.id ?? user?.id ?? "";
+  const topic = selectedTopic ?? "";
+
+  const { data: chat, isFetching: chatLoading } = api.chats.get.useQuery(
+    {
+      userId,
+      topic,
+    },
+    {
+      refetchOnWindowFocus: false,
+    },
+  );
+
+  // Load more videos when scrolling near the bottom
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      _.debounce(() => {
+        const scrolledToBottom =
+          window.innerHeight + window.scrollY >=
+          document.documentElement.scrollHeight - 1000;
+        if (scrolledToBottom) {
+          void fetchNextPage();
+        }
+      }, 100)();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
   if (userLoading || chatLoading || !userId) {
     return (
       <div className="mt-20 flex items-center justify-center">
@@ -113,7 +138,7 @@ export default function InsightsPage() {
     );
   }
 
-  if (!videosLoading && !videosData?.length) {
+  if (!videosLoading && !filteredVideos.length) {
     return (
       <div className="mt-20 flex items-center justify-center">
         <motion.div
@@ -145,15 +170,18 @@ export default function InsightsPage() {
   }
 
   return (
-    <ChatInterface
-      userId={userId}
-      selectedTopic={topic}
-      topics={topics}
-      relevantMoments={filteredMoments}
-      initialMessages={
-        (chat?.data?.messages as CoreMessage[] | undefined) ?? []
-      }
-      onTopicSelect={(topic) => void setSelectedTopic(topic)}
-    />
+    <>
+      <ChatInterface
+        userId={userId}
+        selectedTopic={topic}
+        topics={topics}
+        relevantMoments={filteredMoments}
+        initialMessages={
+          (chat?.data?.messages as CoreMessage[] | undefined) ?? []
+        }
+        onTopicSelect={(topic) => void setSelectedTopic(topic)}
+        isLoading={hasNextPage}
+      />
+    </>
   );
 }

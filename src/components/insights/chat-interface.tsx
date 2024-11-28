@@ -2,13 +2,14 @@
 
 import type { CoreMessage } from "ai";
 import { useChat } from "ai/react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
   Brain,
   GitCommit,
   Goal,
   Heart,
+  MessageCircle,
   MessageSquare,
   Users,
 } from "lucide-react";
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
+import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
 import { convertToUIMessages } from "~/lib/ai/messages";
@@ -30,6 +32,7 @@ type ChatInterfaceProps = {
   relevantMoments: RouterOutputs["moments"]["listAll"]["moments"];
   initialMessages: CoreMessage[];
   onTopicSelect: (topic: string) => void;
+  isLoading?: boolean;
 };
 
 const containerVariants = {
@@ -75,6 +78,7 @@ export function ChatInterface({
   relevantMoments,
   initialMessages,
   onTopicSelect,
+  isLoading,
 }: ChatInterfaceProps) {
   const {
     messages,
@@ -82,7 +86,7 @@ export function ChatInterface({
     handleInputChange,
     handleSubmit,
     append,
-    isLoading,
+    isLoading: chatLoading,
     stop,
     error,
   } = useChat({
@@ -121,23 +125,22 @@ export function ChatInterface({
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="space-y-8 pt-12"
+          className="space-y-12 pt-12"
         >
-          <motion.h2
-            variants={itemVariants}
-            className="text-center text-3xl font-bold tracking-tight"
-          >
-            Start by selecting a topic
-          </motion.h2>
-
-          {/* CTA Button */}
+          {/* Main CTA Section */}
           <motion.div
             variants={itemVariants}
-            className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-4"
+            className="mx-auto max-w-3xl space-y-6 px-4"
           >
+            <motion.h2
+              variants={itemVariants}
+              className="text-center text-3xl font-bold tracking-tight"
+            >
+              Not sure where to start?
+            </motion.h2>
             <Button
-              variant="outline"
-              className="group relative w-full overflow-hidden border-primary bg-background px-8 py-6 text-lg font-semibold text-primary transition-colors hover:bg-primary/10"
+              variant="default"
+              className="group relative w-full overflow-hidden bg-primary px-8 py-8 text-xl font-bold text-primary-foreground shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
               onClick={() => {
                 void append({
                   role: "user",
@@ -146,7 +149,7 @@ export function ChatInterface({
               }}
             >
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"
                 initial={{ x: "-100%" }}
                 whileHover={{ x: "100%" }}
                 transition={{ duration: 0.8, repeat: Number.POSITIVE_INFINITY }}
@@ -155,38 +158,94 @@ export function ChatInterface({
             </Button>
           </motion.div>
 
+          {/* Topic Selection Section */}
           <motion.div
-            variants={containerVariants}
-            className="mx-auto grid max-w-3xl grid-cols-1 gap-4 px-4 sm:grid-cols-2"
+            variants={itemVariants}
+            className="mx-auto max-w-3xl space-y-6 px-4"
           >
-            {topics.map((topic, index) => {
-              const TopicIcon = getTopicIcon(topic);
-              return (
-                <motion.div key={topic} variants={itemVariants}>
-                  <Button
-                    onClick={handleTopicClick(topic)}
-                    className="group relative h-24 w-full overflow-hidden rounded-xl border border-border bg-background p-6 text-left text-primary transition-colors hover:border-primary/50"
-                  >
-                    {/* Animated gradient background */}
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
-                      initial={{ scale: 0, opacity: 0 }}
-                      whileHover={{ scale: 1, opacity: 1 }}
-                      transition={{ duration: 0.3 }}
-                    />
+            <motion.h3
+              variants={itemVariants}
+              className="text-center text-lg font-medium text-muted-foreground"
+            >
+              Or explore specific topics
+            </motion.h3>
 
-                    {/* Content */}
-                    <div className="relative z-10 flex w-full items-center justify-between gap-4 group-hover:text-foreground">
-                      <TopicIcon className="h-10 w-10 rounded-lg bg-primary/10 p-2 text-primary transition-colors group-hover:bg-foreground" />
-                      <h4 className="m-0 ml-1 flex-1 text-left text-lg font-semibold">
-                        {topic}
-                      </h4>
-                    </div>
-                  </Button>
-                </motion.div>
-              );
-            })}
+            <motion.div
+              variants={containerVariants}
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+            >
+              {topics.map((topic, index) => {
+                const TopicIcon = getTopicIcon(topic);
+                return (
+                  <motion.div key={topic} variants={itemVariants}>
+                    <Button
+                      onClick={handleTopicClick(topic)}
+                      className="group relative h-24 w-full overflow-hidden rounded-xl border border-border bg-background p-6 text-left text-primary transition-colors hover:border-primary/50"
+                    >
+                      {/* Animated gradient background */}
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                        initial={{ scale: 0, opacity: 0 }}
+                        whileHover={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+
+                      {/* Content */}
+                      <div className="relative z-10 flex w-full items-center justify-between gap-4 group-hover:text-foreground">
+                        <TopicIcon className="h-10 w-10 rounded-lg bg-primary/10 p-2 text-primary transition-colors group-hover:bg-foreground" />
+                        <h4 className="m-0 ml-1 flex-1 text-left text-lg font-semibold">
+                          {topic}
+                        </h4>
+                      </div>
+                    </Button>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
           </motion.div>
+
+          <AnimatePresence mode="wait">
+            {isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex flex-col items-center justify-center gap-4"
+              >
+                <motion.div
+                  animate={{
+                    scale: [1, 1.1, 1],
+                    opacity: [0.5, 1, 0.5],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <LoadingSpinner className="h-8 w-8 text-primary" />
+                </motion.div>
+                <motion.p
+                  animate={{
+                    opacity: [0.5, 1, 0.5],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                  className="text-center text-sm text-muted-foreground"
+                >
+                  We&apos;re still loading some of your videos...
+                  <br />
+                  More topics will show up soon.
+                </motion.p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 
@@ -206,7 +265,7 @@ export function ChatInterface({
       {!isEmpty && !error && (
         <ChatForm
           className="mt-auto"
-          isPending={isLoading || isTyping}
+          isPending={chatLoading || isTyping}
           handleSubmit={handleSubmit}
         >
           {({ files, setFiles }) => (
@@ -217,7 +276,7 @@ export function ChatInterface({
               files={files}
               setFiles={setFiles}
               stop={stop}
-              isGenerating={isLoading}
+              isGenerating={chatLoading}
             />
           )}
         </ChatForm>
