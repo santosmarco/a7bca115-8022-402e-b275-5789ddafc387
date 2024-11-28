@@ -1,7 +1,6 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import _ from "lodash";
 import {
   BarChart3,
   Brain,
@@ -54,14 +53,6 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
         .order("nickname");
       if (!allProfiles) return;
       setProfiles(allProfiles);
-      if (!selectedProfile)
-        setSelectedProfile(
-          _.pick(user, [
-            "id",
-            "nickname",
-            "is_admin",
-          ] satisfies (keyof Tables<"profiles">)[]),
-        );
     }
 
     void fetchProfiles();
@@ -184,13 +175,17 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                         <Avatar className="h-10 w-10 border-2 border-border/50 transition-colors group-hover:border-primary/50">
                           <AvatarImage
                             src={
-                              user.user_metadata.avatar_url as
-                                | string
-                                | undefined
+                              !selectedProfile || selectedProfile.id === user.id
+                                ? (user.user_metadata.avatar_url as
+                                    | string
+                                    | undefined)
+                                : undefined
                             }
                           />
                           <AvatarFallback className="bg-primary/5">
-                            {user.email?.slice(0, 2).toUpperCase()}
+                            {(selectedProfile?.email ?? user.email)
+                              ?.slice(0, 2)
+                              .toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <motion.div
@@ -216,7 +211,7 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                           transition={{ delay: 0.1 }}
                           className="text-xs text-muted-foreground"
                         >
-                          {user.email}
+                          {selectedProfile?.email ?? user.email}
                         </motion.span>
                       </div>
                     </div>
