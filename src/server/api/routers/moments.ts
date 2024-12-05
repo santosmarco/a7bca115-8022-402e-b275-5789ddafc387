@@ -108,11 +108,7 @@ export const momentsRouter = createTRPCRouter({
       const supabase = await createClient();
 
       try {
-        let query = supabase
-          .from("moments")
-          .select("id")
-          .eq("latest", true)
-          .limit(input.limit);
+        let query = supabase.from("moments").select("id").eq("latest", true);
 
         if (input.query) {
           query = query.textSearch(
