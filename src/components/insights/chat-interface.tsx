@@ -140,7 +140,7 @@ export function ChatInterface({
             </motion.h2>
             <Button
               variant="default"
-              className="group relative w-full overflow-hidden bg-primary px-8 py-8 text-xl font-bold text-primary-foreground shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+              className="group relative w-full overflow-hidden bg-primary px-8 py-8 text-xl font-bold text-foreground/80 shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
               onClick={() => {
                 void append({
                   role: "user",
@@ -149,7 +149,7 @@ export function ChatInterface({
               }}
             >
               <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute inset-0 bg-gradient-to-r from-foreground/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"
                 initial={{ x: "-100%" }}
                 whileHover={{ x: "100%" }}
                 transition={{ duration: 0.8, repeat: Number.POSITIVE_INFINITY }}
@@ -176,6 +176,7 @@ export function ChatInterface({
             >
               {topics.map((topic, index) => {
                 const TopicIcon = getTopicIcon(topic);
+
                 return (
                   <motion.div key={topic} variants={itemVariants}>
                     <Button
@@ -192,7 +193,7 @@ export function ChatInterface({
 
                       {/* Content */}
                       <div className="relative z-10 flex w-full items-center justify-between gap-4 group-hover:text-foreground">
-                        <TopicIcon className="h-10 w-10 rounded-lg bg-primary/10 p-2 text-primary transition-colors group-hover:bg-foreground" />
+                        <TopicIcon className="!h-10 !w-10 rounded-lg bg-primary/10 p-2 text-primary transition-colors group-hover:bg-foreground" />
                         <h4 className="m-0 ml-1 flex-1 text-left text-lg font-semibold">
                           {topic}
                         </h4>
