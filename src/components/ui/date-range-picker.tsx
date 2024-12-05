@@ -17,7 +17,7 @@ import { cn } from "~/lib/utils";
 export function DateRangePicker({
   className,
   onChange,
-}: React.HTMLAttributes<HTMLDivElement> & {
+}: Omit<React.HTMLAttributes<HTMLDivElement>, "onChange"> & {
   onChange?: (date: DateRange | undefined) => void;
 }) {
   const [date, setDate] = React.useState<DateRange | undefined>();
@@ -35,7 +35,7 @@ export function DateRangePicker({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "justify-start text-left font-normal",
               !date && "text-muted-foreground",
             )}
           >
@@ -54,7 +54,7 @@ export function DateRangePicker({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="w-auto p-0" align="end">
           <Calendar
             initialFocus
             mode="range"
