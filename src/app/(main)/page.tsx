@@ -5,13 +5,14 @@ import {
   CameraIcon,
   CheckCheckIcon,
   FileVideo,
-  Search,
+  SearchX,
   VideoOffIcon,
 } from "lucide-react";
 import * as React from "react";
 import { useInView } from "react-intersection-observer";
 
-import { Input } from "~/components/ui/input";
+import { SearchBar } from "~/components/search-bar";
+import { useDebounce } from "~/hooks/use-debounce";
 import { useProfile } from "~/hooks/use-profile";
 import { api } from "~/trpc/react";
 
@@ -48,6 +49,9 @@ export default function HomePage() {
     rootMargin: "0px 0px 400px 0px",
   });
 
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
   const {
     data,
     isLoading: videosLoading,
@@ -71,14 +75,27 @@ export default function HomePage() {
     },
   );
 
-  // Filter videos based on user role and profile
-  const videos = data?.pages.flatMap((page) =>
-    user?.is_admin && (!profile || user.id === profile.id)
-      ? page.videos
-      : page.videos.filter((v) =>
-          v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-        ),
-  );
+  // Filter videos based on user role, profile, and search query
+  const videos = React.useMemo(() => {
+    const allVideos = data?.pages.flatMap((page) =>
+      user?.is_admin && (!profile || user.id === profile.id)
+        ? page.videos
+        : page.videos.filter((v) =>
+            v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+          ),
+    );
+
+    if (!allVideos || !debouncedSearchQuery) return allVideos;
+
+    const searchLower = debouncedSearchQuery.toLowerCase();
+    return allVideos.filter(
+      (video) =>
+        video.title?.toLowerCase().includes(searchLower) ||
+        video.description?.toLowerCase().includes(searchLower),
+    );
+  }, [data?.pages, user, profile, debouncedSearchQuery]);
+
+  const hasVideos = data?.pages.some((page) => page.videos.length > 0);
 
   // Fetch next page when scrolling near the bottom
   React.useEffect(() => {
@@ -103,7 +120,7 @@ export default function HomePage() {
     );
   }
 
-  if (!videos?.length) {
+  if (!hasVideos) {
     return (
       <div className="mt-20 flex items-center justify-center">
         <motion.div
@@ -176,19 +193,50 @@ export default function HomePage() {
           variants={itemVariants}
           className="relative mx-auto max-w-md"
         >
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="search"
+          <SearchBar
             placeholder="Search meetings..."
-            className="w-full rounded-full border-primary/20 pl-10 shadow-lg transition-shadow duration-300 hover:shadow-xl focus-visible:border-primary/30 focus-visible:ring-primary/20"
+            value={searchQuery}
+            onSearch={setSearchQuery}
           />
         </motion.div>
       </motion.div>
 
+      {/* No Results Message */}
+      {videos && videos.length === 0 && debouncedSearchQuery && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-6 py-12 text-center"
+        >
+          <motion.div
+            initial={{ rotate: -10 }}
+            animate={{ rotate: [10, -10, 10, 0] }}
+            transition={{
+              duration: 1.5,
+              times: [0.2, 0.4, 0.6, 1],
+              ease: [0.4, 0, 0.2, 1],
+            }}
+          >
+            <SearchX className="h-16 w-16 text-muted-foreground" />
+          </motion.div>
+          <div className="max-w-sm space-y-2">
+            <p className="font-semibold">
+              No meetings found matching your search
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Try adjusting your search terms or clear the search to see all
+              meetings.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Video Grid */}
-      <motion.div variants={itemVariants}>
-        <VideoGrid videos={videos} />
-      </motion.div>
+      {(!debouncedSearchQuery || (videos && videos.length > 0)) && (
+        <motion.div variants={itemVariants}>
+          <VideoGrid videos={videos ?? []} />
+        </motion.div>
+      )}
 
       {/* Load More Trigger */}
       <div ref={loadMoreRef} className="mt-12 w-full">
@@ -202,7 +250,7 @@ export default function HomePage() {
           </motion.div>
         )}
 
-        {!hasNextPage && videos.length > 0 && (
+        {!hasNextPage && videos && videos.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
