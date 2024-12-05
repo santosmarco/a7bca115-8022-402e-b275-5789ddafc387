@@ -2,6 +2,8 @@ import { initTRPC } from "@trpc/server";
 import SuperJSON from "superjson";
 import { ZodError } from "zod";
 
+import { logger } from "~/lib/logging/server";
+
 export const createTRPCContext = async (opts: { headers: Headers }) => {
   return {
     headers: opts.headers,
@@ -26,20 +28,41 @@ export const createCallerFactory = t.createCallerFactory;
 
 export const createTRPCRouter = t.router;
 
-const timingMiddleware = t.middleware(async ({ next, path }) => {
-  const start = Date.now();
+const loggingMiddleware = t.middleware(
+  async ({ type, path, meta, input, next }) => {
+    const startTime = performance.now();
+    const requestId = crypto.randomUUID();
+    const context = { type, path, meta, input, requestId };
 
-  if (t._config.isDev) {
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-  }
+    const trpcLogger = logger.with(context);
 
-  const result = await next();
+    trpcLogger.info(`[TRPC] ${path} procedure invoked`, {
+      event: "procedure.start",
+    });
 
-  const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+    try {
+      const result = await next();
 
-  return result;
-});
+      const duration = performance.now() - startTime;
 
-export const publicProcedure = t.procedure.use(timingMiddleware);
+      trpcLogger.info(`[TRPC] ${path} procedure succeeded`, {
+        event: "procedure.success",
+        duration,
+      });
+
+      return result;
+    } catch (error) {
+      const duration = performance.now() - startTime;
+
+      trpcLogger.error(`[TRPC] ${path} procedure failed`, {
+        event: "procedure.error",
+        error,
+        duration,
+      });
+
+      throw error;
+    }
+  },
+);
+
+export const publicProcedure = t.procedure.use(loggingMiddleware);

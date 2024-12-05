@@ -1,28 +1,41 @@
-import { log } from "@logtail/next";
-import type { NextRequest } from "next/server";
+import { type LogtailRequest, withLogtail } from "@logtail/next";
 
 import { updateSession } from "~/lib/supabase/middleware";
 
-export async function middleware(request: NextRequest) {
-  log.info(`=> ${request.method.toUpperCase()} ${request.url}`, {
-    url: request.url,
-    method: request.method.toUpperCase(),
-    headers: Object.fromEntries(request.headers.entries()),
-    nextUrl: {
-      pathname: request.nextUrl.pathname,
-      searchParams: Object.fromEntries(request.nextUrl.searchParams.entries()),
-    },
-  });
+import type { logger } from "./lib/logging/server";
+
+export const middleware = withLogtail(async (request: LogtailRequest) => {
+  const requestReport = {
+    startTime: performance.now(),
+    ip: request.ip,
+    region: request.geo?.country,
+    path: request.nextUrl.pathname,
+    host: request.nextUrl.host,
+    method: request.method,
+    scheme: request.nextUrl.protocol.replace(":", ""),
+    userAgent: request.headers.get("user-agent"),
+    requestId: crypto.randomUUID(),
+  } satisfies Parameters<typeof logger.withRequest>[0] &
+    Record<string, unknown>;
+
+  const logPrefix = `${requestReport.method} ${requestReport.path}`;
+
+  request.log.info(`${logPrefix} started`);
 
   const response = await updateSession(request);
 
-  log.info(`<= ${response.status} ${response.statusText}`, {
+  request.log.attachResponseStatus(response.status);
+
+  const duration = performance.now() - requestReport.startTime;
+
+  request.log.info(`${logPrefix} completed with status ${response.status}`, {
     status: response.status,
     statusText: response.statusText,
+    duration,
   });
 
   return response;
-}
+});
 
 export const config = {
   matcher: [

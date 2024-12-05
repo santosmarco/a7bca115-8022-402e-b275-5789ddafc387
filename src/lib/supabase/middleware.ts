@@ -1,11 +1,12 @@
+import type { LogtailRequest } from "@logtail/next";
 import { createServerClient } from "@supabase/ssr";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { env } from "~/env";
 
 import type { Database } from "./database.types";
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(request: LogtailRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(
@@ -32,6 +33,15 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    request.log = request.log.with({
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+  }
 
   if (
     !user &&
