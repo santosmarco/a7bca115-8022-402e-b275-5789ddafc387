@@ -1,15 +1,19 @@
 "use client";
 
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { subDays } from "date-fns";
+import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import _ from "lodash";
 import { Filter, FrownIcon, Search, TrendingUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
+import { type DateRange } from "react-day-picker";
 
 import { MomentCard } from "~/components/moment-card";
 import { Button } from "~/components/ui/button";
+import { DateRangePicker } from "~/components/ui/date-range-picker";
 import { Input } from "~/components/ui/input";
 import { ScrollBar } from "~/components/ui/scroll-area";
 import {
@@ -30,7 +34,7 @@ import {
 import { useProfile } from "~/hooks/use-profile";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
-import { api, type RouterOutputs } from "~/trpc/react";
+import { api } from "~/trpc/react";
 
 export function MomentsPageClient() {
   const router = useRouter();
@@ -44,6 +48,9 @@ export function MomentsPageClient() {
     "category",
     parseAsString,
   );
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const { profile } = useProfile();
   const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery();
   const { data: videosData, isLoading: videosLoading } =
@@ -81,6 +88,8 @@ export function MomentsPageClient() {
           .filter((v) => v.video.videoId === selectedVideo)
           .flatMap((v) => v.allMoments);
 
+  console.log(moments);
+
   // Filter and sort moments based on user selections
   const filteredMoments = moments
     .filter((moment) => {
@@ -94,16 +103,38 @@ export function MomentsPageClient() {
     .filter(
       (moment) =>
         !searchMomentIds || searchMomentIds.find((x) => x.id === moment.id),
-    );
+    )
+    .filter((moment) => {
+      if (!dateRange?.from) return true;
+      const videoDate = videosEnriched.find(
+        (v) => v.video.videoId === moment.video_id,
+      )?.video.publishedAt;
+      if (!videoDate) return true;
+      const date = dayjs(new Date(videoDate));
+      console.log(dateRange, date);
+      if (dateRange.to) {
+        return date.isAfter(dateRange.from) && date.isBefore(dateRange.to);
+      }
+      return date.isAfter(dateRange.from);
+    });
 
-  const sortedMoments = _.sortBy(
+  const sortedMoments = _.orderBy(
     filteredMoments,
-    (m) =>
-      m.reactions.reduce(
-        (acc, r) => acc + (r.reaction_type === "thumbs_up" ? -1 : 1),
-        0,
-      ),
-    (m) => !m.relevant,
+    [
+      (m) => {
+        const videoDate = videosEnriched.find(
+          (v) => v.video.videoId === m.video_id,
+        )?.video.publishedAt;
+        return videoDate ? new Date(videoDate).getTime() : 0;
+      },
+      (m) =>
+        m.reactions.reduce(
+          (acc, r) => acc + (r.reaction_type === "thumbs_up" ? -1 : 1),
+          0,
+        ),
+      (m) => !m.relevant,
+    ],
+    [sortOrder, "asc", "asc"],
   );
 
   const categories = _.sortBy(
@@ -244,15 +275,23 @@ export function MomentsPageClient() {
             </SelectContent>
           </Select>
 
-          {/* <Select value={selectedSort} onValueChange={setSelectedSort}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort By" />
+          <DateRangePicker
+            onChange={setDateRange}
+            className="w-full sm:w-auto"
+          />
+
+          <Select
+            value={sortOrder}
+            onValueChange={(v) => setSortOrder(v as "asc" | "desc")}
+          >
+            <SelectTrigger className="w-full sm:w-48">
+              <SelectValue placeholder="Sort By Date" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recent">Most Recent</SelectItem>
-              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="desc">Newest First</SelectItem>
+              <SelectItem value="asc">Oldest First</SelectItem>
             </SelectContent>
-          </Select> */}
+          </Select>
 
           <ScrollArea className="max-w-full overflow-scroll sm:max-w-[calc(100%-0.8125rem)]">
             <Tabs
@@ -283,6 +322,14 @@ export function MomentsPageClient() {
               onSkipToMoment={handleSkipToMoment(moment)}
               jumpToLabel="Watch"
               className="w-full"
+              videoTitle={
+                videosEnriched.find((v) => v.video.videoId === moment.video_id)
+                  ?.video.title
+              }
+              videoDate={
+                videosEnriched.find((v) => v.video.videoId === moment.video_id)
+                  ?.video.publishedAt
+              }
             />
           ))}
         </div>

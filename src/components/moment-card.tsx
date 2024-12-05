@@ -1,5 +1,3 @@
-"use client";
-
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ClockIcon,
@@ -7,6 +5,7 @@ import {
   Share2Icon,
   ThumbsDown,
   ThumbsUp,
+  VideoIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +51,8 @@ export type MomentCardProps = {
   jumpToLabel?: React.ReactNode;
   noShare?: boolean;
   className?: string;
+  videoTitle?: string;
+  videoDate?: string | null;
 };
 
 export function MomentCard({
@@ -61,6 +62,8 @@ export function MomentCard({
   jumpToLabel,
   noShare,
   className,
+  videoTitle,
+  videoDate,
 }: MomentCardProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
@@ -83,19 +86,16 @@ export function MomentCard({
 
   const { mutate: addReaction } = api.moments.addReaction.useMutation({
     onMutate: async ({ type }) => {
-      // Cancel outgoing refetches
       await utils.moments.getReactions.cancel({ momentId: moment.id });
       await utils.videos.getOne.cancel();
       await utils.videos.list.cancel();
 
-      // Snapshot the previous values
       const previousReactions = utils.moments.getReactions.getData({
         momentId: moment.id,
       });
       const previousVideo = utils.videos.getOne.getData();
       const previousVideos = utils.videos.list.getData();
 
-      // Optimistically update videos.getOne
       utils.videos.getOne.setData(
         {
           videoId: moment.video_id,
@@ -124,102 +124,7 @@ export function MomentCard({
           };
         },
       );
-      utils.videos.getOne.setData(
-        {
-          videoId: moment.video_id,
-          options: { moments: { includeNonRelevant: false } },
-        },
-        (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            moments: old.moments?.map((m) => {
-              if (m.id !== moment.id) return m;
-              return {
-                ...m,
-                reactions: [
-                  ...(m.reactions?.filter((r) => r.user_id !== user?.id) ?? []),
-                  {
-                    id: "temp-id",
-                    moment_id: moment.id,
-                    user_id: user?.id ?? "",
-                    reaction_type: type,
-                    created_at: new Date().toISOString(),
-                  },
-                ],
-              };
-            }),
-          };
-        },
-      );
 
-      // Optimistically update videos.listAll
-      utils.videos.list.setData(
-        { options: { moments: { includeNonRelevant: true } } },
-        (old) => {
-          if (!old?.videos) return old;
-          return {
-            ...old,
-            videos: old.videos.map((video) => {
-              if (video.videoId !== moment.video_id) return video;
-              return {
-                ...video,
-                moments: video.moments?.map((m) => {
-                  if (m.id !== moment.id) return m;
-                  return {
-                    ...m,
-                    reactions: [
-                      ...(m.reactions?.filter((r) => r.user_id !== user?.id) ??
-                        []),
-                      {
-                        id: "temp-id",
-                        moment_id: moment.id,
-                        user_id: user?.id ?? "",
-                        reaction_type: type,
-                        created_at: new Date().toISOString(),
-                      },
-                    ],
-                  };
-                }),
-              };
-            }),
-          };
-        },
-      );
-      utils.videos.list.setData(
-        { options: { moments: { includeNonRelevant: false } } },
-        (old) => {
-          if (!old?.videos) return old;
-          return {
-            ...old,
-            videos: old.videos.map((video) => {
-              if (video.videoId !== moment.video_id) return video;
-              return {
-                ...video,
-                moments: video.moments.map((m) => {
-                  if (m.id !== moment.id) return m;
-                  return {
-                    ...m,
-                    reactions: [
-                      ...(m.reactions?.filter((r) => r.user_id !== user?.id) ??
-                        []),
-                      {
-                        id: "temp-id",
-                        moment_id: moment.id,
-                        user_id: user?.id ?? "",
-                        reaction_type: type,
-                        created_at: new Date().toISOString(),
-                      },
-                    ],
-                  };
-                }),
-              };
-            }),
-          };
-        },
-      );
-
-      // Optimistically update getReactions
       utils.moments.getReactions.setData({ momentId: moment.id }, (old) => {
         const filtered = old?.filter((r) => r.user_id !== user?.id) ?? [];
         return [
@@ -236,7 +141,6 @@ export function MomentCard({
                   nickname: user.nickname,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
-                  email: user.email,
                 }
               : null,
           },
@@ -246,7 +150,6 @@ export function MomentCard({
       return { previousReactions, previousVideo, previousVideos };
     },
     onError: (err, newReaction, context) => {
-      // Revert back to previous states on error
       utils.moments.getReactions.setData(
         { momentId: moment.id },
         context?.previousReactions,
@@ -290,7 +193,6 @@ export function MomentCard({
                   nickname: user.nickname,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
-                  email: user.email,
                 }
               : null,
           },
@@ -312,6 +214,8 @@ export function MomentCard({
   });
 
   const styles = getMomentStyles(moment);
+
+  console.log(moment, videoDate);
 
   const handleCopyUrl = () => {
     const url = `${window.location.origin}/embed/moments/${encodeURIComponent(moment.index)}`;
@@ -372,49 +276,77 @@ export function MomentCard({
           className,
         )}
       >
-        <div className="mb-3 flex flex-col md:mb-2 md:flex-row md:items-center md:justify-between">
-          <h2 className="flex items-baseline font-bold">
-            {moment.title}
-            {user?.is_admin && (
-              <span className="ml-2 text-xs text-muted-foreground">
-                ID: {moment.id}
+        {/* Header Section */}
+        <div className="mb-3 flex flex-col gap-1">
+          {/* Title and Actions */}
+          <div className="flex items-start justify-between">
+            <h2 className="flex items-baseline font-bold leading-none">
+              {moment.title}
+              {user?.is_admin && (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ID: {moment.id}
+                </span>
+              )}
+            </h2>
+            <div className="flex items-center gap-x-2 text-muted-foreground">
+              {!moment.relevant && (
+                <Badge variant="destructive" className="mr-1.5">
+                  Not Relevant
+                </Badge>
+              )}
+              <span className="flex items-center gap-x-1.5 text-sm">
+                <ClockIcon className="h-3.5 w-3.5" />
+                {moment.segment_start_timestamp.replace(/\.\d+/, "")}
               </span>
-            )}
-          </h2>
-          <div className="mt-0.5 flex items-center gap-x-2 text-muted-foreground md:mt-0">
-            {!moment.relevant && (
-              <Badge variant="destructive" className="mr-1.5">
-                Not Relevant
-              </Badge>
-            )}
-            <span className="flex items-center gap-x-1.5 text-sm">
-              <ClockIcon className="h-3.5 w-3.5" />
-              {moment.segment_start_timestamp.replace(/\.\d+/, "")}
-            </span>
-            {!noShare && (
-              <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="link"
-                    size="icon"
-                    className="ml-1.5 hidden h-3.5 w-3.5 text-muted-foreground hover:text-foreground focus-visible:ring-0 md:block"
-                  >
-                    <Share2Icon className="h-3.5 w-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleCopyUrl}>
-                    Copy URL
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCopyEmbed}>
-                    Copy Embed Code
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+              {!noShare && (
+                <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="link"
+                      size="icon"
+                      className="ml-1.5 hidden h-3.5 w-3.5 text-muted-foreground hover:text-foreground focus-visible:ring-0 md:block"
+                    >
+                      <Share2Icon className="h-3.5 w-3.5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleCopyUrl}>
+                      Copy URL
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleCopyEmbed}>
+                      Copy Embed Code
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
           </div>
+
+          {/* Video Info */}
+          {(videoTitle || videoDate) && (
+            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+              {videoTitle && (
+                <div className="flex items-center gap-1.5 font-medium">
+                  <VideoIcon className="h-3.5 w-3.5" />
+                  <span className="leading-none">{videoTitle}</span>
+                  {videoDate && <span>•</span>}
+                </div>
+              )}
+              {videoDate && (
+                <span>
+                  {new Date(videoDate).toLocaleDateString(undefined, {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+              )}
+            </div>
+          )}
         </div>
-        <div className="mb-3 flex flex-wrap items-center gap-2 md:mb-4">
+
+        {/* Activity Types */}
+        <div className="mb-4 flex flex-wrap gap-2">
           {moment.target_person_type && (
             <Badge variant="outline" className="rounded-full">
               {moment.target_person_type}
@@ -428,6 +360,8 @@ export function MomentCard({
             {moment.activity_type}
           </Badge>
         </div>
+
+        {/* Summary */}
         <div className="flex flex-col sm:flex-row sm:items-end">
           <ExpandingText
             text={moment.summary}
@@ -438,6 +372,7 @@ export function MomentCard({
 
         <Separator className="my-4" />
 
+        {/* Actions */}
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             <Button
@@ -511,6 +446,7 @@ export function MomentCard({
           )}
         </div>
 
+        {/* Comments Section */}
         {showComments && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
@@ -556,9 +492,7 @@ export function MomentCard({
                 .map((comment) => (
                   <div key={comment.id} className="flex gap-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={/* comment.user.avatar_url */ undefined}
-                      />
+                      <AvatarImage src={undefined} />
                       <AvatarFallback>
                         {comment.user.nickname?.[0]?.toUpperCase()}
                       </AvatarFallback>
@@ -580,6 +514,8 @@ export function MomentCard({
           </motion.div>
         )}
       </motion.div>
+
+      {/* Overlay for disliked moments */}
       <AnimatePresence mode="wait">
         {hasMoreThumbsDown && (
           <motion.div
