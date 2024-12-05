@@ -139,6 +139,7 @@ export function MomentCard({
               ? {
                   id: user.id,
                   nickname: user.nickname,
+                  email: user.email,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
                 }
@@ -191,6 +192,7 @@ export function MomentCard({
               ? {
                   id: user.id,
                   nickname: user.nickname,
+                  email: user.email,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
                 }
