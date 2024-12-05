@@ -51,12 +51,20 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: false })
       .maybeSingle();
 
-    const { prompt } =
-      observationPrompt ??
-      (await cachedGetObservationPrompt({
-        userId,
-        selectedActivity,
-      }));
+    const prompt =
+      observationPrompt?.prompt ??
+      (selectedActivity
+        ? (
+            await cachedGetObservationPrompt({
+              userId,
+              selectedActivity,
+            })
+          )?.prompt
+        : null);
+
+    const initialMessages = prompt
+      ? [{ role: "system", content: prompt }]
+      : await getObservationChat(supabase, userId);
 
     const tools = {
       displayMoment: tool({
@@ -83,8 +91,7 @@ export async function POST(request: NextRequest) {
       model: openai("gpt-4o-mini-2024-07-18"),
       tools,
       temperature: 0.2,
-      // messages: [{ role: "system", content: prompt }, ...coreMessages],
-      messages: [{ role: "system", content: prompt }, ...coreMessages].map(
+      messages: [...initialMessages, ...coreMessages].map(
         (m) =>
           ({
             ...m,
@@ -102,6 +109,8 @@ export async function POST(request: NextRequest) {
           }) as CoreMessage,
       ),
       onFinish: async ({ response: { messages: responseMessages } }) => {
+        if (!selectedActivity) return;
+
         try {
           await api.chats.save({
             userId,
@@ -122,4 +131,22 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
+}
+
+async function getObservationChat(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+) {
+  const { data: prompts } = await supabase
+    .from("observation_prompts")
+    .select("*")
+    .eq("profile_id", userId)
+    .eq("latest", true)
+    .order("created_at", { ascending: false });
+
+  return (prompts ?? []).flatMap((prompt) => [
+    { role: "user", content: prompt.prompt },
+    { role: "user", content: `Tell me more about ${prompt.type}` },
+    { role: "assistant", content: prompt.result },
+  ]);
 }

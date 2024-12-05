@@ -31,6 +31,7 @@ export const env = createEnv({
     // Slack
     SLACK_BOT_TOKEN: z.string(),
     SLACK_NOTIFICATIONS_CHANNEL: z.string().default("eng-alerts"),
+    LOGTAIL_SOURCE_TOKEN: z.string(),
   },
 
   client: {
@@ -60,6 +61,7 @@ export const env = createEnv({
     MEETING_BAAS_API_KEY: process.env.MEETING_BAAS_API_KEY,
     SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
     SLACK_NOTIFICATIONS_CHANNEL: process.env.SLACK_NOTIFICATIONS_CHANNEL,
+    LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
     // Client
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
