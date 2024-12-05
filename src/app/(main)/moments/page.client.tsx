@@ -1,38 +1,19 @@
 "use client";
 
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { subDays } from "date-fns";
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import _ from "lodash";
-import { Filter, FrownIcon, Search, TrendingUpDown } from "lucide-react";
+import { FrownIcon, SearchX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
 import { type DateRange } from "react-day-picker";
 
 import { MomentCard } from "~/components/moment-card";
-import { Button } from "~/components/ui/button";
-import { DateRangePicker } from "~/components/ui/date-range-picker";
-import { Input } from "~/components/ui/input";
-import { ScrollBar } from "~/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectSeparator,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "~/components/ui/tooltip";
+import { MomentFilters } from "~/components/moments/moment-filters";
+import { MomentSkeletonGrid } from "~/components/moments/moment-skeleton";
 import { useProfile } from "~/hooks/use-profile";
-import type { VideoMoment } from "~/lib/schemas/video-moment";
+import { VideoMoment } from "~/lib/schemas/video-moment";
 import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
 import { api } from "~/trpc/react";
 
@@ -53,23 +34,41 @@ export function MomentsPageClient() {
 
   const { profile } = useProfile();
   const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery();
-  const { data: videosData, isLoading: videosLoading } =
-    api.videos.listAll.useQuery({
-      moments: {
-        includeNonRelevant:
-          user?.is_admin && (!profile || user.id === profile.id),
+  const {
+    data: videosData,
+    isLoading: videosLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = api.videos.list.useInfiniteQuery(
+    {
+      limit: 12,
+      options: {
+        moments: {
+          includeNonRelevant:
+            user?.is_admin && (!profile || user.id === profile.id),
+        },
+        tags:
+          user?.is_admin && (!profile || user.id === profile.id)
+            ? undefined
+            : [profile?.nickname ?? user?.nickname ?? ""],
       },
-    });
+    },
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    },
+  );
+
   const filteredVideos =
     (user?.is_admin && (!profile || user.id === profile.id)
-      ? videosData
-      : videosData?.filter((v) =>
-          v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
-        )) ?? [];
-  const { data: searchMomentIds } = api.moments.search.useQuery({
-    query: searchQueryDebounced ?? "",
-    limit: 100,
-  });
+      ? videosData?.pages.flatMap((page) => page.videos)
+      : videosData?.pages
+          .flatMap((page) => page.videos)
+          .filter((v) =>
+            v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+          )) ?? [];
 
   const videosEnriched = filteredVideos.map((video) => {
     const moments = video.moments ?? [];
@@ -81,14 +80,7 @@ export function MomentsPageClient() {
     return { video, moments, emotions, emotionMoments, allMoments };
   });
 
-  const moments =
-    selectedVideo === "all"
-      ? videosEnriched.flatMap((v) => v.allMoments)
-      : videosEnriched
-          .filter((v) => v.video.videoId === selectedVideo)
-          .flatMap((v) => v.allMoments);
-
-  console.log(moments);
+  const moments = videosEnriched.flatMap((v) => v.allMoments);
 
   // Filter and sort moments based on user selections
   const filteredMoments = moments
@@ -100,10 +92,19 @@ export function MomentsPageClient() {
       if (selectedCategory === "all") return true;
       return moment.activity === selectedCategory;
     })
-    .filter(
-      (moment) =>
-        !searchMomentIds || searchMomentIds.find((x) => x.id === moment.id),
-    )
+    .filter((moment) => {
+      if (!searchQueryDebounced) return true;
+      const searchTerms = searchQueryDebounced.toLowerCase().split(/\s+/);
+      const momentText = [
+        moment.activity,
+        moment.summary,
+        videosEnriched.find((v) => v.video.videoId === moment.video_id)?.video
+          .title ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return searchTerms.every((term) => momentText.includes(term));
+    })
     .filter((moment) => {
       if (!dateRange?.from) return true;
       const videoDate = videosEnriched.find(
@@ -111,7 +112,6 @@ export function MomentsPageClient() {
       )?.video.publishedAt;
       if (!videoDate) return true;
       const date = dayjs(new Date(videoDate));
-      console.log(dateRange, date);
       if (dateRange.to) {
         return date.isAfter(dateRange.from) && date.isBefore(dateRange.to);
       }
@@ -119,7 +119,7 @@ export function MomentsPageClient() {
     });
 
   const sortedMoments = _.orderBy(
-    filteredMoments,
+    filteredMoments.slice(),
     [
       (m) => {
         const videoDate = videosEnriched.find(
@@ -134,17 +134,14 @@ export function MomentsPageClient() {
         ),
       (m) => !m.relevant,
     ],
-    [sortOrder, "asc", "asc"],
+    sortOrder === "desc"
+      ? ["desc", "asc", "asc", "asc"]
+      : ["asc", "desc", "asc", "asc"],
   );
 
   const categories = _.sortBy(
-    Array.from(new Set(sortedMoments.map((m) => m.activity))),
+    Array.from(new Set(moments.map((m) => m.activity))),
     (x) => x,
-  );
-
-  const videosSorted = _.sortBy(
-    _.sortBy(videosEnriched, (v) => v.video.title),
-    (v) => !v.allMoments.length,
   );
 
   const handleSkipToMoment = (moment: VideoMoment) => () => {
@@ -169,7 +166,7 @@ export function MomentsPageClient() {
     function resetCategoryOnVideoChange() {
       void setSelectedCategory("all");
     },
-    [setSelectedCategory],
+    [selectedVideo, setSelectedCategory],
   );
 
   useEffect(
@@ -177,32 +174,44 @@ export function MomentsPageClient() {
       void setSelectedVideo("all");
       void setSelectedCategory("all");
     },
-    [setSelectedVideo, setSelectedCategory],
+    [profile, setSelectedVideo, setSelectedCategory],
   );
+
+  // Automatically fetch next page when available
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   if (videosLoading || userLoading) {
     return (
-      <div className="mt-20 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <TrendingUpDown className="h-10 w-10 animate-pulse text-primary" />
-          <p className="text-sm text-muted-foreground">Loading moments...</p>
-        </motion.div>
+      <div className="container mx-auto space-y-8 py-6">
+        <div className="space-y-4">
+          <h1 className="text-3xl font-bold">All Moments</h1>
+          <MomentFilters
+            onSearchChange={handleSearchChange}
+            onDateRangeChange={setDateRange}
+            onSortOrderChange={setSortOrder}
+            onCategoryChange={(category) => void setSelectedCategory(category)}
+            onVideoChange={(videoId) => void setSelectedVideo(videoId)}
+            categories={categories}
+            selectedCategory={selectedCategory}
+            selectedVideo={selectedVideo}
+            videos={videosEnriched}
+          />
+        </div>
+        <MomentSkeletonGrid />
       </div>
     );
   }
 
-  if (!videosSorted.length) {
+  if (!videosEnriched.length) {
     return (
       <div className="mt-20 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
           className="flex flex-col items-center gap-4"
         >
           <FrownIcon className="h-10 w-10 text-muted-foreground" />
@@ -212,119 +221,64 @@ export function MomentsPageClient() {
     );
   }
 
+  const hasNoResults =
+    sortedMoments.length === 0 && (searchQuery || selectedCategory !== "all");
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto space-y-2 py-6 sm:space-y-8">
-        {/* Header and Search Section */}
-        <div className="space-y-4">
-          <h1 className="text-3xl font-bold">All Moments</h1>
-          <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search moments..."
-                className="pl-8"
-                value={searchQuery ?? ""}
-                onChange={(e) => handleSearchChange(e.target.value)}
-              />
-            </div>
-            <Button variant="outline" className="flex gap-2">
-              <Filter className="h-4 w-4" />
-              Filters
-            </Button>
+    <div className="container mx-auto space-y-8 py-6">
+      <div className="space-y-4">
+        <h1 className="text-3xl font-bold">All Moments</h1>
+        <MomentFilters
+          onSearchChange={handleSearchChange}
+          onDateRangeChange={setDateRange}
+          onSortOrderChange={setSortOrder}
+          onCategoryChange={(category) => void setSelectedCategory(category)}
+          onVideoChange={(videoId) => void setSelectedVideo(videoId)}
+          categories={categories}
+          selectedCategory={selectedCategory}
+          selectedVideo={selectedVideo}
+          videos={videosEnriched}
+        />
+      </div>
+
+      {hasNoResults ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center gap-6 py-12 text-center"
+        >
+          <motion.div
+            initial={{ rotate: -10 }}
+            animate={{ rotate: [10, -10, 10, 0] }}
+            transition={{
+              duration: 1.5,
+              times: [0.2, 0.4, 0.6, 1],
+              ease: [0.4, 0, 0.2, 1],
+            }}
+          >
+            <SearchX className="h-16 w-16 text-muted-foreground" />
+          </motion.div>
+          <div className="max-w-sm space-y-2">
+            <p className="font-semibold">
+              No moments found matching your filters
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Try adjusting your search terms or filters to see more moments
+            </p>
           </div>
-        </div>
-
-        {/* Filter Options */}
-        <div className="flex max-w-full flex-col gap-2 sm:flex-row sm:gap-4">
-          <Select
-            value={selectedVideo ?? "all"}
-            onValueChange={setSelectedVideo}
-          >
-            <SelectTrigger className="w-full sm:w-64">
-              <SelectValue placeholder="Video Source" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Videos</SelectItem>
-              <SelectSeparator />
-              {videosSorted.map((video) => (
-                <TooltipProvider key={video.video.videoId} delayDuration={0}>
-                  <Tooltip
-                    open={video.allMoments.length === 0 ? undefined : false}
-                  >
-                    <TooltipTrigger asChild>
-                      <SelectItem
-                        value={video.video.videoId}
-                        disabled={video.allMoments.length === 0}
-                        className="!pointer-events-auto"
-                      >
-                        {video.video.title}
-                      </SelectItem>
-                    </TooltipTrigger>
-                    <TooltipContent
-                      align="start"
-                      side="bottom"
-                      alignOffset={8}
-                      className="bg-accent"
-                    >
-                      {video.allMoments.length === 0 && "No moments to display"}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              ))}
-            </SelectContent>
-          </Select>
-
-          <DateRangePicker
-            onChange={setDateRange}
-            className="w-full sm:w-auto"
-          />
-
-          <Select
-            value={sortOrder}
-            onValueChange={(v) => setSortOrder(v as "asc" | "desc")}
-          >
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Sort By Date" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="desc">Newest First</SelectItem>
-              <SelectItem value="asc">Oldest First</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <ScrollArea className="max-w-full overflow-scroll sm:max-w-[calc(100%-0.8125rem)]">
-            <Tabs
-              value={selectedCategory ?? "all"}
-              onValueChange={setSelectedCategory}
-              className="w-full sm:w-auto"
-            >
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                {categories.map((category) => (
-                  <TabsTrigger key={category} value={category}>
-                    {category}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            <ScrollBar orientation="horizontal" className="invisible" />
-          </ScrollArea>
-        </div>
-
-        {/* Moments Grid */}
-        <div className="grid gap-6 pt-4 sm:pt-0">
+        </motion.div>
+      ) : (
+        <div className="grid gap-4">
           {sortedMoments.map((moment, index) => (
             <MomentCard
-              key={moment.index}
+              key={moment.id}
               moment={moment}
               index={index}
               onSkipToMoment={handleSkipToMoment(moment)}
               jumpToLabel="Watch"
-              className="w-full"
               videoTitle={
                 videosEnriched.find((v) => v.video.videoId === moment.video_id)
-                  ?.video.title
+                  ?.video.title ?? undefined
               }
               videoDate={
                 videosEnriched.find((v) => v.video.videoId === moment.video_id)
@@ -333,6 +287,35 @@ export function MomentsPageClient() {
             />
           ))}
         </div>
+      )}
+
+      {/* Loading and End States */}
+      <div className="mt-12 w-full">
+        {isFetchingNextPage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center py-8"
+          >
+            <FrownIcon className="h-8 w-8 animate-pulse text-primary" />
+          </motion.div>
+        )}
+
+        {!hasNextPage && moments.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col items-center gap-4 pt-8"
+          >
+            <div className="text-center">
+              <p className="font-medium">You're all caught up! 🎉</p>
+              <p className="text-sm text-muted-foreground">
+                Check back later for new moments
+              </p>
+            </div>
+          </motion.div>
+        )}
       </div>
     </div>
   );
