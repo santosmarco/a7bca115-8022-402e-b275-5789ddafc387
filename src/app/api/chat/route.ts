@@ -12,6 +12,7 @@ import {
   listMeetingsTool,
 } from "~/lib/ai/tools";
 import { getObservationPrompt } from "~/lib/api/observation";
+import { searchSimilar } from "~/lib/pinecone/search";
 import { UIMessage } from "~/lib/schemas/ai";
 import { createClient } from "~/lib/supabase/server";
 import { api } from "~/trpc/server";
@@ -33,6 +34,7 @@ export const ChatRequestBody = z
 export type ChatRequestBody = z.infer<typeof ChatRequestBody>;
 
 const MODEL_RETRY_ORDER = [
+  "gpt-4o",
   "gpt-4o-mini",
   "gpt-4-turbo",
   "gpt-4",
@@ -52,7 +54,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = request.nextUrl.searchParams.get("model") ?? "gpt-4o-mini";
+    const model =
+      request.nextUrl.searchParams.get("model") ?? MODEL_RETRY_ORDER[0];
     const { userId, selectedActivity, messages } = bodyParseResult.data;
 
     const supabase = await createClient();
@@ -96,15 +99,50 @@ export async function POST(request: NextRequest) {
             `,
           },
         ]
-      : await getObservationChat(supabase, userId);
+      : /* await getObservationChat(supabase, userId); */ [];
 
     const coreMessages = convertToCoreMessages(messages, { tools });
+
+    const latestUserMessage = [...coreMessages]
+      .reverse()
+      .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
+
+    let context = "";
+    if (latestUserMessage) {
+      const results = await searchSimilar(
+        latestUserMessage.content.toString(),
+        {
+          topK: 30,
+          minScore: 0.4,
+        },
+      );
+      console.log(results);
+      context += results.map((r) => JSON.stringify(r, null, 2)).join("\n\n");
+    }
+
+    const systemMessages = context
+      ? [
+          ...initialMessages,
+          {
+            role: "user",
+            content: dedent`
+              Here is some relevant context from previous meetings that might help with the response:
+              
+              <context>
+              ${context}
+              </context>
+            `,
+          },
+        ]
+      : initialMessages;
+
+    console.log([...systemMessages, ...coreMessages]);
 
     const result = streamText({
       model: openai(model),
       tools: { ...tools, explain: explainTool(tools) },
       temperature: 0.2,
-      messages: [...initialMessages, ...coreMessages].map(
+      messages: [...systemMessages, ...coreMessages].map(
         (m) =>
           ({
             ...m,
@@ -113,10 +151,6 @@ export async function POST(request: NextRequest) {
               coreMessages.length > 1 && {
                 content: `
                   ${m.content}
-
-                  ---
-
-                  Remember: ALWAYS CALL the \`displayMoment\` tool to show a moment in the chat.
                 `,
               }),
           }) as CoreMessage,

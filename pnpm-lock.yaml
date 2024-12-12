@@ -25,19 +25,19 @@ importers:
         version: 3.9.1(react-hook-form@7.53.1(react@18.3.1))
       '@langchain/community':
         specifier: ^0.3.18
-        version: 0.3.18(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.76.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.3.0)(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))(@notionhq/client@2.2.15)(@supabase/supabase-js@2.46.1)(axios@1.7.7)(cheerio@1.0.0)(google-auth-library@9.14.2)(googleapis@144.0.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.76.1(zod@3.23.8))(playwright@1.49.1)(ws@8.18.0)
+        version: 0.3.18(@browserbasehq/sdk@2.0.0(encoding@0.1.13))(@browserbasehq/stagehand@1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(encoding@0.1.13)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.3.0)(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(@notionhq/client@2.2.15(encoding@0.1.13))(@pinecone-database/pinecone@4.0.0)(@supabase/supabase-js@2.46.1)(axios@1.7.7)(cheerio@1.0.0)(encoding@0.1.13)(google-auth-library@9.14.2(encoding@0.1.13))(googleapis@144.0.0(encoding@0.1.13))(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))(playwright@1.49.1)(ws@8.18.0)
       '@langchain/core':
         specifier: ^0.3.23
-        version: 0.3.23(openai@4.76.1(zod@3.23.8))
+        version: 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       '@langchain/langgraph':
         specifier: ^0.2.32
-        version: 0.2.32(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
+        version: 0.2.32(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))
       '@langchain/openai':
         specifier: ^0.3.14
-        version: 0.3.14(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
+        version: 0.3.14(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(encoding@0.1.13)
       '@langchain/textsplitters':
         specifier: ^0.1.0
-        version: 0.1.0(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
+        version: 0.1.0(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))
       '@logtail/next':
         specifier: ^0.1.7
         version: 0.1.7(next@14.2.16(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
@@ -46,7 +46,7 @@ importers:
         version: 7.13.4(react@18.3.1)
       '@notionhq/client':
         specifier: ^2.2.15
-        version: 2.2.15
+        version: 2.2.15(encoding@0.1.13)
       '@opentelemetry/api-logs':
         specifier: ^0.56.0
         version: 0.56.0
@@ -56,6 +56,9 @@ importers:
       '@opentelemetry/sdk-logs':
         specifier: ^0.56.0
         version: 0.56.0(@opentelemetry/api@1.9.0)
+      '@pinecone-database/pinecone':
+        specifier: ^4.0.0
+        version: 4.0.0
       '@radix-ui/react-accordion':
         specifier: ^1.2.1
         version: 1.2.1(@types/react-dom@18.3.1)(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -232,7 +235,7 @@ importers:
         version: 1.3.1(next@14.2.16(@babel/core@7.26.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.49.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))
       googleapis:
         specifier: ^144.0.0
-        version: 144.0.0
+        version: 144.0.0(encoding@0.1.13)
       http:
         specifier: 0.0.1-security
         version: 0.0.1-security
@@ -244,7 +247,7 @@ importers:
         version: 1.2.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       langchain:
         specifier: ^0.3.7
-        version: 0.3.7(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))(axios@1.7.7)(cheerio@1.0.0)(handlebars@4.7.8)(openai@4.76.1(zod@3.23.8))
+        version: 0.3.7(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(axios@1.7.7)(cheerio@1.0.0)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       langfuse:
         specifier: ^3.31.3
         version: 3.31.3
@@ -443,7 +446,7 @@ importers:
         version: 5.6.3
       vercel:
         specifier: ^37.14.0
-        version: 37.14.0
+        version: 37.14.0(encoding@0.1.13)
 
 packages:
 
@@ -1806,6 +1809,10 @@ packages:
   '@opentelemetry/semantic-conventions@1.28.0':
     resolution: {integrity: sha512-lp4qAiMTD4sNWW4DbKLBkfiMZ4jbAboJIGOQr5DvciMRI494OapieI9qiODpOt0XBr1LjIDy1xAGAnVs5supTA==}
     engines: {node: '>=14'}
+
+  '@pinecone-database/pinecone@4.0.0':
+    resolution: {integrity: sha512-INYS+GBys9v5BRTyn0tv8srVsPTlSRvE3BPE4Wkc/lOEyAIyB9F7DEMXbeF19FOLEgRwCuHTLjzm1niENl+4FA==}
+    engines: {node: '>=18.0.0'}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -4096,6 +4103,9 @@ packages:
 
   encoding-sniffer@0.2.0:
     resolution: {integrity: sha512-ju7Wq1kg04I3HtiYIOrUrdfdDvkyO9s5XM8QAj/bN61Yo/Vb4vgJxy5vi4Yxk01gWHbrofpPtpxM8bKger9jhg==}
+
+  encoding@0.1.13:
+    resolution: {integrity: sha512-ETBauow1T35Y/WZMkio9jiM0Z5xjHHmJ4XmjZOq1l/dXz3lr2sRn87nJy20RupqSh1F2m3HHPSp8ShIPQJrJ3A==}
 
   end-of-stream@1.1.0:
     resolution: {integrity: sha512-EoulkdKF/1xa92q25PbjuDcgJ9RDHYU2Rs3SCIvs2/dSQ3BpmxneNHmA/M7fe60M3PrV7nNGTTNbkK62l6vXiQ==}
@@ -7977,7 +7987,7 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
 
-  '@anthropic-ai/sdk@0.27.3':
+  '@anthropic-ai/sdk@0.27.3(encoding@0.1.13)':
     dependencies:
       '@types/node': 18.19.68
       '@types/node-fetch': 2.6.11
@@ -7985,7 +7995,7 @@ snapshots:
       agentkeepalive: 4.5.0
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
@@ -8129,7 +8139,7 @@ snapshots:
       '@babel/helper-string-parser': 7.25.9
       '@babel/helper-validator-identifier': 7.25.9
 
-  '@browserbasehq/sdk@2.0.0':
+  '@browserbasehq/sdk@2.0.0(encoding@0.1.13)':
     dependencies:
       '@types/node': 18.19.68
       '@types/node-fetch': 2.6.11
@@ -8137,18 +8147,18 @@ snapshots:
       agentkeepalive: 4.5.0
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
-  '@browserbasehq/stagehand@1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.76.1(zod@3.23.8))(zod@3.23.8)':
+  '@browserbasehq/stagehand@1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(encoding@0.1.13)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))(zod@3.23.8)':
     dependencies:
-      '@anthropic-ai/sdk': 0.27.3
-      '@browserbasehq/sdk': 2.0.0
+      '@anthropic-ai/sdk': 0.27.3(encoding@0.1.13)
+      '@browserbasehq/sdk': 2.0.0(encoding@0.1.13)
       '@playwright/test': 1.49.1
       deepmerge: 4.3.1
       dotenv: 16.4.7
-      openai: 4.76.1(zod@3.23.8)
+      openai: 4.76.1(encoding@0.1.13)(zod@3.23.8)
       sharp: 0.33.5
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
@@ -8532,30 +8542,31 @@ snapshots:
 
   '@jsonhero/path@1.0.21': {}
 
-  '@langchain/community@0.3.18(@browserbasehq/sdk@2.0.0)(@browserbasehq/stagehand@1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.76.1(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.3.0)(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))(@notionhq/client@2.2.15)(@supabase/supabase-js@2.46.1)(axios@1.7.7)(cheerio@1.0.0)(google-auth-library@9.14.2)(googleapis@144.0.0)(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.76.1(zod@3.23.8))(playwright@1.49.1)(ws@8.18.0)':
+  '@langchain/community@0.3.18(@browserbasehq/sdk@2.0.0(encoding@0.1.13))(@browserbasehq/stagehand@1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(encoding@0.1.13)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))(zod@3.23.8))(@ibm-cloud/watsonx-ai@1.3.0)(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(@notionhq/client@2.2.15(encoding@0.1.13))(@pinecone-database/pinecone@4.0.0)(@supabase/supabase-js@2.46.1)(axios@1.7.7)(cheerio@1.0.0)(encoding@0.1.13)(google-auth-library@9.14.2(encoding@0.1.13))(googleapis@144.0.0(encoding@0.1.13))(handlebars@4.7.8)(ibm-cloud-sdk-core@5.1.0)(ignore@5.3.2)(jsonwebtoken@9.0.2)(lodash@4.17.21)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))(playwright@1.49.1)(ws@8.18.0)':
     dependencies:
-      '@browserbasehq/stagehand': 1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(openai@4.76.1(zod@3.23.8))(zod@3.23.8)
+      '@browserbasehq/stagehand': 1.6.0(@playwright/test@1.49.1)(deepmerge@4.3.1)(dotenv@16.4.7)(encoding@0.1.13)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))(zod@3.23.8)
       '@ibm-cloud/watsonx-ai': 1.3.0
-      '@langchain/core': 0.3.23(openai@4.76.1(zod@3.23.8))
-      '@langchain/openai': 0.3.14(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
+      '@langchain/core': 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
+      '@langchain/openai': 0.3.14(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(encoding@0.1.13)
       binary-extensions: 2.3.0
       expr-eval: 2.0.2
       flat: 5.0.2
       ibm-cloud-sdk-core: 5.1.0
       js-yaml: 4.1.0
-      langchain: 0.3.7(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))(axios@1.7.7)(cheerio@1.0.0)(handlebars@4.7.8)(openai@4.76.1(zod@3.23.8))
-      langsmith: 0.2.13(openai@4.76.1(zod@3.23.8))
-      openai: 4.76.1(zod@3.23.8)
+      langchain: 0.3.7(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(axios@1.7.7)(cheerio@1.0.0)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
+      langsmith: 0.2.13(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
+      openai: 4.76.1(encoding@0.1.13)(zod@3.23.8)
       uuid: 10.0.0
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
     optionalDependencies:
-      '@browserbasehq/sdk': 2.0.0
-      '@notionhq/client': 2.2.15
+      '@browserbasehq/sdk': 2.0.0(encoding@0.1.13)
+      '@notionhq/client': 2.2.15(encoding@0.1.13)
+      '@pinecone-database/pinecone': 4.0.0
       '@supabase/supabase-js': 2.46.1
       cheerio: 1.0.0
-      google-auth-library: 9.14.2
-      googleapis: 144.0.0
+      google-auth-library: 9.14.2(encoding@0.1.13)
+      googleapis: 144.0.0(encoding@0.1.13)
       ignore: 5.3.2
       jsonwebtoken: 9.0.2
       lodash: 4.17.21
@@ -8575,14 +8586,14 @@ snapshots:
       - handlebars
       - peggy
 
-  '@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8))':
+  '@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))':
     dependencies:
       '@cfworker/json-schema': 4.0.3
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.15
-      langsmith: 0.2.13(openai@4.76.1(zod@3.23.8))
+      langsmith: 0.2.13(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -8592,9 +8603,9 @@ snapshots:
     transitivePeerDependencies:
       - openai
 
-  '@langchain/langgraph-checkpoint@0.0.13(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))':
+  '@langchain/langgraph-checkpoint@0.0.13(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))':
     dependencies:
-      '@langchain/core': 0.3.23(openai@4.76.1(zod@3.23.8))
+      '@langchain/core': 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       uuid: 10.0.0
 
   '@langchain/langgraph-sdk@0.0.32':
@@ -8604,27 +8615,27 @@ snapshots:
       p-retry: 4.6.2
       uuid: 9.0.1
 
-  '@langchain/langgraph@0.2.32(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))':
+  '@langchain/langgraph@0.2.32(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))':
     dependencies:
-      '@langchain/core': 0.3.23(openai@4.76.1(zod@3.23.8))
-      '@langchain/langgraph-checkpoint': 0.0.13(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
+      '@langchain/core': 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
+      '@langchain/langgraph-checkpoint': 0.0.13(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))
       '@langchain/langgraph-sdk': 0.0.32
       uuid: 10.0.0
       zod: 3.23.8
 
-  '@langchain/openai@0.3.14(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))':
+  '@langchain/openai@0.3.14(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(encoding@0.1.13)':
     dependencies:
-      '@langchain/core': 0.3.23(openai@4.76.1(zod@3.23.8))
+      '@langchain/core': 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       js-tiktoken: 1.0.15
-      openai: 4.76.1(zod@3.23.8)
+      openai: 4.76.1(encoding@0.1.13)(zod@3.23.8)
       zod: 3.23.8
       zod-to-json-schema: 3.24.1(zod@3.23.8)
     transitivePeerDependencies:
       - encoding
 
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))':
+  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))':
     dependencies:
-      '@langchain/core': 0.3.23(openai@4.76.1(zod@3.23.8))
+      '@langchain/core': 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       js-tiktoken: 1.0.15
 
   '@liuli-util/fs-extra@0.1.0':
@@ -8641,12 +8652,12 @@ snapshots:
     dependencies:
       react: 18.3.1
 
-  '@mapbox/node-pre-gyp@1.0.11':
+  '@mapbox/node-pre-gyp@1.0.11(encoding@0.1.13)':
     dependencies:
       detect-libc: 2.0.3
       https-proxy-agent: 5.0.1
       make-dir: 3.1.0
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
       nopt: 5.0.0
       npmlog: 5.0.1
       rimraf: 3.0.2
@@ -8708,10 +8719,10 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@notionhq/client@2.2.15':
+  '@notionhq/client@2.2.15(encoding@0.1.13)':
     dependencies:
       '@types/node-fetch': 2.6.11
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
@@ -8936,6 +8947,10 @@ snapshots:
   '@opentelemetry/semantic-conventions@1.25.1': {}
 
   '@opentelemetry/semantic-conventions@1.28.0': {}
+
+  '@pinecone-database/pinecone@4.0.0':
+    dependencies:
+      encoding: 0.1.13
 
   '@pkgjs/parseargs@0.11.0':
     optional: true
@@ -10272,7 +10287,7 @@ snapshots:
 
   '@vercel/error-utils@2.0.2': {}
 
-  '@vercel/fun@1.1.0':
+  '@vercel/fun@1.1.0(encoding@0.1.13)':
     dependencies:
       '@tootallnate/once': 2.0.0
       async-listen: 1.2.0
@@ -10282,7 +10297,7 @@ snapshots:
       generic-pool: 3.4.2
       micro: 9.3.5-canary.3
       ms: 2.1.1
-      node-fetch: 2.6.7
+      node-fetch: 2.6.7(encoding@0.1.13)
       path-match: 1.2.4
       promisepipe: 3.0.0
       semver: 7.3.5
@@ -10318,16 +10333,16 @@ snapshots:
       '@vercel/static-config': 3.0.0
       ts-morph: 12.0.0
 
-  '@vercel/next@4.3.18':
+  '@vercel/next@4.3.18(encoding@0.1.13)':
     dependencies:
-      '@vercel/nft': 0.27.3
+      '@vercel/nft': 0.27.3(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  '@vercel/nft@0.27.3':
+  '@vercel/nft@0.27.3(encoding@0.1.13)':
     dependencies:
-      '@mapbox/node-pre-gyp': 1.0.11
+      '@mapbox/node-pre-gyp': 1.0.11(encoding@0.1.13)
       '@rollup/pluginutils': 4.2.1
       acorn: 8.14.0
       acorn-import-attributes: 1.9.5(acorn@8.14.0)
@@ -10343,7 +10358,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@vercel/node@3.2.24':
+  '@vercel/node@3.2.24(encoding@0.1.13)':
     dependencies:
       '@edge-runtime/node-utils': 2.3.0
       '@edge-runtime/primitives': 4.1.0
@@ -10351,7 +10366,7 @@ snapshots:
       '@types/node': 16.18.11
       '@vercel/build-utils': 8.4.12
       '@vercel/error-utils': 2.0.2
-      '@vercel/nft': 0.27.3
+      '@vercel/nft': 0.27.3(encoding@0.1.13)
       '@vercel/static-config': 3.0.0
       async-listen: 3.0.0
       cjs-module-lexer: 1.2.3
@@ -10359,7 +10374,7 @@ snapshots:
       es-module-lexer: 1.4.1
       esbuild: 0.14.47
       etag: 1.8.1
-      node-fetch: 2.6.9
+      node-fetch: 2.6.9(encoding@0.1.13)
       path-to-regexp: 6.2.1
       ts-morph: 12.0.0
       ts-node: 10.9.1(@types/node@16.18.11)(typescript@4.9.5)
@@ -10383,9 +10398,9 @@ snapshots:
 
   '@vercel/python@4.3.1': {}
 
-  '@vercel/redwood@2.1.8':
+  '@vercel/redwood@2.1.8(encoding@0.1.13)':
     dependencies:
-      '@vercel/nft': 0.27.3
+      '@vercel/nft': 0.27.3(encoding@0.1.13)
       '@vercel/routing-utils': 3.1.0
       '@vercel/static-config': 3.0.0
       semver: 6.3.1
@@ -10394,10 +10409,10 @@ snapshots:
       - encoding
       - supports-color
 
-  '@vercel/remix-builder@2.2.13':
+  '@vercel/remix-builder@2.2.13(encoding@0.1.13)':
     dependencies:
       '@vercel/error-utils': 2.0.2
-      '@vercel/nft': 0.27.3
+      '@vercel/nft': 0.27.3(encoding@0.1.13)
       '@vercel/static-config': 3.0.0
       ts-morph: 12.0.0
     transitivePeerDependencies:
@@ -11412,6 +11427,10 @@ snapshots:
       iconv-lite: 0.6.3
       whatwg-encoding: 3.1.1
 
+  encoding@0.1.13:
+    dependencies:
+      iconv-lite: 0.6.3
+
   end-of-stream@1.1.0:
     dependencies:
       once: 1.3.3
@@ -12231,20 +12250,20 @@ snapshots:
       strip-ansi: 6.0.1
       wide-align: 1.1.5
 
-  gaxios@6.7.1:
+  gaxios@6.7.1(encoding@0.1.13):
     dependencies:
       extend: 3.0.2
       https-proxy-agent: 7.0.5
       is-stream: 2.0.1
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
       uuid: 9.0.1
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  gcp-metadata@6.1.0:
+  gcp-metadata@6.1.0(encoding@0.1.13):
     dependencies:
-      gaxios: 6.7.1
+      gaxios: 6.7.1(encoding@0.1.13)
       json-bigint: 1.0.0
     transitivePeerDependencies:
       - encoding
@@ -12344,23 +12363,23 @@ snapshots:
       merge2: 1.4.1
       slash: 3.0.0
 
-  google-auth-library@9.14.2:
+  google-auth-library@9.14.2(encoding@0.1.13):
     dependencies:
       base64-js: 1.5.1
       ecdsa-sig-formatter: 1.0.11
-      gaxios: 6.7.1
-      gcp-metadata: 6.1.0
-      gtoken: 7.1.0
+      gaxios: 6.7.1(encoding@0.1.13)
+      gcp-metadata: 6.1.0(encoding@0.1.13)
+      gtoken: 7.1.0(encoding@0.1.13)
       jws: 4.0.0
     transitivePeerDependencies:
       - encoding
       - supports-color
 
-  googleapis-common@7.2.0:
+  googleapis-common@7.2.0(encoding@0.1.13):
     dependencies:
       extend: 3.0.2
-      gaxios: 6.7.1
-      google-auth-library: 9.14.2
+      gaxios: 6.7.1(encoding@0.1.13)
+      google-auth-library: 9.14.2(encoding@0.1.13)
       qs: 6.13.0
       url-template: 2.0.8
       uuid: 9.0.1
@@ -12368,10 +12387,10 @@ snapshots:
       - encoding
       - supports-color
 
-  googleapis@144.0.0:
+  googleapis@144.0.0(encoding@0.1.13):
     dependencies:
-      google-auth-library: 9.14.2
-      googleapis-common: 7.2.0
+      google-auth-library: 9.14.2(encoding@0.1.13)
+      googleapis-common: 7.2.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -12398,9 +12417,9 @@ snapshots:
 
   graphemer@1.4.0: {}
 
-  gtoken@7.1.0:
+  gtoken@7.1.0(encoding@0.1.13):
     dependencies:
-      gaxios: 6.7.1
+      gaxios: 6.7.1(encoding@0.1.13)
       jws: 4.0.0
     transitivePeerDependencies:
       - encoding
@@ -13002,15 +13021,15 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  langchain@0.3.7(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))(axios@1.7.7)(cheerio@1.0.0)(handlebars@4.7.8)(openai@4.76.1(zod@3.23.8)):
+  langchain@0.3.7(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(axios@1.7.7)(cheerio@1.0.0)(encoding@0.1.13)(handlebars@4.7.8)(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)):
     dependencies:
-      '@langchain/core': 0.3.23(openai@4.76.1(zod@3.23.8))
-      '@langchain/openai': 0.3.14(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.23(openai@4.76.1(zod@3.23.8)))
+      '@langchain/core': 0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
+      '@langchain/openai': 0.3.14(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))(encoding@0.1.13)
+      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.23(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)))
       js-tiktoken: 1.0.15
       js-yaml: 4.1.0
       jsonpointer: 5.0.1
-      langsmith: 0.2.13(openai@4.76.1(zod@3.23.8))
+      langsmith: 0.2.13(openai@4.76.1(encoding@0.1.13)(zod@3.23.8))
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
@@ -13039,7 +13058,7 @@ snapshots:
     dependencies:
       langfuse-core: 3.31.3
 
-  langsmith@0.2.13(openai@4.76.1(zod@3.23.8)):
+  langsmith@0.2.13(openai@4.76.1(encoding@0.1.13)(zod@3.23.8)):
     dependencies:
       '@types/uuid': 10.0.0
       commander: 10.0.1
@@ -13048,7 +13067,7 @@ snapshots:
       semver: 7.6.3
       uuid: 10.0.0
     optionalDependencies:
-      openai: 4.76.1(zod@3.23.8)
+      openai: 4.76.1(encoding@0.1.13)(zod@3.23.8)
 
   language-subtag-registry@0.3.23: {}
 
@@ -13708,17 +13727,23 @@ snapshots:
 
   node-domexception@1.0.0: {}
 
-  node-fetch@2.6.7:
+  node-fetch@2.6.7(encoding@0.1.13):
     dependencies:
       whatwg-url: 5.0.0
+    optionalDependencies:
+      encoding: 0.1.13
 
-  node-fetch@2.6.9:
+  node-fetch@2.6.9(encoding@0.1.13):
     dependencies:
       whatwg-url: 5.0.0
+    optionalDependencies:
+      encoding: 0.1.13
 
-  node-fetch@2.7.0:
+  node-fetch@2.7.0(encoding@0.1.13):
     dependencies:
       whatwg-url: 5.0.0
+    optionalDependencies:
+      encoding: 0.1.13
 
   node-fetch@3.3.2:
     dependencies:
@@ -13858,7 +13883,7 @@ snapshots:
       regex: 5.0.2
       regex-recursion: 4.2.1
 
-  openai@4.76.1(zod@3.23.8):
+  openai@4.76.1(encoding@0.1.13)(zod@3.23.8):
     dependencies:
       '@types/node': 18.19.68
       '@types/node-fetch': 2.6.11
@@ -13866,7 +13891,7 @@ snapshots:
       agentkeepalive: 4.5.0
       form-data-encoder: 1.7.2
       formdata-node: 4.4.1
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
     optionalDependencies:
       zod: 3.23.8
     transitivePeerDependencies:
@@ -15615,17 +15640,17 @@ snapshots:
       - '@types/react'
       - '@types/react-dom'
 
-  vercel@37.14.0:
+  vercel@37.14.0(encoding@0.1.13):
     dependencies:
       '@vercel/build-utils': 8.4.12
-      '@vercel/fun': 1.1.0
+      '@vercel/fun': 1.1.0(encoding@0.1.13)
       '@vercel/go': 3.2.0
       '@vercel/hydrogen': 1.0.9
-      '@vercel/next': 4.3.18
-      '@vercel/node': 3.2.24
+      '@vercel/next': 4.3.18(encoding@0.1.13)
+      '@vercel/node': 3.2.24(encoding@0.1.13)
       '@vercel/python': 4.3.1
-      '@vercel/redwood': 2.1.8
-      '@vercel/remix-builder': 2.2.13
+      '@vercel/redwood': 2.1.8(encoding@0.1.13)
+      '@vercel/remix-builder': 2.2.13(encoding@0.1.13)
       '@vercel/ruby': 2.1.0
       '@vercel/static-build': 2.5.34
       chokidar: 3.3.1

@@ -166,6 +166,7 @@ export const listMeetingsTool = tool({
             speaker: true,
           })
           .extend({
+            id: z.string(),
             momentIds: z.array(z.string()).optional(),
           }),
       )
@@ -211,6 +212,7 @@ export const listMeetingsTool = tool({
 
     const data =
       result.data?.map((meeting) => ({
+        id: meeting.video_api_id,
         name: meeting.name,
         date: meeting.date,
         speaker: meeting.speaker,
