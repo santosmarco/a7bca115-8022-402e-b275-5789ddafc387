@@ -39,7 +39,10 @@ const MODEL_RETRY_ORDER = [
   "gpt-4-turbo",
   "gpt-4",
   "gpt-3.5-turbo",
-] satisfies Parameters<typeof openai>[0][];
+] as const satisfies Parameters<typeof openai>[0][];
+const modelRetryOrderSchema = z
+  .enum(MODEL_RETRY_ORDER)
+  .catch(MODEL_RETRY_ORDER[0]);
 
 export async function POST(request: NextRequest) {
   try {
@@ -54,8 +57,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model =
-      request.nextUrl.searchParams.get("model") ?? MODEL_RETRY_ORDER[0];
+    const model = modelRetryOrderSchema.parse(
+      request.nextUrl.searchParams.get("model") ?? MODEL_RETRY_ORDER[0],
+    );
     const { userId, selectedActivity, messages } = bodyParseResult.data;
 
     const supabase = await createClient();
