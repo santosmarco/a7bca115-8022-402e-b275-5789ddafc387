@@ -2,12 +2,8 @@
 
 import type { ToolInvocation } from "ai";
 import { cva, type VariantProps } from "class-variance-authority";
-import {
-  ChevronDown,
-  MessageCircle,
-  MessageSquare,
-  TrendingUpDownIcon,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronDown, MessageSquare } from "lucide-react";
 import type React from "react";
 import { useState } from "react";
 
@@ -18,6 +14,7 @@ import {
   CollapsibleTrigger,
 } from "~/components/ui/collapsible";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
+import type { ListMeetingsToolOutput } from "~/lib/ai/tools";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -207,6 +204,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                       />
                     </CollapsibleContent>
                   </Collapsible>
+                );
+              } else if (toolInvocation.toolName === "listMeetings") {
+                const { data } =
+                  toolInvocation.result as ListMeetingsToolOutput;
+                return (
+                  <motion.div className="flex flex-col gap-2">
+                    {data?.map((meeting) => (
+                      <div key={meeting.video_api_id}>{meeting.name}</div>
+                    ))}
+                  </motion.div>
                 );
               }
 

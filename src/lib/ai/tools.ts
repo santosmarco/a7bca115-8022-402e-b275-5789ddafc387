@@ -1,20 +1,231 @@
-import { tool } from "ai";
+import type { CoreMessage } from "ai";
+import { tool as coreTool } from "ai";
+import _ from "lodash";
+import type { ZodType, ZodTypeDef } from "zod";
 import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 
 import { api } from "~/trpc/server";
 
-export const getMomentsTool = tool({
-  description: "Useful when you need to get moments for a given activity",
-  parameters: z.object({
-    activity: z.string().describe("The activity to get moments for"),
+import { VideoMoment } from "../schemas/video-moment";
+import { meetingsRowSchema, momentsRowSchema } from "../supabase/schemas";
+import { createClient } from "../supabase/server";
+
+type inferParameters<T extends ZodType<any, ZodTypeDef, any>> = z.infer<T>;
+
+export function tool<
+  TParameters extends ZodType<any, ZodTypeDef, any>,
+  TResult,
+>(tool: {
+  description: string;
+  parameters: TParameters;
+  output: z.ZodType<TResult>;
+  execute: (
+    args: inferParameters<TParameters>,
+    options: {
+      messages: CoreMessage[];
+      abortSignal?: AbortSignal;
+    },
+  ) => PromiseLike<TResult>;
+}) {
+  return Object.assign(coreTool(tool), {
+    _def: {
+      description: tool.description,
+      parameters: tool.parameters,
+      output: tool.output,
+    },
+  });
+}
+
+export type Tool<
+  TParameters extends ZodType<any, ZodTypeDef, any> = any,
+  TResult = any,
+> = ReturnType<typeof tool<TParameters, TResult>>;
+
+export type ToolOutput<T extends Tool> = z.output<T["_def"]["output"]>;
+
+export function explainTools<T extends Record<string, Tool>>(tools: T) {
+  return _({ ...tools, explain: explainTool(tools) })
+    .toPairs()
+    .map(
+      ([name, tool]) =>
+        `- \`${name}\`: ${tool._def.description}\n${JSON.stringify(
+          {
+            parameters: zodToJsonSchema(tool._def.parameters),
+            output: zodToJsonSchema(tool._def.output),
+          },
+          null,
+          2,
+        )}`,
+    )
+    .join("\n\n")
+    .valueOf();
+}
+
+export const explainTool = <T extends Record<string, Tool>>(tools: T) =>
+  tool({
+    description: "Useful for explaining a tool.",
+    parameters: z.object({
+      toolName: z
+        .enum(Object.keys(tools) as [string, ...string[]])
+        .describe("The name of the tool to explain."),
+    }),
+    output: z.object({
+      error: z
+        .string()
+        .optional()
+        .describe("A description of an error, if applicable."),
+      description: z
+        .string()
+        .optional()
+        .describe("The description of the tool."),
+      parameters: z
+        .unknown()
+        .optional()
+        .describe("The parameters of the tool."),
+      output: z.unknown().optional().describe("The output of the tool."),
+    }),
+    execute: async ({ toolName }) => {
+      const tool = tools[toolName];
+
+      if (!tool) {
+        return { error: `Tool ${toolName} not found.` };
+      }
+
+      return {
+        description: tool._def.description,
+        parameters: tool._def.parameters,
+        output: tool._def.output,
+      };
+    },
+  });
+
+export const displayMomentTool = tool({
+  description:
+    "Useful for displaying a moment in the chat. Pass the moment ID and the reasoning for displaying it.",
+  parameters: z
+    .object({
+      id: z.string().describe("The ID of the moment to display."),
+      reasoning: z
+        .string()
+        .describe("The reasoning for displaying the moment."),
+    })
+    .describe("The arguments for the displayMoment tool."),
+  output: z.object({
+    id: z.string(),
+    reasoning: z.string(),
+    moment: VideoMoment,
   }),
-  execute: async ({ activity }) => {
-    let { moments } = await api.moments.listAll();
-
-    if (activity) {
-      moments = moments.filter((moment) => moment.activity === activity);
-    }
-
-    return moments;
+  execute: async ({ id, reasoning }) => {
+    const moment = await api.moments.getOneById({ momentId: id });
+    return { id, reasoning, moment };
   },
 });
+
+export const listMeetingsTool = tool({
+  description:
+    "Useful when you need to get data about one or more meetings from the database.",
+  parameters: z.object({
+    filters: z.object({
+      meetingId: z
+        .string()
+        .optional()
+        .describe("(Optional) The ID, aka `video_api_id`, of the meeting."),
+      speaker: z
+        .string()
+        .optional()
+        .describe(
+          "(Optional) The speaker, aka `target_person`, to filter the moments by.",
+        ),
+      startDate: z
+        .string()
+        .optional()
+        .describe("(Optional) The start date to filter the moments by."),
+      endDate: z
+        .string()
+        .optional()
+        .describe("(Optional) The end date to filter the moments by."),
+    }),
+    page: z
+      .number()
+      .optional()
+      .describe("(Optional) The page number to fetch (starts at 1)."),
+    pageSize: z
+      .number()
+      .optional()
+      .describe("(Optional) Number of items per page. Defaults to 10."),
+  }),
+  output: z.object({
+    data: z
+      .array(
+        meetingsRowSchema
+          .pick({
+            name: true,
+            summary: true,
+            date: true,
+            speaker: true,
+          })
+          .extend({
+            momentIds: z.array(z.string()).optional(),
+          }),
+      )
+      .nullable(),
+    error: z.string().nullable(),
+    page: z.number(),
+    pageSize: z.number(),
+    hasMore: z.boolean().nullable(),
+  }),
+  execute: async ({
+    filters: { meetingId, speaker, startDate, endDate },
+    page,
+    pageSize,
+  }) => {
+    const supabase = await createClient();
+
+    page ??= 1;
+    pageSize ??= 10;
+
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize - 1;
+
+    const query = supabase
+      .from("meetings")
+      .select("*, moments(*)")
+      .order("date", { ascending: false })
+      .range(start, end);
+
+    if (meetingId) {
+      query.eq("video_api_id", meetingId);
+    }
+    if (speaker) {
+      query.eq("speaker", speaker);
+    }
+    if (startDate) {
+      query.gte("date", startDate);
+    }
+    if (endDate) {
+      query.lte("date", endDate);
+    }
+
+    const result = await query;
+
+    const data =
+      result.data?.map((meeting) => ({
+        name: meeting.name,
+        date: meeting.date,
+        speaker: meeting.speaker,
+        summary: meeting.summary,
+        momentIds: meeting.moments?.map((moment) => moment.id),
+      })) ?? null;
+
+    return {
+      data,
+      error: result.error?.message ?? null,
+      page,
+      pageSize,
+      hasMore: result.data && result.data.length === pageSize,
+    };
+  },
+});
+
+export type ListMeetingsToolOutput = ToolOutput<typeof listMeetingsTool>;
