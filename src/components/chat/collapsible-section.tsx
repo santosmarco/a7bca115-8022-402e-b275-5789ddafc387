@@ -46,7 +46,7 @@ export function CollapsibleSection({
             <span className="font-medium leading-none">
               {title}
               {count !== undefined && (
-                <span className="ml-1.5 text-xs text-muted-foreground">
+                <span className="ml-1.5 text-xs leading-none text-muted-foreground">
                   ({count})
                 </span>
               )}

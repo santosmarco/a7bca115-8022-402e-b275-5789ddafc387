@@ -3,8 +3,7 @@
 import type { ToolInvocation } from "ai";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import { motion } from "framer-motion";
-import { Calendar, MessageSquare } from "lucide-react";
+import { TrendingUpIcon, VideoIcon } from "lucide-react";
 import type React from "react";
 
 import { CollapsibleSection } from "~/components/chat/collapsible-section";
@@ -90,12 +89,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
-      <div className={chatBubbleVariants({ isUser, animation })}>
+      <div
+        className={cn(
+          chatBubbleVariants({ isUser, animation }),
+          toolInvocations?.length && "sm:w-[50%]",
+        )}
+      >
         {role !== "data" && (
           <div
             className={isUser ? "text-primary-foreground" : "text-foreground"}
           >
-            <MarkdownRenderer>{content}</MarkdownRenderer>
+            <MarkdownRenderer>
+              {content.replace(/^.*<context>.*<\/context>.*---\n\n/s, "")}
+            </MarkdownRenderer>
           </div>
         )}
 
@@ -106,7 +112,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         ) : null}
 
         {!!toolInvocations?.length && (
-          <div className="space-y-2">
+          <div className="min-w-full space-y-2">
             {toolInvocations?.map((toolInvocation) => {
               if (toolInvocation.state !== "result") {
                 return (
@@ -132,7 +138,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <CollapsibleSection
                     key={toolInvocation.toolCallId}
                     title={moment.title}
-                    icon={MessageSquare}
+                    icon={TrendingUpIcon}
                   >
                     <MomentDisplay
                       id={id}
@@ -151,7 +157,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <CollapsibleSection
                     key={toolInvocation.toolCallId}
                     title="Found Meetings"
-                    icon={Calendar}
+                    icon={VideoIcon}
                     count={data?.length ?? 0}
                   >
                     <ChatMeetingList meetings={data} />
