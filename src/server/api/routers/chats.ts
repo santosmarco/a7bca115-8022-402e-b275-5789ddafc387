@@ -22,6 +22,7 @@ export const chatsRouter = createTRPCRouter({
         .select()
         .eq("user_id", input.userId)
         .eq("topic", input.topic)
+        .eq("latest", true)
         .maybeSingle();
     }),
 
@@ -42,6 +43,7 @@ export const chatsRouter = createTRPCRouter({
           .select()
           .eq("user_id", input.userId)
           .eq("topic", input.topic)
+          .eq("latest", true)
           .maybeSingle();
 
         if (chat.error) {
@@ -59,6 +61,7 @@ export const chatsRouter = createTRPCRouter({
               user_id: input.userId,
               topic: input.topic,
               messages: input.messages as Json[],
+              latest: true,
             })
             .select("*");
         }
