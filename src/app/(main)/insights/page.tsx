@@ -17,11 +17,11 @@ export const maxDuration = 30;
 export default function InsightsPage() {
   const [selectedVideo, setSelectedVideo] = useQueryState(
     "video",
-    parseAsString.withDefault("all"),
+    parseAsString.withDefault("all").withOptions({ history: "push" }),
   );
   const [selectedTopic, setSelectedTopic] = useQueryState(
     "topic",
-    parseAsString,
+    parseAsString.withOptions({ history: "push" }),
   );
 
   const { profile } = useProfile();
