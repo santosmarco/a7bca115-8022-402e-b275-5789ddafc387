@@ -44,6 +44,8 @@ export const chatsRouter = createTRPCRouter({
           .eq("user_id", input.userId)
           .eq("topic", input.topic)
           .eq("latest", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (chat.error) {
