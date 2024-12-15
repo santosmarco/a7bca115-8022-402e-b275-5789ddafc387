@@ -268,7 +268,7 @@ export const searchMomentsTool = tool({
             momentId: result.metadata.moments_id,
           });
 
-          return { ...result, moment };
+          return { ...result, moment: VideoMoment.parse(moment) };
         } catch (error) {
           console.error("Failed to get moment", { error });
           return null;
