@@ -132,16 +132,20 @@ export async function POST(request: NextRequest) {
       .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
 
     if (latestUserMessage) {
+      const ragFilters: Record<string, unknown> = {};
+      if (profile) {
+        ragFilters.profile_id = profile.id;
+      }
+      if (selectedActivity && selectedActivity !== "Coach") {
+        ragFilters.activity_type = selectedActivity;
+      }
+
       const results = await searchSimilar(
         latestUserMessage.content.toString(),
         {
           topK: 30,
           minScore: 0.4,
-          ...(profile?.nickname && {
-            filter: {
-              target_person: profile.nickname,
-            },
-          }),
+          filter: ragFilters,
         },
       );
 
