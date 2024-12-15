@@ -1,27 +1,21 @@
 import type { CoreMessage } from "ai";
 import { tool as coreTool } from "ai";
 import _ from "lodash";
-import type { ZodType, ZodTypeDef } from "zod";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 
 import { api } from "~/trpc/server";
 
 import { VideoMoment } from "../schemas/video-moment";
-import { meetingsRowSchema, momentsRowSchema } from "../supabase/schemas";
+import { meetingsRowSchema } from "../supabase/schemas";
 import { createClient } from "../supabase/server";
 
-type inferParameters<T extends ZodType<any, ZodTypeDef, any>> = z.infer<T>;
-
-export function tool<
-  TParameters extends ZodType<any, ZodTypeDef, any>,
-  TResult,
->(tool: {
+export function tool<TParameters extends z.ZodTypeAny, TResult>(tool: {
   description: string;
   parameters: TParameters;
   output: z.ZodType<TResult>;
   execute: (
-    args: inferParameters<TParameters>,
+    args: z.infer<TParameters>,
     options: {
       messages: CoreMessage[];
       abortSignal?: AbortSignal;
@@ -38,7 +32,7 @@ export function tool<
 }
 
 export type Tool<
-  TParameters extends ZodType<any, ZodTypeDef, any> = any,
+  TParameters extends z.ZodTypeAny = z.ZodTypeAny,
   TResult = any,
 > = ReturnType<typeof tool<TParameters, TResult>>;
 
@@ -105,10 +99,10 @@ export const displayMomentTool = tool({
     "Useful for displaying a moment in the chat. Pass the moment ID and the reasoning for displaying it.",
   parameters: z
     .object({
-      id: z.string().describe("The ID of the moment to display."),
+      id: z.string().describe("(Required) The ID of the moment to display."),
       reasoning: z
         .string()
-        .describe("The reasoning for displaying the moment."),
+        .describe("(Required) The reasoning for displaying the moment."),
     })
     .describe("The arguments for the displayMoment tool."),
   output: z.object({
@@ -125,36 +119,40 @@ export const displayMomentTool = tool({
 export const listMeetingsTool = tool({
   description:
     "Useful when you need to get data about one or more meetings from the database.",
-  parameters: z.object({
-    filters: z.object({
-      meetingId: z
-        .string()
+  parameters: z
+    .object({
+      filters: z
+        .object({
+          meetingId: z
+            .string()
+            .optional()
+            .describe("(Optional) The ID, aka `video_api_id`, of the meeting."),
+          speaker: z
+            .string()
+            .optional()
+            .describe(
+              "(Optional) The speaker, aka `target_person`, to filter the meetings by. Generally, this is the person you are coaching.",
+            ),
+          startDate: z
+            .string()
+            .optional()
+            .describe("(Optional) The start date to filter the meetings by."),
+          endDate: z
+            .string()
+            .optional()
+            .describe("(Optional) The end date to filter the meetings by."),
+        })
+        .describe("(Optional) The filters to apply to the meetings."),
+      page: z
+        .number()
         .optional()
-        .describe("(Optional) The ID, aka `video_api_id`, of the meeting."),
-      speaker: z
-        .string()
+        .describe("(Optional) The page number to fetch (starts at 1)."),
+      pageSize: z
+        .number()
         .optional()
-        .describe(
-          "(Optional) The speaker, aka `target_person`, to filter the moments by.",
-        ),
-      startDate: z
-        .string()
-        .optional()
-        .describe("(Optional) The start date to filter the moments by."),
-      endDate: z
-        .string()
-        .optional()
-        .describe("(Optional) The end date to filter the moments by."),
-    }),
-    page: z
-      .number()
-      .optional()
-      .describe("(Optional) The page number to fetch (starts at 1)."),
-    pageSize: z
-      .number()
-      .optional()
-      .describe("(Optional) Number of items per page. Defaults to 10."),
-  }),
+        .describe("(Optional) Number of items per page. Defaults to 10."),
+    })
+    .describe("The arguments for the listMeetings tool."),
   output: z.object({
     data: z
       .array(
@@ -167,7 +165,7 @@ export const listMeetingsTool = tool({
           })
           .extend({
             id: z.string(),
-            momentIds: z.array(z.string()).optional(),
+            momentIds: z.array(z.string()),
           }),
       )
       .nullable(),
@@ -217,7 +215,7 @@ export const listMeetingsTool = tool({
         date: meeting.date,
         speaker: meeting.speaker,
         summary: meeting.summary,
-        momentIds: meeting.moments?.map((moment) => moment.id),
+        momentIds: meeting.moments?.map((moment) => moment.id) ?? [],
       })) ?? null;
 
     return {
