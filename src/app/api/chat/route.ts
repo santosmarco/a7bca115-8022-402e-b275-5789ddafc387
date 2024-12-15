@@ -64,14 +64,17 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    const { data: observationPrompt } = await supabase
-      .from("observation_prompts")
-      .select("*")
-      .eq("profile_id", userId)
-      .eq("type", selectedActivity)
-      .eq("latest", true)
-      .order("created_at", { ascending: false })
-      .maybeSingle();
+    const [{ data: profile }, { data: observationPrompt }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabase
+        .from("observation_prompts")
+        .select("*")
+        .eq("profile_id", userId)
+        .eq("type", selectedActivity)
+        .eq("latest", true)
+        .order("created_at", { ascending: false })
+        .maybeSingle(),
+    ]);
 
     const prompt =
       observationPrompt?.prompt ??
@@ -118,6 +121,11 @@ export async function POST(request: NextRequest) {
         {
           topK: 30,
           minScore: 0.4,
+          ...(profile?.nickname && {
+            filter: {
+              target_person: profile.nickname,
+            },
+          }),
         },
       );
       console.log(results);
