@@ -139,6 +139,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   moment: RouterOutputs["moments"]["getOneById"];
                 };
 
+                if (!moment) {
+                  return null;
+                }
+
                 return (
                   <CollapsibleSection
                     key={toolInvocation.toolCallId}
