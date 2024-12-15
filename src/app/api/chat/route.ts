@@ -76,6 +76,31 @@ export async function POST(request: NextRequest) {
         .maybeSingle(),
     ]);
 
+    const tools = {
+      displayMoment: displayMomentTool,
+      listMeetings: listMeetingsTool,
+    };
+
+    let systemMessage = dedent`
+      You are the best coach in the world. You can assist your clients with any questions they have. You help them with their goals, emotions, decisions, delegations, feedback, team conflicts, goal setting, and more.
+
+      You have the following tools available:
+
+      <tools>
+      ${explainTools(tools)}
+      </tools>
+
+      Whenever you may need further explanation about a tool, don't forget to run the \`explain\` tool.
+    `;
+    if (profile?.nickname) {
+      systemMessage += `\n\nYou are coaching <user>${profile.nickname}</user>.`;
+    }
+    if (selectedActivity) {
+      systemMessage += `\n\nYou are specifically discussing <topic>${selectedActivity}</topic>.`;
+    }
+    systemMessage += "\n\nNow, the conversation begins.";
+
+    /*
     const prompt =
       observationPrompt?.prompt ??
       (selectedActivity
@@ -83,38 +108,29 @@ export async function POST(request: NextRequest) {
             await cachedGetObservationPrompt({
               userId,
               selectedActivity,
-            })
+            }).catch(() => undefined)
           )?.prompt
-        : null);
+        : undefined);
+    */
 
-    const tools = {
-      displayMoment: displayMomentTool,
-      listMeetings: listMeetingsTool,
-    };
+    const initialMessages: CoreMessage[] = [
+      { role: "system", content: systemMessage },
+      ...(observationPrompt?.result
+        ? [
+            { role: "user" as const, content: observationPrompt.prompt },
+            { role: "assistant" as const, content: observationPrompt.result },
+          ]
+        : []),
+    ];
 
-    const initialMessages = prompt
-      ? [
-          { role: "system", content: prompt },
-          {
-            role: "user",
-            content: dedent`
-              You have the following tools available:
-
-              ${explainTools(tools)}
-
-              Whenever you may need further explanation about a tool, don't forget to run the \`explain\` tool.
-            `,
-          },
-        ]
-      : /* await getObservationChat(supabase, userId); */ [];
-
-    const coreMessages = convertToCoreMessages(messages, { tools });
+    const coreMessages = convertToCoreMessages(messages, {
+      tools: { ...tools, explain: explainTool(tools) },
+    });
 
     const latestUserMessage = [...coreMessages]
       .reverse()
       .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
 
-    let context = "";
     if (latestUserMessage) {
       const results = await searchSimilar(
         latestUserMessage.content.toString(),
@@ -128,45 +144,25 @@ export async function POST(request: NextRequest) {
           }),
         },
       );
-      console.log(results);
-      context += results.map((r) => JSON.stringify(r, null, 2)).join("\n\n");
+
+      latestUserMessage.content = dedent`
+        Here is some relevant context from previous meetings that might help with the response:
+        
+        <context>
+        ${results.length > 0 ? results.map((r) => JSON.stringify(r, null, 2)).join("\n\n") : "No relevant context found"}
+        </context>
+
+        ---
+
+        ${latestUserMessage.content}
+      `;
     }
-
-    const systemMessages = context
-      ? [
-          ...initialMessages,
-          {
-            role: "user",
-            content: dedent`
-              Here is some relevant context from previous meetings that might help with the response:
-              
-              <context>
-              ${context}
-              </context>
-            `,
-          },
-        ]
-      : initialMessages;
-
-    console.log([...systemMessages, ...coreMessages]);
 
     const result = streamText({
       model: openai(model),
       tools: { ...tools, explain: explainTool(tools) },
       temperature: 0.2,
-      messages: [...systemMessages, ...coreMessages].map(
-        (m) =>
-          ({
-            ...m,
-            ...(m.role === "user" &&
-              typeof m.content === "string" &&
-              coreMessages.length > 1 && {
-                content: `
-                  ${m.content}
-                `,
-              }),
-          }) as CoreMessage,
-      ),
+      messages: [...initialMessages, ...coreMessages],
       onFinish: async ({ response: { messages: responseMessages } }) => {
         if (!selectedActivity) return;
 
@@ -202,22 +198,4 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     );
   }
-}
-
-async function getObservationChat(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-) {
-  const { data: prompts } = await supabase
-    .from("observation_prompts")
-    .select("*")
-    .eq("profile_id", userId)
-    .eq("latest", true)
-    .order("created_at", { ascending: false });
-
-  return (prompts ?? []).flatMap((prompt) => [
-    { role: "user", content: prompt.prompt },
-    { role: "user", content: `Tell me more about ${prompt.type}` },
-    { role: "assistant", content: prompt.result },
-  ]);
 }

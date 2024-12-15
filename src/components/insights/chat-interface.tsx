@@ -111,7 +111,10 @@ export function ChatInterface({
   useEffect(
     function handleInitializeConversation() {
       if (isEmpty && userId && selectedTopic && !isTyping) {
-        const messageContent = `Tell me more about ${selectedTopic}`;
+        const messageContent =
+          selectedTopic === "Coach"
+            ? `What should I talk to my coach about?`
+            : `Tell me more about ${selectedTopic}`;
         void append({ role: "user", content: messageContent });
       }
     },
@@ -141,12 +144,7 @@ export function ChatInterface({
             <Button
               variant="default"
               className="group relative w-full overflow-hidden bg-primary px-8 py-8 text-xl font-bold text-foreground/80 shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
-              onClick={() => {
-                void append({
-                  role: "user",
-                  content: "What should I talk to my coach about?",
-                });
-              }}
+              onClick={handleTopicClick("Coach")}
             >
               <motion.div
                 className="absolute inset-0 bg-gradient-to-r from-foreground/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"
