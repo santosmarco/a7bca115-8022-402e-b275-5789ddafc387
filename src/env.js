@@ -33,7 +33,7 @@ export const env = createEnv({
     SLACK_NOTIFICATIONS_CHANNEL: z.string().default("eng-alerts"),
     LOGTAIL_SOURCE_TOKEN: z.string(),
     // Langfuse
-    LANGFUSE_HOST: z.string(),
+    LANGFUSE_BASEURL: z.string(),
     LANGFUSE_PUBLIC_KEY: z.string(),
     LANGFUSE_SECRET_KEY: z.string(),
     // Pinecone
@@ -74,7 +74,7 @@ export const env = createEnv({
     SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN,
     SLACK_NOTIFICATIONS_CHANNEL: process.env.SLACK_NOTIFICATIONS_CHANNEL,
     LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
-    LANGFUSE_HOST: process.env.LANGFUSE_HOST,
+    LANGFUSE_BASEURL: process.env.LANGFUSE_BASEURL,
     LANGFUSE_PUBLIC_KEY: process.env.LANGFUSE_PUBLIC_KEY,
     LANGFUSE_SECRET_KEY: process.env.LANGFUSE_SECRET_KEY,
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
