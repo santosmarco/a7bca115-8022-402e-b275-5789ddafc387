@@ -3,6 +3,7 @@
 import type { CoreMessage } from "ai";
 import { useChat } from "ai/react";
 import { AnimatePresence, motion } from "framer-motion";
+import _ from "lodash";
 import {
   AlertCircle,
   Brain,
@@ -24,6 +25,7 @@ import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
 import { RestartChatButton } from "~/components/ui/restart-chat-button";
 import { convertToUIMessages } from "~/lib/ai/messages";
+import { createClient } from "~/lib/supabase/client";
 import type { RouterOutputs } from "~/trpc/react";
 
 type ChatInterfaceProps = {
@@ -81,6 +83,8 @@ export function ChatInterface({
   onTopicSelect,
   isLoading,
 }: ChatInterfaceProps) {
+  const supabase = createClient();
+
   const {
     messages,
     input,
@@ -118,15 +122,47 @@ export function ChatInterface({
 
   useEffect(
     function handleInitializeConversation() {
-      if (isEmpty && userId && selectedTopic && !isTyping) {
-        const messageContent =
-          selectedTopic === "Coach"
-            ? `What should I talk to my coach about?`
-            : `Tell me more about ${selectedTopic}`;
-        void append({ role: "user", content: messageContent });
+      if (!isEmpty || !userId || !selectedTopic || isTyping) return;
+
+      if (selectedTopic === "Coach") {
+        const initializeCoachChat = async () => {
+          const { data } = await supabase
+            .from("observation_prompts")
+            .select("*")
+            .eq("type", "Coach")
+            .eq("profile_id", userId)
+            .eq("latest", true)
+            .maybeSingle();
+
+          const defaultMessage = {
+            id: _.uniqueId(),
+            role: "user" as const,
+            content: "What should I talk to my coach about?",
+          };
+
+          const assistantMessage = data?.result
+            ? {
+                id: _.uniqueId(),
+                role: "assistant" as const,
+                content: data.result,
+              }
+            : defaultMessage;
+
+          setMessages((messages) =>
+            messages.length === 0 ? [...messages, assistantMessage] : messages,
+          );
+        };
+
+        void initializeCoachChat();
+        return;
       }
+
+      void append({
+        role: "user",
+        content: `Tell me more about ${selectedTopic}`,
+      });
     },
-    [isEmpty, userId, selectedTopic, isTyping, append],
+    [supabase, isEmpty, userId, selectedTopic, isTyping, append, setMessages],
   );
 
   return (
