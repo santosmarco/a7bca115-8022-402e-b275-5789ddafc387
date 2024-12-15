@@ -142,7 +142,7 @@ export function ChatMessages({
 
   return (
     <div
-      className="relative overflow-y-auto pb-4 pt-12"
+      className="relative overflow-y-auto pb-4 pt-24"
       ref={containerRef}
       onScroll={handleScroll}
     >

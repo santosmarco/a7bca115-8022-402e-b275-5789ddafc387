@@ -22,6 +22,7 @@ import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
 import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
+import { RestartChatButton } from "~/components/ui/restart-chat-button";
 import { convertToUIMessages } from "~/lib/ai/messages";
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -89,6 +90,8 @@ export function ChatInterface({
     isLoading: chatLoading,
     stop,
     error,
+    reload,
+    setMessages,
   } = useChat({
     body: { userId, selectedActivity: selectedTopic, relevantMoments },
     initialMessages: convertToUIMessages(initialMessages),
@@ -106,6 +109,11 @@ export function ChatInterface({
 
   const handleTopicClick = (topic: string) => () => {
     onTopicSelect(topic);
+  };
+
+  const handleRestart = () => {
+    setMessages([]);
+    void reload();
   };
 
   useEffect(
@@ -249,16 +257,25 @@ export function ChatInterface({
       )}
 
       {!isEmpty && (
-        <ChatMessages messages={messages}>
-          {error && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>{error.message}</AlertDescription>
-            </Alert>
-          )}
-          <MessageList messages={messages} isTyping={isTyping && !error} />
-        </ChatMessages>
+        <>
+          {/* Chat Header */}
+          <header className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border">
+            <h2 className="text-lg font-semibold">{selectedTopic}</h2>
+            <RestartChatButton onRestart={handleRestart} />
+          </header>
+
+          {/* Chat Messages */}
+          <ChatMessages messages={messages}>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>{error.message}</AlertDescription>
+              </Alert>
+            )}
+            <MessageList messages={messages} isTyping={isTyping && !error} />
+          </ChatMessages>
+        </>
       )}
 
       {!isEmpty && !error && (
