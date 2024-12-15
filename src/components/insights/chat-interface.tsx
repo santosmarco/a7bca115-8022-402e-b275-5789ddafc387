@@ -10,7 +10,6 @@ import {
   GitCommit,
   Goal,
   Heart,
-  MessageCircle,
   MessageSquare,
   Users,
 } from "lucide-react";
@@ -115,9 +114,14 @@ export function ChatInterface({
     onTopicSelect(topic);
   };
 
-  const handleRestart = () => {
+  const handleRestart = async () => {
+    await supabase
+      .from("chats")
+      .delete()
+      .eq("user_id", userId)
+      .eq("topic", selectedTopic);
     setMessages([]);
-    void reload();
+    await reload();
   };
 
   useEffect(

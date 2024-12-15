@@ -6,6 +6,8 @@ import { zodToJsonSchema } from "zod-to-json-schema";
 
 import { api } from "~/trpc/server";
 
+import { IndexMetadata } from "../pinecone/client";
+import { searchSimilar } from "../pinecone/search";
 import { VideoMoment } from "../schemas/video-moment";
 import { meetingsRowSchema } from "../supabase/schemas";
 import { createClient } from "../supabase/server";
@@ -108,11 +110,16 @@ export const displayMomentTool = tool({
   output: z.object({
     id: z.string(),
     reasoning: z.string(),
-    moment: VideoMoment,
+    moment: VideoMoment.nullable(),
   }),
   execute: async ({ id, reasoning }) => {
-    const moment = await api.moments.getOneById({ momentId: id });
-    return { id, reasoning, moment };
+    try {
+      const moment = await api.moments.getOneById({ momentId: id });
+      return { id, reasoning, moment };
+    } catch (error) {
+      console.error("Failed to get moment", { error });
+      return { id, reasoning, moment: null };
+    }
   },
 });
 
@@ -229,3 +236,52 @@ export const listMeetingsTool = tool({
 });
 
 export type ListMeetingsToolOutput = ToolOutput<typeof listMeetingsTool>;
+
+export const searchMomentsTool = tool({
+  description: "Useful for searching for moments in the database.",
+  parameters: z
+    .object({
+      query: z.string().describe("(Required) The query to search for."),
+    })
+    .describe("The arguments for the searchMoments tool."),
+  output: z.object({
+    results: z.array(
+      z.object({
+        moment: VideoMoment,
+        metadata: IndexMetadata.optional(),
+      }),
+    ),
+  }),
+  execute: async ({ query }) => {
+    const results = await searchSimilar(query, {
+      topK: 10,
+      minScore: 0.2,
+      filter: { type: { $eq: "moments" } },
+    });
+
+    const resultsWithMoments = await Promise.all(
+      results.map(async (result) => {
+        if (!result.metadata?.moments_id) return null;
+
+        try {
+          const moment = await api.moments.getOneById({
+            momentId: result.metadata.moments_id,
+          });
+
+          return { ...result, moment };
+        } catch (error) {
+          console.error("Failed to get moment", { error });
+          return null;
+        }
+      }),
+    );
+
+    return {
+      results: resultsWithMoments.filter(
+        (r): r is NonNullable<typeof r> => r !== null,
+      ),
+    };
+  },
+});
+
+export type SearchMomentsToolOutput = ToolOutput<typeof searchMomentsTool>;

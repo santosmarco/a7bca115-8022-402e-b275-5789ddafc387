@@ -13,6 +13,7 @@ import { cn } from "~/lib/utils";
 interface CollapsibleSectionProps {
   title: string;
   icon: React.ElementType;
+  args?: Record<string, unknown>;
   count?: number;
   children: React.ReactNode;
   className?: string;
@@ -21,6 +22,7 @@ interface CollapsibleSectionProps {
 export function CollapsibleSection({
   title,
   icon: Icon,
+  args,
   count,
   children,
   className,
@@ -65,8 +67,22 @@ export function CollapsibleSection({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.2 }}
-          className="p-2"
+          className="space-y-4 p-2"
         >
+          {args && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2"
+            >
+              <div className="text-xs font-medium text-muted-foreground">
+                Arguments:
+              </div>
+              <pre className="max-h-[200px] overflow-auto rounded-md bg-accent/50 p-2 text-xs">
+                <code>{JSON.stringify(args, null, 2)}</code>
+              </pre>
+            </motion.div>
+          )}
           {children}
         </motion.div>
       </CollapsibleContent>

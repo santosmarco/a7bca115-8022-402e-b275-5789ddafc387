@@ -3,7 +3,7 @@
 import type { ToolInvocation } from "ai";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import { TrendingUpIcon, VideoIcon } from "lucide-react";
+import { TrendingUpDownIcon, TrendingUpIcon, VideoIcon } from "lucide-react";
 import type React from "react";
 
 import { CollapsibleSection } from "~/components/chat/collapsible-section";
@@ -11,9 +11,14 @@ import { LoadingIndicator } from "~/components/chat/loading-indicator";
 import { ChatMeetingList } from "~/components/chat/meeting-list";
 import { MomentDisplay } from "~/components/chat/moment-display";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
-import type { ListMeetingsToolOutput } from "~/lib/ai/tools";
+import type {
+  ListMeetingsToolOutput,
+  SearchMomentsToolOutput,
+} from "~/lib/ai/tools";
 import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
+
+import { ChatMomentList } from "../chat/moment-list";
 
 const chatBubbleVariants = cva(
   "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
@@ -139,6 +144,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     key={toolInvocation.toolCallId}
                     title={moment.title}
                     icon={TrendingUpIcon}
+                    args={toolInvocation.args}
                   >
                     <MomentDisplay
                       id={id}
@@ -159,8 +165,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     title="Found Meetings"
                     icon={VideoIcon}
                     count={data?.length ?? 0}
+                    args={toolInvocation.args}
                   >
                     <ChatMeetingList meetings={data} />
+                  </CollapsibleSection>
+                );
+              }
+
+              if (toolInvocation.toolName === "searchMoments") {
+                const { results } =
+                  toolInvocation.result as SearchMomentsToolOutput;
+
+                return (
+                  <CollapsibleSection
+                    key={toolInvocation.toolCallId}
+                    title="Found Moments"
+                    icon={TrendingUpDownIcon}
+                    count={results?.length ?? 0}
+                    args={toolInvocation.args}
+                  >
+                    <ChatMomentList moments={results} />
                   </CollapsibleSection>
                 );
               }

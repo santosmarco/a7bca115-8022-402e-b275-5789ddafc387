@@ -10,6 +10,7 @@ import {
   explainTool,
   explainTools,
   listMeetingsTool,
+  searchMomentsTool,
 } from "~/lib/ai/tools";
 import { getObservationPrompt } from "~/lib/api/observation";
 import { searchSimilar } from "~/lib/pinecone/search";
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
     const tools = {
       displayMoment: displayMomentTool,
       listMeetings: listMeetingsTool,
+      searchMoments: searchMomentsTool,
     };
 
     let systemMessage = dedent`
@@ -100,25 +102,19 @@ export async function POST(request: NextRequest) {
     }
     systemMessage += "\n\nNow, the conversation begins.";
 
-    /*
-    const prompt =
-      observationPrompt?.prompt ??
-      (selectedActivity
-        ? (
-            await cachedGetObservationPrompt({
-              userId,
-              selectedActivity,
-            }).catch(() => undefined)
-          )?.prompt
-        : undefined);
-    */
-
     const initialMessages: CoreMessage[] = [
       { role: "system", content: systemMessage },
-      ...(observationPrompt?.result
+      ...(observationPrompt
         ? [
             { role: "user" as const, content: observationPrompt.prompt },
-            { role: "assistant" as const, content: observationPrompt.result },
+            ...(observationPrompt.result && observationPrompt.type !== "Coach"
+              ? [
+                  {
+                    role: "assistant" as const,
+                    content: observationPrompt.result,
+                  },
+                ]
+              : []),
           ]
         : []),
     ];
@@ -132,12 +128,17 @@ export async function POST(request: NextRequest) {
       .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
 
     if (latestUserMessage) {
-      const ragFilters: Record<string, unknown> = {};
+      let ragFilters: any = { $and: [] };
       if (profile) {
-        ragFilters.profile_id = profile.id;
+        ragFilters.$and.push({ profile_id: { $eq: profile.id } });
       }
       if (selectedActivity && selectedActivity !== "Coach") {
-        ragFilters.activity_type = selectedActivity;
+        ragFilters.$and.push({ activity_type: { $eq: selectedActivity } });
+      }
+      if (!ragFilters.$and?.length) {
+        delete ragFilters.$and;
+      } else if (ragFilters.$and.length === 1) {
+        ragFilters = ragFilters.$and[0] ?? {};
       }
 
       const results = await searchSimilar(
@@ -165,6 +166,7 @@ export async function POST(request: NextRequest) {
     const result = streamText({
       model: openai(model),
       tools: { ...tools, explain: explainTool(tools) },
+      maxSteps: 5,
       temperature: 0.2,
       messages: [...initialMessages, ...coreMessages],
       onFinish: async ({ response: { messages: responseMessages } }) => {
