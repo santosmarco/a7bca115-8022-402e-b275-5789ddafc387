@@ -184,6 +184,11 @@ export async function POST(request: NextRequest) {
         </context>
 
         REMEMBER: The user's name is <user>${profile?.nickname}</user>.
+        
+        RESPONSE STYLE:
+          - The user prefers succinct yet complete answers that are easy to understand and follow up on.
+          - The user prefers responses that feel human rather than robotic.
+          - The user prefers you to engage in a real conversation; avoid lists, tables, and other formatting, unless necessary.
       `;
 
       if (selectedMoments.length > 0) {
