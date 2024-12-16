@@ -47,11 +47,12 @@ const modelRetryOrderSchema = z
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[Chat] Received request");
     const body = (await request.json()) as unknown;
     const bodyParseResult = ChatRequestBody.required().safeParse(body);
 
     if (!bodyParseResult.success) {
-      console.error("Validation error:", bodyParseResult.error);
+      console.error("[Chat] Validation error:", bodyParseResult.error);
       return NextResponse.json(
         { error: "Invalid chat payload" },
         { status: 400 },
@@ -61,9 +62,18 @@ export async function POST(request: NextRequest) {
     const model = modelRetryOrderSchema.parse(
       request.nextUrl.searchParams.get("model") ?? MODEL_RETRY_ORDER[0],
     );
+    console.log("[Chat] Using model:", model);
+
     const { userId, selectedActivity, messages } = bodyParseResult.data;
+    console.log(
+      "[Chat] Processing request for user:",
+      userId,
+      "activity:",
+      selectedActivity,
+    );
 
     const supabase = await createClient();
+    console.log("[Chat] Supabase client initialized");
 
     const [{ data: profile }, { data: observationPrompt }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
@@ -76,6 +86,10 @@ export async function POST(request: NextRequest) {
         .order("created_at", { ascending: false })
         .maybeSingle(),
     ]);
+    console.log("[Chat] Fetched profile and observation prompt", {
+      hasProfile: !!profile,
+      hasObservationPrompt: !!observationPrompt,
+    });
 
     const tools = {
       displayMoment: displayMomentTool,
@@ -101,6 +115,7 @@ export async function POST(request: NextRequest) {
       systemMessage += `\n\nYou are specifically discussing <topic>${selectedActivity}</topic>.`;
     }
     systemMessage += "\n\nNow, the conversation begins.";
+    console.log("[Chat] Generated system message", { systemMessage });
 
     const initialMessages: CoreMessage[] = [
       { role: "system", content: systemMessage },
@@ -118,20 +133,26 @@ export async function POST(request: NextRequest) {
           ]
         : []),
     ];
+    console.log("[Chat] Prepared initial messages:", initialMessages);
 
     const coreMessages = convertToCoreMessages(messages, {
       tools: { ...tools, explain: explainTool(tools) },
     });
+    console.log("[Chat] Converted core messages:", coreMessages);
 
     const latestUserMessage = [...coreMessages]
       .reverse()
       .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
 
     if (latestUserMessage) {
+      console.log(
+        "[Chat] Found latest user message, searching for similar content",
+      );
       const results = await searchSimilar(
         `${profile?.nickname ? `${profile.nickname}: ` : ""}${latestUserMessage.content.toString()}`,
         { topK: 30, minScore: 0.4 },
       );
+      console.log("[Chat] Found similar results:", results);
 
       latestUserMessage.content = dedent`
         Here is some relevant context from previous meetings that might help with the response:
@@ -146,6 +167,10 @@ export async function POST(request: NextRequest) {
       `;
     }
 
+    console.log(
+      "[Chat] Starting stream with total messages:",
+      initialMessages.length + coreMessages.length,
+    );
     const result = streamText({
       model: openai(model),
       tools: { ...tools, explain: explainTool(tools) },
@@ -157,27 +182,31 @@ export async function POST(request: NextRequest) {
         if (!selectedActivity) return;
 
         try {
+          console.log("[Chat] Saving chat messages");
           await api.chats.save({
             userId,
             topic: selectedActivity,
             messages: [...coreMessages, ...responseMessages],
           });
+          console.log("[Chat] Successfully saved chat messages");
         } catch (error) {
-          console.error("Failed to save chat", { error });
+          console.error("[Chat] Failed to save chat", { error });
         }
       },
       experimental_telemetry: { isEnabled: true },
     });
 
+    console.log("[Chat] Returning stream response");
     return result.toDataStreamResponse();
   } catch (error) {
-    console.error("Chat error:", error);
+    console.error("[Chat] Encountered error:", error);
 
     const nextRetryModel = MODEL_RETRY_ORDER.find((model, idx) => {
       return MODEL_RETRY_ORDER.indexOf(model) === idx + 1;
     });
 
     if (nextRetryModel) {
+      console.log("[Chat] Retrying with next model:", nextRetryModel);
       const url = new URL(request.nextUrl);
       url.searchParams.set("model", nextRetryModel);
       return fetch(url.toString(), request);
