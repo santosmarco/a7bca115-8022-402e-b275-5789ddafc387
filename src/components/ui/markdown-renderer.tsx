@@ -7,6 +7,8 @@ import { CopyButton } from "~/components/ui/copy-button";
 import { rehypeMoment } from "~/lib/markdown/rehype-moment";
 import { cn } from "~/lib/utils";
 
+import { MomentDisplay } from "../chat/moment-display";
+
 interface MarkdownRendererProps {
   children: string;
 }
@@ -196,29 +198,7 @@ const COMPONENTS = {
     "data-moment-reasoning": string;
   }) => (
     <>
-      <iframe
-        src={`/embed/moments/${momentId}`}
-        title={momentReasoning}
-        className="my-2 w-full rounded-md"
-        onLoad={(e) => {
-          const iframe = e.currentTarget;
-          const resizeObserver = new ResizeObserver(() => {
-            const height =
-              iframe.contentWindow?.document.documentElement.scrollHeight;
-            if (height && height <= 400) iframe.style.height = `${height}px`;
-          });
-          if (iframe.contentWindow?.document.documentElement) {
-            resizeObserver.observe(
-              iframe.contentWindow?.document.documentElement,
-            );
-          }
-        }}
-      />
-
-      <div className="text-xs italic text-muted-foreground">
-        {momentReasoning}
-      </div>
-
+      <MomentDisplay id={momentId} reasoning={momentReasoning} />
       {props.children}
     </>
   ),

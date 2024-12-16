@@ -150,11 +150,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     icon={TrendingUpIcon}
                     args={toolInvocation.args}
                   >
-                    <MomentDisplay
-                      id={id}
-                      reasoning={reasoning}
-                      moment={moment}
-                    />
+                    <MomentDisplay id={id} reasoning={reasoning} />
                   </CollapsibleSection>
                 );
               }
