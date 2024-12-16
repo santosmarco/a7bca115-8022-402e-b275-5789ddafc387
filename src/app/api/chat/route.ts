@@ -128,26 +128,9 @@ export async function POST(request: NextRequest) {
       .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
 
     if (latestUserMessage) {
-      let ragFilters: any = { $and: [] };
-      if (profile) {
-        ragFilters.$and.push({ profile_id: { $eq: profile.id } });
-      }
-      if (selectedActivity && selectedActivity !== "Coach") {
-        ragFilters.$and.push({ activity_type: { $eq: selectedActivity } });
-      }
-      if (!ragFilters.$and?.length) {
-        delete ragFilters.$and;
-      } else if (ragFilters.$and.length === 1) {
-        ragFilters = ragFilters.$and[0] ?? {};
-      }
-
       const results = await searchSimilar(
-        latestUserMessage.content.toString(),
-        {
-          topK: 30,
-          minScore: 0.4,
-          filter: ragFilters,
-        },
+        `${profile?.nickname ? `${profile.nickname}: ` : ""}${latestUserMessage.content.toString()}`,
+        { topK: 30, minScore: 0.4 },
       );
 
       latestUserMessage.content = dedent`
@@ -168,6 +151,7 @@ export async function POST(request: NextRequest) {
       tools: { ...tools, explain: explainTool(tools) },
       maxSteps: 5,
       temperature: 0.2,
+      maxTokens: 8192,
       messages: [...initialMessages, ...coreMessages],
       onFinish: async ({ response: { messages: responseMessages } }) => {
         if (!selectedActivity) return;
