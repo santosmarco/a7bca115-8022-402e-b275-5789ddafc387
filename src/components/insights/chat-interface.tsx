@@ -17,7 +17,6 @@ import {
 import { useEffect } from "react";
 import { toast } from "sonner";
 
-import { DebugToggle } from "~/components/debug/debug-toggle";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
@@ -360,7 +359,6 @@ export function ChatInterface({
                     transition={{ delay: 0.3 }}
                     className="flex items-center gap-4"
                   >
-                    <DebugToggle />
                     <RestartChatButton onRestart={handleRestart} />
                   </motion.div>
                 </motion.header>
