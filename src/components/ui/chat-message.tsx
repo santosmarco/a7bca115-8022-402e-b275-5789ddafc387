@@ -3,22 +3,24 @@
 import type { ToolInvocation } from "ai";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import { TrendingUpDownIcon, TrendingUpIcon, VideoIcon } from "lucide-react";
-import type React from "react";
+import { Tag, TagIcon, VideoIcon } from "lucide-react";
+import * as React from "react";
 
+import type { ChatRequestBody } from "~/app/api/chat/route";
 import { CollapsibleSection } from "~/components/chat/collapsible-section";
 import { LoadingIndicator } from "~/components/chat/loading-indicator";
 import { ChatMeetingList } from "~/components/chat/meeting-list";
 import { MomentDisplay } from "~/components/chat/moment-display";
+import { ChatMomentList } from "~/components/chat/moment-list";
 import { MarkdownRenderer } from "~/components/ui/markdown-renderer";
 import type {
   ListMeetingsToolOutput,
   SearchMomentsToolOutput,
 } from "~/lib/ai/tools";
+import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
-import type { RouterOutputs } from "~/trpc/react";
 
-import { ChatMomentList } from "../chat/moment-list";
+import { Badge } from "./badge";
 
 const chatBubbleVariants = cva(
   "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
@@ -77,6 +79,12 @@ export interface ChatMessageProps extends Message {
   actions?: React.ReactNode;
 }
 
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+}
+
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   content,
@@ -92,6 +100,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     minute: "2-digit",
   });
 
+  const pinnedMomentsMatch =
+    /VERY IMPORTANT: FOCUS \*\*ONLY\*\* ON THESE MOMENTS:\n```\n([^]*?)\n```/s.exec(
+      content,
+    );
+  const pinnedVideosMatch =
+    /VERY IMPORTANT: FOCUS \*\*ONLY\*\* ON THESE VIDEOS:\n```\n([^]*?)\n```/s.exec(
+      content,
+    );
+
+  const pinnedMoments = pinnedMomentsMatch?.[1]
+    ? JSON.parse(pinnedMomentsMatch[1])
+    : [];
+  const pinnedVideos = pinnedVideosMatch?.[1]
+    ? JSON.parse(pinnedVideosMatch[1])
+    : [];
+  const pinnedContent = [...pinnedMoments, ...pinnedVideos] as NonNullable<
+    ChatRequestBody["selectedMoments" | "selectedVideos"]
+  >[number][];
+
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
       <div
@@ -104,6 +131,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <div
             className={isUser ? "text-primary-foreground" : "text-foreground"}
           >
+            {pinnedContent.length > 0 && (
+              <div className="flex flex-wrap gap-1 pb-2">
+                {pinnedContent.map((item) => (
+                  <Badge
+                    key={"id" in item ? item.id : item.videoId}
+                    variant="outline"
+                    className="flex items-center gap-1.5 border-border bg-accent font-normal"
+                  >
+                    {"videoId" in item ? (
+                      <VideoIcon className="h-3 w-3" />
+                    ) : (
+                      <TagIcon className="h-3 w-3" />
+                    )}
+                    {item.title}
+                  </Badge>
+                ))}
+              </div>
+            )}
             <MarkdownRenderer>
               {content.replace(/^.*<context>.*<\/context>.*---\n\n/s, "")}
             </MarkdownRenderer>
@@ -136,7 +181,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 const { id, reasoning, moment } = toolInvocation.result as {
                   id: string;
                   reasoning: string;
-                  moment: RouterOutputs["moments"]["getOneById"];
+                  moment: VideoMoment;
                 };
 
                 if (!moment) {
@@ -147,7 +192,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <CollapsibleSection
                     key={toolInvocation.toolCallId}
                     title={moment.title}
-                    icon={TrendingUpIcon}
+                    icon={Tag}
                     args={toolInvocation.args}
                   >
                     <MomentDisplay id={id} reasoning={reasoning} />
@@ -180,7 +225,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   <CollapsibleSection
                     key={toolInvocation.toolCallId}
                     title="Found Moments"
-                    icon={TrendingUpDownIcon}
+                    icon={Tag}
                     count={results?.length ?? 0}
                     args={toolInvocation.args}
                   >

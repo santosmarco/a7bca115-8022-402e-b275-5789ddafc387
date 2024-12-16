@@ -14,25 +14,28 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import type { ChatRequestBody } from "~/app/api/chat/route";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
-import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
+import { ChatContainer, ChatMessages } from "~/components/ui/chat";
 import { LoadingSpinner } from "~/components/ui/loading-spinner";
-import { MessageInput } from "~/components/ui/message-input";
 import { MessageList } from "~/components/ui/message-list";
 import { RestartChatButton } from "~/components/ui/restart-chat-button";
 import { convertToUIMessages } from "~/lib/ai/messages";
 import { createClient } from "~/lib/supabase/client";
 import type { RouterOutputs } from "~/trpc/react";
 
+import { ChatInput } from "../chat/chat-input";
+
 type ChatInterfaceProps = {
   userId: string;
   selectedTopic: string;
   topics: string[];
   relevantMoments: RouterOutputs["moments"]["listAll"]["moments"];
+  relevantVideos: RouterOutputs["videos"]["listAll"];
   initialMessages: CoreMessage[];
   onTopicSelect: (topic: string) => void;
   isLoading?: boolean;
@@ -72,7 +75,7 @@ const headerVariants = {
     scale: 1,
     transition: {
       duration: 0.6,
-      ease: [0.19, 1.0, 0.22, 1.0], // Ease-out expo
+      ease: [0.19, 1.0, 0.22, 1.0],
       scale: {
         duration: 0.4,
         ease: "easeOut",
@@ -110,11 +113,18 @@ export function ChatInterface({
   selectedTopic,
   topics,
   relevantMoments,
+  relevantVideos,
   initialMessages,
   onTopicSelect,
   isLoading,
 }: ChatInterfaceProps) {
   const supabase = createClient();
+  const [selectedMoments, setSelectedMoments] = useState<
+    RouterOutputs["moments"]["listAll"]["moments"]
+  >([]);
+  const [selectedVideos, setSelectedVideos] = useState<
+    RouterOutputs["videos"]["listAll"]
+  >([]);
 
   const {
     messages,
@@ -127,8 +137,15 @@ export function ChatInterface({
     error,
     reload,
     setMessages,
+    setInput,
   } = useChat({
-    body: { userId, selectedActivity: selectedTopic, relevantMoments },
+    body: {
+      userId,
+      selectedActivity: selectedTopic,
+      relevantMoments,
+      selectedMoments,
+      selectedVideos,
+    } satisfies ChatRequestBody,
     initialMessages: convertToUIMessages(initialMessages),
     maxSteps: 5,
     onError: (error) => {
@@ -381,23 +398,44 @@ export function ChatInterface({
       )}
 
       {!isEmpty && !error && (
-        <ChatForm
+        <form
           className="mt-auto"
-          isPending={chatLoading || isTyping}
-          handleSubmit={handleSubmit}
+          onSubmit={(ev) => {
+            if (chatLoading || isTyping) {
+              ev.preventDefault();
+              return;
+            }
+
+            handleSubmit(ev);
+          }}
         >
-          {({ files, setFiles }) => (
-            <MessageInput
-              value={input}
-              onChange={handleInputChange}
-              allowAttachments
-              files={files}
-              setFiles={setFiles}
-              stop={stop}
-              isGenerating={chatLoading}
-            />
-          )}
-        </ChatForm>
+          <ChatInput
+            value={input}
+            onChange={handleInputChange}
+            stop={stop}
+            isGenerating={chatLoading}
+            moments={relevantMoments}
+            videos={relevantVideos}
+            selectedMoments={selectedMoments}
+            selectedVideos={selectedVideos}
+            onSelectMoment={(moment) =>
+              setSelectedMoments((prev) => [...prev, moment])
+            }
+            onUnselectMoment={(moment) =>
+              setSelectedMoments((prev) =>
+                prev.filter((m) => m.id !== moment.id),
+              )
+            }
+            onSelectVideo={(video) =>
+              setSelectedVideos((prev) => [...prev, video])
+            }
+            onUnselectVideo={(video) =>
+              setSelectedVideos((prev) =>
+                prev.filter((v) => v.videoId !== video.videoId),
+              )
+            }
+          />
+        </form>
       )}
     </ChatContainer>
   );

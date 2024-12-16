@@ -1,5 +1,6 @@
 import { openai } from "@ai-sdk/openai";
 import { convertToCoreMessages, type CoreMessage, streamText } from "ai";
+import _ from "lodash";
 import { type NextRequest, NextResponse } from "next/server";
 import { cache } from "react";
 import dedent from "ts-dedent";
@@ -15,7 +16,10 @@ import {
 import { getObservationPrompt } from "~/lib/api/observation";
 import { searchSimilar } from "~/lib/pinecone/search";
 import { UIMessage } from "~/lib/schemas/ai";
+import { Video } from "~/lib/schemas/video";
+import { VideoMoment } from "~/lib/schemas/video-moment";
 import { createClient } from "~/lib/supabase/server";
+import type { toVideoOutput } from "~/lib/videos";
 import { api } from "~/trpc/server";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +33,8 @@ export const ChatRequestBody = z
     userId: z.string(),
     selectedActivity: z.string(),
     messages: z.array(UIMessage.passthrough()),
+    selectedMoments: z.array(VideoMoment).default([]),
+    selectedVideos: z.array(Video).default([]),
   })
   .partial()
   .passthrough();
@@ -64,7 +70,13 @@ export async function POST(request: NextRequest) {
     );
     console.log("[Chat] Using model:", model);
 
-    const { userId, selectedActivity, messages } = bodyParseResult.data;
+    const {
+      userId,
+      selectedActivity,
+      messages,
+      selectedMoments,
+      selectedVideos,
+    } = bodyParseResult.data;
     console.log(
       "[Chat] Processing request for user:",
       userId,
@@ -154,17 +166,42 @@ export async function POST(request: NextRequest) {
       );
       console.log("[Chat] Found similar results:", results);
 
+      const userMessageContent =
+        typeof latestUserMessage.content === "string"
+          ? latestUserMessage.content
+          : latestUserMessage.content.reduce((acc, curr) => {
+              return acc + (curr.type === "text" ? curr.text : "");
+            }, "");
+
       latestUserMessage.content = dedent`
         Here is some relevant context from previous meetings that might help with the response:
         
         <context>
         ${results.length > 0 ? results.map((r) => JSON.stringify(r, null, 2)).join("\n\n") : "No relevant context found"}
         </context>
-
-        ---
-
-        ${latestUserMessage.content}
       `;
+
+      if (selectedMoments.length > 0) {
+        latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE MOMENTS:\n\`\`\`\n${JSON.stringify(selectedMoments, null, 2)}\n\`\`\``;
+      }
+      if (selectedVideos.length > 0) {
+        latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE VIDEOS:\n\`\`\`\n${JSON.stringify(
+          selectedVideos.map((v) =>
+            _.omit(v, [
+              "meeting",
+              "metadata",
+              "moments",
+              "vtt",
+            ] satisfies (keyof ReturnType<typeof toVideoOutput>)[]),
+          ),
+          null,
+          2,
+        )}\n\`\`\``;
+      }
+
+      latestUserMessage.content += `\n\n---\n\n${userMessageContent}`;
+
+      console.log("[Chat] Updated latest user message:", latestUserMessage);
     }
 
     console.log(

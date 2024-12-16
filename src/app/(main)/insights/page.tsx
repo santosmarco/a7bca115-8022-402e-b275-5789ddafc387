@@ -86,7 +86,7 @@ export default function InsightsPage() {
       return moment.video_id === selectedVideo;
     })
     .filter((moment) => {
-      if (!selectedTopic) return true;
+      if (!selectedTopic || selectedTopic === "Coach") return true;
       return moment.activity === selectedTopic;
     });
 
@@ -176,6 +176,7 @@ export default function InsightsPage() {
         selectedTopic={topic}
         topics={topics}
         relevantMoments={filteredMoments}
+        relevantVideos={filteredVideos}
         initialMessages={
           (chat?.data?.messages as CoreMessage[] | undefined) ?? []
         }
