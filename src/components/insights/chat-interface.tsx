@@ -11,11 +11,13 @@ import {
   Goal,
   Heart,
   MessageSquare,
+  User,
   Users,
 } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
+import { DebugToggle } from "~/components/debug/debug-toggle";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
 import { ChatContainer, ChatForm, ChatMessages } from "~/components/ui/chat";
@@ -59,6 +61,36 @@ const itemVariants = {
   },
 };
 
+const headerVariants = {
+  initial: {
+    opacity: 0,
+    y: -20,
+    scale: 0.95,
+  },
+  animate: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.6,
+      ease: [0.19, 1.0, 0.22, 1.0], // Ease-out expo
+      scale: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    scale: 0.95,
+    transition: {
+      duration: 0.3,
+      ease: "easeIn",
+    },
+  },
+};
+
 const topicIcons: Record<string, React.ElementType> = {
   "Decision Making": Brain,
   Delegation: GitCommit,
@@ -66,6 +98,7 @@ const topicIcons: Record<string, React.ElementType> = {
   Feedback: MessageSquare,
   "Goal Setting": Goal,
   "Team Conflict": Users,
+  Coach: User,
 };
 
 function getTopicIcon(topic: string) {
@@ -299,10 +332,41 @@ export function ChatInterface({
       {!isEmpty && (
         <>
           {/* Chat Header */}
-          <header className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border">
-            <h2 className="text-lg font-semibold">{selectedTopic}</h2>
-            <RestartChatButton onRestart={handleRestart} />
-          </header>
+          {(() => {
+            const TopicIcon = getTopicIcon(selectedTopic);
+
+            return (
+              <AnimatePresence mode="wait">
+                <motion.header
+                  key={selectedTopic}
+                  variants={headerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border"
+                >
+                  <motion.div
+                    className="flex items-center gap-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <TopicIcon className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold">{selectedTopic}</h2>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex items-center gap-4"
+                  >
+                    <DebugToggle />
+                    <RestartChatButton onRestart={handleRestart} />
+                  </motion.div>
+                </motion.header>
+              </AnimatePresence>
+            );
+          })()}
 
           {/* Chat Messages */}
           <ChatMessages messages={messages}>
