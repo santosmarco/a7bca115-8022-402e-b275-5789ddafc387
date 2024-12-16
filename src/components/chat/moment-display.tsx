@@ -1,14 +1,11 @@
 import { motion } from "framer-motion";
 
-import type { RouterOutputs } from "~/trpc/react";
-
 interface MomentDisplayProps {
   id: string;
   reasoning: string;
-  moment: RouterOutputs["moments"]["getOneById"];
 }
 
-export function MomentDisplay({ id, reasoning, moment }: MomentDisplayProps) {
+export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
   return (
     <div className="space-y-2">
       <iframe
