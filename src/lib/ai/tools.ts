@@ -45,14 +45,10 @@ export function explainTools<T extends Record<string, Tool>>(tools: T) {
     .toPairs()
     .map(
       ([name, tool]) =>
-        `- \`${name}\`: ${tool._def.description}\n${JSON.stringify(
-          {
-            parameters: zodToJsonSchema(tool._def.parameters),
-            output: zodToJsonSchema(tool._def.output),
-          },
-          null,
-          2,
-        )}`,
+        `- \`${name}\`: ${tool._def.description}\n${JSON.stringify({
+          parameters: zodToJsonSchema(tool._def.parameters),
+          output: zodToJsonSchema(tool._def.output),
+        })}`,
     )
     .join("\n\n")
     .valueOf();

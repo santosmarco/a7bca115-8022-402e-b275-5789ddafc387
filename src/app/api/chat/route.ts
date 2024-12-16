@@ -86,17 +86,21 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     console.log("[Chat] Supabase client initialized");
 
-    const [{ data: profile }, { data: observationPrompt }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-      supabase
-        .from("observation_prompts")
-        .select("*")
-        .eq("profile_id", userId)
-        .eq("type", selectedActivity)
-        .eq("latest", true)
-        .order("created_at", { ascending: false })
-        .maybeSingle(),
-    ]);
+    const [{ data: profile }, { data: observationPrompts }] = await Promise.all(
+      [
+        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+        supabase
+          .from("observation_prompts")
+          .select("*")
+          .eq("profile_id", userId)
+          .eq("type", selectedActivity)
+          .eq("latest", true)
+          .order("created_at", { ascending: false }),
+      ],
+    );
+
+    const observationPrompt = observationPrompts?.[0];
+
     console.log("[Chat] Fetched profile and observation prompt", {
       hasProfile: !!profile,
       hasObservationPrompt: !!observationPrompt,
@@ -161,7 +165,7 @@ export async function POST(request: NextRequest) {
       );
       const results = await searchSimilar(
         `${profile?.nickname ? `${profile.nickname}: ` : ""}${latestUserMessage.content.toString()}`,
-        { topK: 30, minScore: 0.4 },
+        { topK: 15, minScore: 0.4 },
       );
       console.log("[Chat] Found similar results:", results);
 
@@ -176,12 +180,14 @@ export async function POST(request: NextRequest) {
         Here is some relevant context from previous meetings that might help with the response:
         
         <context>
-        ${results.length > 0 ? results.map((r) => JSON.stringify(r, null, 2)).join("\n\n") : "No relevant context found"}
+        ${results.length > 0 ? results.map((r) => JSON.stringify(r)).join("\n\n") : "No relevant context found"}
         </context>
+
+        REMEMBER: The user's name is <user>${profile?.nickname}</user>.
       `;
 
       if (selectedMoments.length > 0) {
-        latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE MOMENTS:\n\`\`\`\n${JSON.stringify(selectedMoments, null, 2)}\n\`\`\``;
+        latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE MOMENTS:\n\`\`\`\n${JSON.stringify(selectedMoments)}\n\`\`\``;
       }
       if (selectedVideos.length > 0) {
         latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE VIDEOS:\n\`\`\`\n${JSON.stringify(
@@ -193,8 +199,6 @@ export async function POST(request: NextRequest) {
               "vtt",
             ] satisfies (keyof ReturnType<typeof toVideoOutput>)[]),
           ),
-          null,
-          2,
         )}\n\`\`\``;
       }
 
@@ -237,16 +241,16 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("[Chat] Encountered error:", error);
 
-    const nextRetryModel = MODEL_RETRY_ORDER.find((model, idx) => {
-      return MODEL_RETRY_ORDER.indexOf(model) === idx + 1;
-    });
+    // const nextRetryModel = MODEL_RETRY_ORDER.find((model, idx) => {
+    //   return MODEL_RETRY_ORDER.indexOf(model) === idx + 1;
+    // });
 
-    if (nextRetryModel) {
-      console.log("[Chat] Retrying with next model:", nextRetryModel);
-      const url = new URL(request.nextUrl);
-      url.searchParams.set("model", nextRetryModel);
-      return fetch(url.toString(), request);
-    }
+    // if (nextRetryModel) {
+    //   console.log("[Chat] Retrying with next model:", nextRetryModel);
+    //   const url = new URL(request.nextUrl);
+    //   url.searchParams.set("model", nextRetryModel);
+    //   return fetch(url.toString(), request);
+    // }
 
     return NextResponse.json(
       { error: "Internal server error" },
