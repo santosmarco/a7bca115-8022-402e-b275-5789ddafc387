@@ -41,7 +41,6 @@ export const ChatRequestBody = z
 export type ChatRequestBody = z.infer<typeof ChatRequestBody>;
 
 const MODEL_RETRY_ORDER = [
-  "gpt-4o",
   "gpt-4o-mini",
   "gpt-4-turbo",
   "gpt-4",
