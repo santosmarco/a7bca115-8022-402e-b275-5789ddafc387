@@ -256,7 +256,16 @@ export const searchMomentsTool = tool({
     const results = await searchSimilar(query, {
       topK: 10,
       minScore: 0.2,
-      filter: { type: { $eq: "moments" } },
+      filter: {
+        $and: [
+          {
+            profile_id: {
+              $eq: "6c49a9f3-4943-4341-a5d0-1e2012570980", // Hard-coding Kanishka's profile ID for now
+            },
+          },
+          { type: { $eq: "moments" } },
+        ],
+      },
     });
 
     const resultsWithMoments = await Promise.all(
