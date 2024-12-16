@@ -242,6 +242,12 @@ export const searchMomentsTool = tool({
   parameters: z
     .object({
       query: z.string().describe("(Required) The query to search for."),
+      topK: z
+        .number()
+        .optional()
+        .describe(
+          "(Optional) The number of results to return. Defaults to 10.",
+        ),
     })
     .describe("The arguments for the searchMoments tool."),
   output: z.object({
@@ -252,9 +258,9 @@ export const searchMomentsTool = tool({
       }),
     ),
   }),
-  execute: async ({ query }) => {
+  execute: async ({ query, topK }) => {
     const results = await searchSimilar(query, {
-      topK: 10,
+      topK: topK ?? 10,
       minScore: 0.2,
       filter: {
         $and: [

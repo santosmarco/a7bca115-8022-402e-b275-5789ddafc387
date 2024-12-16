@@ -1,7 +1,9 @@
-import { motion } from "framer-motion";
-import { MessageSquare } from "lucide-react";
+"use client";
 
-import { Badge } from "~/components/ui/badge";
+import { motion } from "framer-motion";
+import { Clock, MessageSquare, Tag, Timer, User } from "lucide-react";
+import { useMemo } from "react";
+
 import type { SearchMomentsToolOutput } from "~/lib/ai/tools";
 import { cn } from "~/lib/utils";
 
@@ -30,6 +32,20 @@ const itemVariants = {
 };
 
 export function ChatMomentList({ moments, className }: ChatMomentListProps) {
+  const sortedMoments = useMemo(() => {
+    return [...moments].sort((a, b) => {
+      // Sort by relevance score first
+      const scoreA = a.metadata?.score ?? 0;
+      const scoreB = b.metadata?.score ?? 0;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+
+      // Then by timestamp if scores are equal
+      const timeA = new Date(a.moment.segment_start_timestamp).getTime();
+      const timeB = new Date(b.moment.segment_start_timestamp).getTime();
+      return timeB - timeA;
+    });
+  }, [moments]);
+
   if (!moments?.length) {
     return (
       <motion.div
@@ -50,9 +66,9 @@ export function ChatMomentList({ moments, className }: ChatMomentListProps) {
       animate="visible"
       className={cn("space-y-2", className)}
     >
-      {moments.map((result, index) => (
+      {sortedMoments.map((result, index) => (
         <motion.div
-          key={index}
+          key={`${result.moment.id}-${index}`}
           variants={itemVariants}
           onClick={() => {
             window.open(
@@ -60,25 +76,59 @@ export function ChatMomentList({ moments, className }: ChatMomentListProps) {
               "_blank",
             );
           }}
-          className="group flex cursor-pointer items-center justify-between gap-3 rounded-md border border-border/50 bg-background/50 px-3 py-2 transition-colors hover:border-primary/20"
+          className="group flex cursor-pointer flex-col gap-2 rounded-md border border-border/50 bg-background/50 p-3 transition-colors hover:border-primary/20"
         >
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="truncate text-sm font-medium group-hover:text-primary">
-                {result.moment.title}
-              </h4>
-              {result.metadata?.activity_type && (
-                <Badge
-                  variant="secondary"
-                  className="flex items-center gap-1 border border-primary/20 text-xs"
-                >
-                  {result.metadata.activity_type}
-                </Badge>
+          {/* Title and Score */}
+          <div className="flex items-start gap-2">
+            <h4 className="line-clamp-2 flex-1 font-medium group-hover:text-primary">
+              {result.moment.title}
+            </h4>
+          </div>
+
+          {/* Metadata */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground">
+            {/* Activity Type */}
+            <div className="flex items-center gap-1">
+              <Tag className="h-3 w-3" />
+              {result.metadata?.activity_type}
+            </div>
+
+            {/* Speaker */}
+            {result.moment.target_person_type && (
+              <div className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                {result.moment.target_person_type}
+              </div>
+            )}
+
+            {/* Duration */}
+            <div className="flex items-center gap-1">
+              <Timer className="h-3 w-3" />
+              {formatDuration(
+                result.moment.segment_end_timestamp_in_seconds -
+                  result.moment.segment_start_timestamp_in_seconds,
               )}
             </div>
+
+            {/* Timestamp */}
+            <div className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {result.moment.segment_start_timestamp}
+            </div>
           </div>
+
+          {/* Summary */}
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {result.moment.summary}
+          </p>
         </motion.div>
       ))}
     </motion.div>
   );
+}
+
+function formatDuration(seconds: number): string {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 }
