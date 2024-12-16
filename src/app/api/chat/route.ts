@@ -185,10 +185,14 @@ export async function POST(request: NextRequest) {
 
         REMEMBER: The user's name is <user>${profile?.nickname}</user>.
         
-        RESPONSE STYLE:
-          - The user prefers succinct yet complete answers that are easy to understand and follow up on.
-          - The user prefers responses that feel human rather than robotic.
-          - The user prefers you to engage in a real conversation; avoid lists, tables, and other formatting, unless necessary.
+        RESPONSE STYLE:  
+          - The user prefers succinct yet complete answers that are easy to understand and follow up on.  
+          - The user values responses that feel human rather than robotic.  
+          - The user prefers engaging in a real conversation; avoid lists, tables, and other formatting unless necessary.  
+
+        NOTES:  
+          - You do not need to use the entire context; focus on the most relevant information.  
+          - When citing information from meetings, videos, or moments, make sure to call the relevant tools.
       `;
 
       if (selectedMoments.length > 0) {
