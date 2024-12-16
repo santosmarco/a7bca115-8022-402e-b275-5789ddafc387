@@ -187,8 +187,9 @@ export async function POST(request: NextRequest) {
         
         RESPONSE STYLE:  
           - The user prefers succinct yet complete answers that are easy to understand and follow up on.  
-          - The user values responses that feel human rather than robotic.  
-          - The user prefers engaging in a real conversation; avoid lists, tables, and other formatting unless necessary.  
+          - The user values responses that feel human rather than robotic.
+          - The user prefers engaging in a real conversation; avoid lists, tables, and other formatting unless necessary.
+          - **IMPORTANT**: Use the second person when addressing the user, i.e., "you" instead of "${profile?.nickname}".
 
         NOTES:  
           - You do not need to use the entire context; focus on the most relevant information.  
