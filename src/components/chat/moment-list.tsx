@@ -32,20 +32,6 @@ const itemVariants = {
 };
 
 export function ChatMomentList({ moments, className }: ChatMomentListProps) {
-  const sortedMoments = useMemo(() => {
-    return [...moments].sort((a, b) => {
-      // Sort by relevance score first
-      const scoreA = a.metadata?.score ?? 0;
-      const scoreB = b.metadata?.score ?? 0;
-      if (scoreA !== scoreB) return scoreB - scoreA;
-
-      // Then by timestamp if scores are equal
-      const timeA = new Date(a.moment.segment_start_timestamp).getTime();
-      const timeB = new Date(b.moment.segment_start_timestamp).getTime();
-      return timeB - timeA;
-    });
-  }, [moments]);
-
   if (!moments?.length) {
     return (
       <motion.div
@@ -66,7 +52,7 @@ export function ChatMomentList({ moments, className }: ChatMomentListProps) {
       animate="visible"
       className={cn("space-y-2", className)}
     >
-      {sortedMoments.map((result, index) => (
+      {moments.map((result, index) => (
         <motion.div
           key={`${result.moment.id}-${index}`}
           variants={itemVariants}
