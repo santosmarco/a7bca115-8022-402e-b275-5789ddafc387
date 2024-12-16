@@ -40,8 +40,11 @@ export type Tool<
 
 export type ToolOutput<T extends Tool> = z.output<T["_def"]["output"]>;
 
-export function explainTools<T extends Record<string, Tool>>(tools: T) {
-  return _({ ...tools, explain: explainTool(tools) })
+export function explainTools<T extends Record<string, Tool>>(
+  tools: T,
+  includeExplain = true,
+) {
+  return _({ ...tools, ...(includeExplain && { explain: explainTool(tools) }) })
     .toPairs()
     .map(
       ([name, tool]) =>

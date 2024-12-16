@@ -14,6 +14,7 @@ import {
   searchMomentsTool,
 } from "~/lib/ai/tools";
 import { getObservationPrompt } from "~/lib/api/observation";
+import { SlashCommand } from "~/lib/commands/schemas";
 import { searchSimilar } from "~/lib/pinecone/search";
 import { UIMessage } from "~/lib/schemas/ai";
 import { Video } from "~/lib/schemas/video";
@@ -159,22 +160,37 @@ export async function POST(request: NextRequest) {
       .reverse()
       .find((m): m is Extract<typeof m, { role: "user" }> => m.role === "user");
 
-    if (latestUserMessage) {
-      console.log(
-        "[Chat] Found latest user message, searching for similar content",
-      );
-      const results = await searchSimilar(
-        `${profile?.nickname ? `${profile.nickname}: ` : ""}${latestUserMessage.content.toString()}`,
-        { topK: 15, minScore: 0.4 },
-      );
-      console.log("[Chat] Found similar results:", results);
+    let userCommands: string[] = [];
 
+    if (latestUserMessage) {
       const userMessageContent =
         typeof latestUserMessage.content === "string"
           ? latestUserMessage.content
           : latestUserMessage.content.reduce((acc, curr) => {
               return acc + (curr.type === "text" ? curr.text : "");
             }, "");
+
+      userCommands = _.uniq(
+        userMessageContent.match(
+          new RegExp(`\\${SlashCommand.options.join("|")}`, "g"),
+        ),
+      );
+
+      const cleanedUserMessageContent = userMessageContent.replace(
+        new RegExp(`\\${SlashCommand.options.join("|")}\\s*`, "g"),
+        "",
+      );
+
+      console.log(
+        "[Chat] Found latest user message, searching for similar content",
+      );
+
+      const results = await searchSimilar(
+        `${profile?.nickname ? `${profile.nickname}: ` : ""}${cleanedUserMessageContent}`,
+        { topK: 15, minScore: 0.4 },
+      );
+
+      console.log("[Chat] Found similar results:", results);
 
       latestUserMessage.content = dedent`
         Here is some relevant context from previous meetings that might help with the response:
@@ -196,11 +212,17 @@ export async function POST(request: NextRequest) {
           - When citing information from meetings, videos, or moments, make sure to call the relevant tools.
       `;
 
+      if (userCommands.includes("/meetings")) {
+        latestUserMessage.content += `\n\nVERY IMPORTANT: THE USER IS ASKING FOR MEETINGS. **CALLING THE \`listMeetings\` TOOL IS MANDATORY.**\n${explainTools({ listMeetings: listMeetingsTool }, false)}`;
+      }
+      if (userCommands.includes("/moments")) {
+        latestUserMessage.content += `\n\nVERY IMPORTANT: THE USER IS ASKING FOR MOMENTS. **CALLING BOTH THE \`searchMoments\` AND \`displayMoment\` TOOLS IS MANDATORY.**\n${explainTools({ searchMoments: searchMomentsTool, displayMoment: displayMomentTool }, false)}`;
+      }
       if (selectedMoments.length > 0) {
         latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE MOMENTS:\n\`\`\`\n${JSON.stringify(selectedMoments)}\n\`\`\``;
       }
       if (selectedVideos.length > 0) {
-        latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE VIDEOS:\n\`\`\`\n${JSON.stringify(
+        latestUserMessage.content += `\n\nVERY IMPORTANT: FOCUS **ONLY** ON THESE MEETINGS:\n\`\`\`\n${JSON.stringify(
           selectedVideos.map((v) =>
             _.omit(v, [
               "meeting",
@@ -224,7 +246,7 @@ export async function POST(request: NextRequest) {
     const result = streamText({
       model: openai(model),
       tools: { ...tools, explain: explainTool(tools) },
-      maxSteps: 5,
+      maxSteps: userCommands.length > 0 ? 8 : 5,
       temperature: 0.2,
       maxTokens: 8192,
       messages: [...initialMessages, ...coreMessages],

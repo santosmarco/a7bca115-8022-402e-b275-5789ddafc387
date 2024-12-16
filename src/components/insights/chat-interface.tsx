@@ -177,43 +177,38 @@ export function ChatInterface({
     function handleInitializeConversation() {
       if (!isEmpty || !userId || !selectedTopic || isTyping) return;
 
-      if (selectedTopic === "Coach") {
-        const initializeCoachChat = async () => {
-          const { data } = await supabase
-            .from("observation_prompts")
-            .select("*")
-            .eq("type", "Coach")
-            .eq("profile_id", userId)
-            .eq("latest", true)
-            .maybeSingle();
+      const initializeChat = async () => {
+        const { data } = await supabase
+          .from("observation_prompts")
+          .select("*")
+          .eq("type", selectedTopic)
+          .eq("profile_id", userId)
+          .eq("latest", true)
+          .maybeSingle();
 
-          const defaultMessage = {
-            id: _.uniqueId(),
-            role: "user" as const,
-            content: "What should I talk to my coach about?",
-          };
-
-          const assistantMessage = data?.result
-            ? {
-                id: _.uniqueId(),
-                role: "assistant" as const,
-                content: data.result,
-              }
-            : defaultMessage;
-
-          setMessages((messages) =>
-            messages.length === 0 ? [...messages, assistantMessage] : messages,
-          );
+        const defaultMessage = {
+          id: _.uniqueId(),
+          role: "user" as const,
+          content:
+            selectedTopic === "Coach"
+              ? "What should I talk to my coach about?"
+              : `Tell me more about ${selectedTopic}`,
         };
 
-        void initializeCoachChat();
-        return;
-      }
+        const assistantMessage = data?.result
+          ? {
+              id: _.uniqueId(),
+              role: "assistant" as const,
+              content: data.result,
+            }
+          : defaultMessage;
 
-      void append({
-        role: "user",
-        content: `Tell me more about ${selectedTopic}`,
-      });
+        setMessages((messages) =>
+          messages.length === 0 ? [...messages, assistantMessage] : messages,
+        );
+      };
+
+      void initializeChat();
     },
     [supabase, isEmpty, userId, selectedTopic, isTyping, append, setMessages],
   );
