@@ -16,7 +16,7 @@ import type { Json } from "~/lib/supabase/database.types";
 export const checkMeetings = schedules.task({
   id: "check-meetings-v2",
   maxDuration: 300,
-  cron: "*/1 * * * *",
+  cron: "*/3 * * * *",
   machine: { preset: "small-2x" },
   run: async (payload) => {
     const supabase = createClient();
