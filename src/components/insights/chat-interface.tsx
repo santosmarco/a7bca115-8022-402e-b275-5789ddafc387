@@ -363,7 +363,11 @@ export function ChatInterface({
                     transition={{ delay: 0.2 }}
                   >
                     <TopicIcon className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-semibold">{selectedTopic}</h2>
+                    <h2 className="text-lg font-semibold">
+                      {selectedTopic === "Coach"
+                        ? "Exploration"
+                        : selectedTopic}
+                    </h2>
                   </motion.div>
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
