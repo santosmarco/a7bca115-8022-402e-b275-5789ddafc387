@@ -11,7 +11,7 @@ import {
   explainTool,
   explainTools,
   listMeetingsTool,
-  searchMomentsTool,
+  searchMomentsTool as createSearchMomentsTool,
 } from "~/lib/ai/tools";
 import { getObservationPrompt } from "~/lib/api/observation";
 import { SlashCommand } from "~/lib/commands/schemas";
@@ -99,6 +99,8 @@ export async function POST(request: NextRequest) {
           .order("created_at", { ascending: false }),
       ],
     );
+
+    const searchMomentsTool = createSearchMomentsTool(userId);
 
     const observationPrompt = observationPrompts?.[0];
 

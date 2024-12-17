@@ -236,66 +236,65 @@ export const listMeetingsTool = tool({
 
 export type ListMeetingsToolOutput = ToolOutput<typeof listMeetingsTool>;
 
-export const searchMomentsTool = tool({
-  description: "Useful for searching for moments in the database.",
-  parameters: z
-    .object({
-      query: z.string().describe("(Required) The query to search for."),
-      topK: z
-        .number()
-        .optional()
-        .describe(
-          "(Optional) The number of results to return. Defaults to 10.",
-        ),
-    })
-    .describe("The arguments for the searchMoments tool."),
-  output: z.object({
-    results: z.array(
-      z.object({
-        moment: VideoMoment,
-        metadata: IndexMetadata.optional(),
-      }),
-    ),
-  }),
-  execute: async ({ query, topK }) => {
-    const results = await searchSimilar(query, {
-      topK: topK ?? 10,
-      minScore: 0.2,
-      filter: {
-        $and: [
-          {
-            profile_id: {
-              $eq: "6c49a9f3-4943-4341-a5d0-1e2012570980", // Hard-coding Kanishka's profile ID for now
-            },
-          },
-          { type: { $eq: "moments" } },
-        ],
-      },
-    });
-
-    const resultsWithMoments = await Promise.all(
-      results.map(async (result) => {
-        if (!result.metadata?.moments_id) return null;
-
-        try {
-          const moment = await api.moments.getOneById({
-            momentId: result.metadata.moments_id,
-          });
-
-          return { ...result, moment: VideoMoment.parse(moment) };
-        } catch (error) {
-          console.error("Failed to get moment", { error });
-          return null;
-        }
-      }),
-    );
-
-    return {
-      results: resultsWithMoments.filter(
-        (r): r is NonNullable<typeof r> => r !== null,
+export const searchMomentsTool = (profileId: string) =>
+  tool({
+    description: "Useful for searching for moments in the database.",
+    parameters: z
+      .object({
+        query: z.string().describe("(Required) The query to search for."),
+        topK: z
+          .number()
+          .optional()
+          .describe(
+            "(Optional) The number of results to return. Defaults to 10.",
+          ),
+      })
+      .describe("The arguments for the searchMoments tool."),
+    output: z.object({
+      results: z.array(
+        z.object({
+          moment: VideoMoment,
+          metadata: IndexMetadata.optional(),
+        }),
       ),
-    };
-  },
-});
+    }),
+    execute: async ({ query, topK }) => {
+      const results = await searchSimilar(query, {
+        topK: topK ?? 10,
+        minScore: 0.2,
+        filter: {
+          $and: [
+            { profile_id: { $eq: profileId } },
+            { type: { $eq: "moments" } },
+          ],
+        },
+      });
 
-export type SearchMomentsToolOutput = ToolOutput<typeof searchMomentsTool>;
+      const resultsWithMoments = await Promise.all(
+        results.map(async (result) => {
+          if (!result.metadata?.moments_id) return null;
+
+          try {
+            const moment = await api.moments.getOneById({
+              momentId: result.metadata.moments_id,
+            });
+
+            return { ...result, moment: VideoMoment.parse(moment) };
+          } catch (error) {
+            console.error("Failed to get moment", { error });
+            return null;
+          }
+        }),
+      );
+
+      return {
+        results: resultsWithMoments.filter(
+          (r): r is NonNullable<typeof r> => r !== null,
+        ),
+      };
+    },
+  });
+
+export type SearchMomentsToolOutput = ToolOutput<
+  ReturnType<typeof searchMomentsTool>
+>;
