@@ -11,9 +11,7 @@ type MomentElement = Element & {
 };
 
 const isMomentElement = (node: Element): node is MomentElement =>
-  node.tagName === "moment" &&
-  typeof node.properties?.id === "string" &&
-  typeof node.properties?.reasoning === "string";
+  node.tagName === "moment" && typeof node.properties?.id === "string";
 
 export const rehypeMoment: Plugin<[], Root> = () => {
   return (tree) => {

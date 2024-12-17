@@ -210,6 +210,7 @@ export async function POST(request: NextRequest) {
         NOTES:  
           - You do not need to use the entire context; focus on the most relevant information.  
           - When citing information from meetings, videos, or moments, make sure to call the relevant tools.
+          - Use the \`<moment id={moment_id} reasoning={optional_reasoning_for_why_this_moment_is_relevant} />\` tag to reference specific moments **inline** (in the message). Important: Treat <moment /> tags like paragraphs; they occupy a full block in the document and cannot be nested.
       `;
 
       if (userCommands.includes("/meetings")) {

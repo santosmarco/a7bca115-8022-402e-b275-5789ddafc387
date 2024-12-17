@@ -195,7 +195,7 @@ const COMPONENTS = {
     ...props
   }: React.HTMLAttributes<HTMLDivElement> & {
     "data-moment-id": string;
-    "data-moment-reasoning": string;
+    "data-moment-reasoning"?: string;
   }) => (
     <>
       <MomentDisplay id={momentId} reasoning={momentReasoning} />

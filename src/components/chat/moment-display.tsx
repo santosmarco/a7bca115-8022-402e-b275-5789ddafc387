@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 interface MomentDisplayProps {
   id: string;
-  reasoning: string;
+  reasoning?: string;
 }
 
 export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
@@ -26,13 +26,15 @@ export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
           }
         }}
       />
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-xs italic text-muted-foreground"
-      >
-        {reasoning}
-      </motion.p>
+      {reasoning && (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-xs italic text-muted-foreground"
+        >
+          {reasoning}
+        </motion.p>
+      )}
     </div>
   );
 }
