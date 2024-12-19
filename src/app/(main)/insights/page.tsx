@@ -3,7 +3,7 @@
 import type { CoreMessage } from "ai";
 import { motion } from "framer-motion";
 import _ from "lodash";
-import { MessageCircleMoreIcon, VideoOffIcon } from "lucide-react";
+import { BotOffIcon, MessageCircleMoreIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useEffect } from "react";
 
@@ -155,7 +155,7 @@ export default function InsightsPage() {
               ease: [0.4, 0, 0.2, 1],
             }}
           >
-            <VideoOffIcon className="h-16 w-16 text-muted-foreground" />
+            <BotOffIcon className="h-16 w-16 text-muted-foreground" />
           </motion.div>
           <div className="max-w-sm space-y-2">
             <p className="font-semibold">No meetings found</p>
