@@ -142,6 +142,9 @@ export function MomentCard({
                   email: user.email,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
+                  role: user.role,
+                  coach_id: user.coach_id,
+                  dossier: user.dossier,
                 }
               : null,
           },
@@ -195,6 +198,9 @@ export function MomentCard({
                   email: user.email,
                   avatar_url: user.user_metadata.avatar_url as string,
                   is_admin: user.is_admin,
+                  role: user.role,
+                  coach_id: user.coach_id,
+                  dossier: user.dossier,
                 }
               : null,
           },
