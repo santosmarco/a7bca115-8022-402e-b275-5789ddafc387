@@ -137,7 +137,6 @@ export function ChatInterface({
     error,
     reload,
     setMessages,
-    setInput,
   } = useChat({
     body: {
       userId,
@@ -411,6 +410,14 @@ export function ChatInterface({
           <ChatInput
             value={input}
             onChange={handleInputChange}
+            onSubmit={(ev) => {
+              if (chatLoading || isTyping) {
+                ev?.preventDefault?.();
+                return;
+              }
+
+              handleSubmit(ev);
+            }}
             stop={stop}
             isGenerating={chatLoading}
             moments={relevantMoments}
