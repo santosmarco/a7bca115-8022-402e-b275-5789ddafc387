@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 
 import { env } from "~/env";
-import { createClient } from "~/lib/supabase/server";
+import { type SupabaseBrowserClient } from "../supabase/client";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
@@ -43,12 +43,14 @@ export async function setGoogleCredentials(
   });
 }
 
-export async function getGoogleCalendar(userId: string) {
+export async function getGoogleCalendar(
+  userId: string,
+  supabaseClient: SupabaseBrowserClient,
+) {
   const oauth2Client = getOAuth2Client(userId);
 
   // Get fresh credentials from database
-  const supabase = await createClient();
-  const { data: credentials } = await supabase
+  const { data: credentials } = await supabaseClient
     .from("integration_credentials")
     .select()
     .eq("user_id", userId)

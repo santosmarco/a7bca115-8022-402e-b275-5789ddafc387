@@ -4,17 +4,17 @@ import { PluginKey } from "@tiptap/pm/state";
 import type { SuggestionOptions } from "../utils/create-suggestion";
 import { Suggestion } from "./suggestion";
 
-export type SlashCommandsOptions = {
+export type MentionsOptions = {
   suggestion: Partial<SuggestionOptions>;
 };
 
-export const SlashCommands = Extension.create<SlashCommandsOptions, never>({
-  name: "slash-commands",
+export const Mentions = Extension.create<MentionsOptions, never>({
+  name: "mentions",
 
   addOptions() {
     return {
       suggestion: {
-        char: "/",
+        char: "@",
         startOfLine: false,
         command: ({ editor, range, props }) => {
           props.command({ editor, range, props });
@@ -26,7 +26,7 @@ export const SlashCommands = Extension.create<SlashCommandsOptions, never>({
   addProseMirrorPlugins() {
     return [
       Suggestion({
-        pluginKey: new PluginKey("slash-commands-suggestion"),
+        pluginKey: new PluginKey("mentions-suggestion"),
         editor: this.editor,
         ...this.options.suggestion,
       }),

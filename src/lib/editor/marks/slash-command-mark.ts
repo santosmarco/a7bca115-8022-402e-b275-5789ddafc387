@@ -17,7 +17,7 @@ export const SlashCommandMark = Mark.create<SlashCommandMarkOptions>({
   addOptions() {
     return {
       HTMLAttributes: {
-        class: cn("rounded-sm", "bg-primary", "px-1"),
+        class: cn("rounded-sm border border-accent bg-accent px-1"),
       },
     };
   },

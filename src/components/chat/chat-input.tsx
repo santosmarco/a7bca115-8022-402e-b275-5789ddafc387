@@ -53,6 +53,7 @@ export function ChatInput({
         onChange={onChange}
         onSubmit={onSubmit}
         className={cn(showSelectionsList && "pb-[50px]")}
+        disabled={isGenerating}
       />
 
       <SelectedContentList

@@ -6,9 +6,12 @@ import StarterKit from "@tiptap/starter-kit";
 import * as React from "react";
 import type { Except } from "type-fest";
 
+import { coachingFrameworkSuggestion } from "~/lib/editor/extensions/coaching-framework-suggestion";
+import { Mentions } from "~/lib/editor/extensions/mentions";
 import { SlashCommands } from "~/lib/editor/extensions/slash-commands";
-import { suggestion } from "~/lib/editor/extensions/suggestion";
-import { SlashCommandMark } from "~/lib/editor/nodes/slash-command-mark";
+import { suggestion as slashCommandSuggestion } from "~/lib/editor/extensions/suggestion";
+import { MentionMark } from "~/lib/editor/marks/mention-mark";
+import { SlashCommandMark } from "~/lib/editor/marks/slash-command-mark";
 import { cn } from "~/lib/utils";
 
 type EditorProps = Except<
@@ -23,20 +26,31 @@ type EditorProps = Except<
   onSubmit: (event?: { preventDefault?: () => void }) => void;
 };
 
-export function Editor({ onChange, onSubmit, ...props }: EditorProps) {
+export function Editor({
+  onChange,
+  onSubmit,
+  className,
+  disabled,
+  ...props
+}: EditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: "Ask AI, or press '/' for commands...",
+        placeholder: "Ask AI, or press '/' for commands, '@' for frameworks...",
         showOnlyWhenEditable: true,
       }),
       SlashCommandMark,
+      MentionMark,
       SlashCommands.configure({
-        suggestion,
+        suggestion: slashCommandSuggestion,
+      }),
+      Mentions.configure({
+        suggestion: coachingFrameworkSuggestion,
       }),
     ],
     content: "",
+    editable: !disabled,
     editorProps: {
       attributes: {
         class: cn(
@@ -50,7 +64,7 @@ export function Editor({ onChange, onSubmit, ...props }: EditorProps) {
           "[&_p.is-editor-empty:first-child]:before:h-0",
           "[&_p.is-editor-empty:first-child]:before:text-gray-400",
           "[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]",
-          props.className,
+          className,
         ),
       },
       handleKeyDown(view, event) {
@@ -58,7 +72,7 @@ export function Editor({ onChange, onSubmit, ...props }: EditorProps) {
         if (
           event.key === "Enter" &&
           !event.shiftKey &&
-          !/\/[a-zA-Z0-9]*$/.test(view.state.doc.textContent)
+          !/(?:\/|@)[a-zA-Z0-9]*$/.test(view.state.doc.textContent)
         ) {
           event.preventDefault();
           onSubmit();
@@ -76,5 +90,12 @@ export function Editor({ onChange, onSubmit, ...props }: EditorProps) {
     },
   });
 
-  return <EditorContent {...props} editor={editor} className="min-w-full" />;
+  return (
+    <EditorContent
+      editor={editor}
+      className="min-w-full"
+      disabled={disabled}
+      {...props}
+    />
+  );
 }
