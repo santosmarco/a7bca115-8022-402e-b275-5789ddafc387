@@ -40,19 +40,22 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
   const pathname = usePathname();
   const supabase = createClient();
   const [profiles, setProfiles] = useState<Tables<"profiles">[]>([]);
+  const [didSetProfiles, setDidSetProfiles] = useState(false);
   const { profile: selectedProfile, setProfile: setSelectedProfile } =
     useProfile();
   const [authSectionIsHovered, setAuthSectionIsHovered] = useState(false);
 
   useEffect(() => {
+    if (didSetProfiles) return;
+
     async function fetchProfiles() {
-      if (!user.is_admin || profiles.length > 0) return;
-      const { data: allProfiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("nickname");
-      if (!allProfiles) return;
-      setProfiles(allProfiles);
+      let query = supabase.from("profiles").select("*").order("nickname");
+      if (!user.is_admin) {
+        query = query.or(`id.eq.${user.id},coach_id.eq.${user.id}`);
+      }
+      const { data: allProfiles } = await query;
+      setProfiles(allProfiles ?? []);
+      setDidSetProfiles(true);
     }
 
     void fetchProfiles();
@@ -225,11 +228,11 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                 alignOffset={-256}
                 className="mb-4 ml-4 w-56"
               >
-                {user.is_admin && profiles.length > 0 && (
+                {profiles.length > 1 && (
                   <>
                     <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                       <User className="h-3 w-3" />
-                      Admin • Switch Profile
+                      {user.is_admin ? "Admin" : "Coach"} • Switch Profile
                     </DropdownMenuLabel>
                     {profiles.map((profile) => (
                       <DropdownMenuItem
@@ -245,7 +248,14 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                               : "bg-muted",
                           )}
                         />
-                        {profile.nickname}
+                        <span className="flex items-baseline gap-x-2">
+                          {profile.nickname}
+                          {profile.id === user.id && (
+                            <span className="text-xs text-muted-foreground">
+                              (You)
+                            </span>
+                          )}
+                        </span>
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
