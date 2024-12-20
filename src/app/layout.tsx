@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-import { ProfileWarning } from "~/components/profile-warning";
 import { Toaster } from "~/components/ui/sonner";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -29,7 +28,6 @@ export default function RootLayout({
       <body>
         <NuqsAdapter>
           <TRPCReactProvider>
-            <ProfileWarning />
             {children}
             <Toaster />
           </TRPCReactProvider>
