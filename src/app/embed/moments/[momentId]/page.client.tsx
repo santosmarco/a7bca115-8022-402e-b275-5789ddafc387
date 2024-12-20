@@ -21,7 +21,7 @@ export function EmbedMomentPageClient({ moment }: EmbedMomentPageClientProps) {
       moment={moment}
       onSkipToMoment={handleSkipToMoment}
       jumpToLabel="Watch"
-      className="rounded-lg border border-foreground bg-transparent"
+      className="rounded-lg border-none bg-transparent pb-0"
     />
   );
 }

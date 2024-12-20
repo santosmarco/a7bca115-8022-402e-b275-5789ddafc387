@@ -34,11 +34,10 @@ export function MobileNav({ user, className }: SidebarNavProps) {
 
         <Button
           variant="ghost"
-          size="icon"
-          className="h-5 w-5 lg:hidden"
+          className="h-6 w-6 p-0 hover:bg-transparent hover:text-primary lg:hidden"
           onClick={() => setOpen(true)}
         >
-          <Menu className="h-5 w-5" />
+          <Menu className="!h-6 !w-6" />
           <span className="sr-only">Toggle menu</span>
         </Button>
       </motion.div>

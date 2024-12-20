@@ -1,0 +1,306 @@
+import { logger, schedules } from "@trigger.dev/sdk/v3";
+import dayjs from "dayjs";
+import type { calendar_v3 } from "googleapis";
+
+import {
+  getGoogleCalendar,
+  setGoogleCredentials,
+} from "~/lib/google-calendar/client";
+import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
+import type { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
+import { meetingBaas } from "~/lib/meeting-baas/client";
+import { slack } from "~/lib/slack";
+import { createClient } from "~/lib/supabase/client";
+import type { Json } from "~/lib/supabase/database.types";
+
+export const checkMeetings = schedules.task({
+  id: "check-meetings-v2",
+  maxDuration: 300,
+  cron: "*/3 * * * *",
+  machine: { preset: "small-2x" },
+  run: async (payload) => {
+    const supabase = createClient();
+
+    const { data: googleCredentials, error: googleCredentialsError } =
+      await supabase
+        .from("integration_credentials")
+        .select("*")
+        .eq("provider", "google");
+
+    if (googleCredentialsError) {
+      await slack.error({
+        text: `Error fetching Google credentials: ${googleCredentialsError.message}`,
+      });
+      logger.error("Error fetching google credentials", {
+        error: googleCredentialsError,
+      });
+      throw googleCredentialsError;
+    }
+
+    for (const credential of googleCredentials) {
+      if (credential.requires_reauth) {
+        await slack.warn({
+          text: `Skipping user ${credential.user_id} - Google reauthorization required`,
+        });
+        logger.warn("Google reauthorization required, skipping...", {
+          userId: credential.user_id,
+        });
+        continue;
+      }
+
+      if (!credential.access_token || !credential.refresh_token) {
+        await slack.warn({
+          text: `No access token or refresh token found for Google credential (User ID: ${credential.user_id})`,
+        });
+        logger.warn(
+          "No access token or refresh token found for google credential, skipping...",
+          { userId: credential.user_id },
+        );
+        continue;
+      }
+
+      try {
+        await setGoogleCredentials(
+          credential.user_id,
+          credential.refresh_token,
+        );
+
+        let calendars: calendar_v3.Schema$CalendarListEntry[] = [];
+        try {
+          const calendarClient = await getGoogleCalendar(
+            credential.user_id,
+            supabase,
+          );
+          const response = await calendarClient.calendarList.list({
+            minAccessRole: "reader",
+          });
+          calendars = response.data.items ?? [];
+        } catch (apiError) {
+          if ((apiError as Error).message.includes("invalid_grant")) {
+            await slack.warn({
+              text: `User ${credential.user_id} needs to reauthorize their Google account`,
+            });
+
+            await supabase
+              .from("integration_credentials")
+              .update({
+                requires_reauth: true,
+                last_refresh_attempt: new Date().toISOString(),
+                refresh_error: (apiError as Error).message,
+                access_token: null,
+                refresh_token: null,
+              })
+              .eq("user_id", credential.user_id)
+              .eq("provider", "google");
+
+            continue;
+          }
+          throw apiError;
+        }
+
+        if (!calendars.length) {
+          await slack.info({
+            text: `No calendars found for user ${credential.user_id}`,
+          });
+          logger.warn("No calendars found for google credential, skipping...", {
+            userId: credential.user_id,
+          });
+          continue;
+        }
+
+        for (const calendar of calendars) {
+          if (!calendar.id) {
+            await slack.warn({
+              text: `No calendar ID found for calendar "${calendar.summary}"`,
+            });
+            logger.warn(
+              "No calendar id found for google calendar, skipping...",
+              {
+                userId: credential.user_id,
+                calendar,
+              },
+            );
+            continue;
+          }
+
+          const calendarClient = await getGoogleCalendar(
+            credential.user_id,
+            supabase,
+          );
+          const {
+            data: { items: eventsInTheNextFourMinutes = [] },
+          } = await calendarClient.events.list({
+            calendarId: calendar.id,
+            timeMin: dayjs(payload.timestamp).toISOString(),
+            timeMax: dayjs(payload.timestamp).add(4, "minutes").toISOString(),
+            singleEvents: true,
+            timeZone: "UTC",
+          });
+
+          const videoConferencesInTheNextFourMinutes =
+            eventsInTheNextFourMinutes.filter(
+              (event): event is typeof event & GoogleCalendarVideoConference =>
+                !!(
+                  event.id &&
+                  event.start?.dateTime &&
+                  event.conferenceData?.entryPoints?.some(
+                    (entryPoint) =>
+                      entryPoint.entryPointType ===
+                        GoogleCalendarConferenceEntryPointType.VIDEO &&
+                      entryPoint.uri,
+                  )
+                ),
+            );
+
+          if (!videoConferencesInTheNextFourMinutes.length) {
+            logger.info(
+              `Found ${eventsInTheNextFourMinutes.length} events in the next 4 minutes for google calendar, but none of them are video conferences`,
+              {
+                userId: credential.user_id,
+                calendar,
+                events: eventsInTheNextFourMinutes,
+              },
+            );
+            continue;
+          }
+
+          const videoConferencesInTheNextFourMinutesWithNotetakerInvited =
+            videoConferencesInTheNextFourMinutes.filter((conference) =>
+              conference.attendees?.some(
+                (attendee) =>
+                  attendee.email?.trim()?.toLowerCase() ===
+                  "notetaker@withtitan.com",
+              ),
+            );
+
+          if (
+            !videoConferencesInTheNextFourMinutesWithNotetakerInvited.length
+          ) {
+            logger.info(
+              `Found ${videoConferencesInTheNextFourMinutes.length} video conferences in the next 4 minutes for google calendar, but none of them have the notetaker invited`,
+              {
+                userId: credential.user_id,
+                calendar,
+                events: videoConferencesInTheNextFourMinutes,
+              },
+            );
+            continue;
+          }
+
+          await slack.send({
+            text: `🎯 Found ${videoConferencesInTheNextFourMinutesWithNotetakerInvited.length} video conferences with the notetaker invited in the next 4 minutes for google calendar`,
+          });
+          logger.info(
+            `Found ${videoConferencesInTheNextFourMinutesWithNotetakerInvited.length} video conferences with the notetaker invited in the next 4 minutes for google calendar`,
+            {
+              userId: credential.user_id,
+              calendar,
+              events: videoConferencesInTheNextFourMinutesWithNotetakerInvited,
+            },
+          );
+
+          for (const conference of videoConferencesInTheNextFourMinutesWithNotetakerInvited) {
+            const meetingUrl = conference.conferenceData.entryPoints.find(
+              (entryPoint) =>
+                entryPoint.entryPointType ===
+                GoogleCalendarConferenceEntryPointType.VIDEO,
+            )?.uri;
+
+            if (!meetingUrl) {
+              await slack.warn({
+                text: `No video URL found for meeting "${conference.summary}" (User: ${credential.user_id})`,
+              });
+              logger.warn(
+                "No video entry point found for google calendar event",
+                {
+                  userId: credential.user_id,
+                  calendar,
+                  event: conference,
+                },
+              );
+              continue;
+            }
+
+            const { data: maybeMeetingBots, error: maybeMeetingBotsError } =
+              await supabase
+                .from("meeting_bots")
+                .select("id")
+                .contains("raw_data", {
+                  google_calendar_raw_data: {
+                    id: conference.id,
+                  },
+                });
+
+            if (maybeMeetingBotsError) {
+              await slack.error({
+                text: `Error checking for existing meeting bot: ${maybeMeetingBotsError.message}`,
+              });
+              logger.error("Error checking for existing meeting bot", {
+                error: maybeMeetingBotsError,
+              });
+              continue;
+            }
+
+            if (maybeMeetingBots?.length) {
+              await slack.info({
+                text: `Skipping meeting "${conference.summary}" - already has a bot assigned`,
+              });
+              logger.info("Skipping event - already has a meeting bot", {
+                userId: credential.user_id,
+                calendar,
+                eventId: conference.id,
+              });
+              continue;
+            }
+
+            await slack.send({
+              text: `🤖 Joining meeting "${conference.summary}"...`,
+            });
+
+            const { bot_id: meetingBotId } = await meetingBaas.meetings.join({
+              bot_name: "Notetaker",
+              reserved: true,
+              meeting_url: meetingUrl,
+              bot_image: "https://i.ibb.co/X7QvTBN/Titan-Image-1600x900.png",
+              recording_mode: "speaker_view",
+              speech_to_text: { provider: "Default" },
+              automatic_leave: {
+                waiting_room_timeout: 60 * 60, // 1 hour
+                noone_joined_timeout: 60 * 60, // 1 hour
+              },
+              extra: {
+                userId: credential.user_id,
+                event: conference,
+                google_calendar_raw_data: conference,
+              },
+            });
+
+            await supabase.from("meeting_bots").insert({
+              id: meetingBotId,
+              raw_data: {
+                google_calendar_raw_data: conference,
+              } as Json,
+            });
+
+            await slack.success({
+              text: `Successfully joined meeting "${conference.summary}" (Bot ID: ${meetingBotId})`,
+            });
+            logger.info("Successfully joined meeting", {
+              userId: credential.user_id,
+              calendar,
+              eventId: conference.id,
+            });
+          }
+        }
+      } catch (error) {
+        await slack.error({
+          text: `Error processing Google calendar for user ${credential.user_id}: ${(error as Error).message}`,
+        });
+        logger.error("Error processing google credential", {
+          error,
+          userId: credential.user_id,
+        });
+      }
+    }
+  },
+});

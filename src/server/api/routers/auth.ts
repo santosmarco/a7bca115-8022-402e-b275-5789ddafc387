@@ -43,7 +43,30 @@ export const authRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Session not found",
         });
-      return session;
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .single();
+      if (profileError)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to get profile: ${(profileError as Error).message}`,
+          cause: profileError,
+        });
+      if (!profile)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Profile not found",
+        });
+      const userRole = profile.role;
+      const user = {
+        ...session.user,
+        ...profile,
+        role: userRole,
+        is_admin: profile.is_admin || userRole === "admin",
+      };
+      return { ...session, user };
     } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -87,7 +110,13 @@ export const authRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Profile not found",
         });
-      return { ...user, ...profile };
+      const userRole = profile.role;
+      return {
+        ...user,
+        ...profile,
+        role: userRole,
+        is_admin: profile.is_admin || userRole === "admin",
+      };
     } catch (error) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",

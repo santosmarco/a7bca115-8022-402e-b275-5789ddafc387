@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Puzzle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useCallback, useEffect, useState } from "react";
 import { SiApple, SiGoogle, SiSlack, SiZoom } from "react-icons/si";
 import { toast } from "sonner";
 
@@ -12,7 +13,7 @@ import { Button } from "~/components/ui/button";
 import { Card } from "~/components/ui/card";
 import { env } from "~/env";
 import { createClient } from "~/lib/supabase/client";
-import type { RouterOutputs } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
 
 export type IntegrationsPageClientProps = {
   user: RouterOutputs["auth"]["getUser"];
@@ -80,9 +81,14 @@ const integrations = [
   },
 ] satisfies Integration[];
 
-export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
-  const router = useRouter();
+export function IntegrationsPageClient() {
+  const userQuery = api.auth.getUser.useQuery();
   const supabase = createClient();
+  const router = useRouter();
+  const [connectedTo, setConnectedTo] = useQueryState(
+    "connectedTo",
+    parseAsStringLiteral(integrations.map((i) => i.provider)),
+  );
   const [connectingProviders, setConnectingProviders] = useState<
     Integration["provider"][]
   >([]);
@@ -94,12 +100,14 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
     async (provider: Integration["provider"]) => {
       setConnectingProviders((prev) => [...prev, provider]);
 
-      const { error } = await supabase.auth.linkIdentity({
+      const { data, error } = await supabase.auth.linkIdentity({
         provider,
         options: {
           redirectTo: `${getBaseUrl()}auth/callback?${new URLSearchParams({
             provider,
-            next: "/integrations",
+            next: `/integrations?${new URLSearchParams({
+              connectedTo: provider,
+            })}`,
           })}`,
           ...(provider === "google" && {
             queryParams: {
@@ -107,25 +115,27 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
               prompt: "consent",
             },
             scopes:
-              "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events.readonly",
+              "https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/calendar.calendars.readonly https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/calendar.readonly",
           }),
         },
       });
 
       if (error) {
         toast.error("Failed to connect", { description: error.message });
-        setConnectingProviders((prev) => prev.filter((p) => p !== provider));
-        return;
+      }
+
+      if (data.url) {
+        router.push(data.url);
       }
     },
-    [supabase],
+    [supabase, router],
   );
 
   const handleDisconnect = useCallback(
     async (provider: Integration["provider"]) => {
       setDisconnectingProviders((prev) => [...prev, provider]);
 
-      const integrationIdentity = user.identities?.find(
+      const integrationIdentity = userQuery.data?.identities?.find(
         (i) => i.provider === provider,
       );
 
@@ -145,7 +155,7 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
         return;
       }
 
-      router.refresh();
+      await userQuery.refetch();
 
       toast.info("Disconnected", {
         description: "You are no longer connected to this integration.",
@@ -153,8 +163,18 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
 
       setDisconnectingProviders((prev) => prev.filter((p) => p !== provider));
     },
-    [supabase, user, router],
+    [supabase, userQuery],
   );
+
+  useEffect(() => {
+    if (connectedTo) {
+      toast.success(`Connected to ${connectedTo}`, {
+        description: "You can now use this integration.",
+      });
+
+      void setConnectedTo(null);
+    }
+  }, [connectedTo, setConnectedTo]);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -187,13 +207,16 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
           className="grid gap-6 md:grid-cols-2"
         >
           {integrations.map((integration) => {
-            const isConnected = user.identities?.some(
+            const isConnected = userQuery.data?.identities?.some(
               (i) => i.provider === integration.provider,
             );
             const isLoading =
+              userQuery.isLoading ||
               connectingProviders.includes(integration.provider) ||
               disconnectingProviders.includes(integration.provider);
-            const providerList = user.identities?.map((i) => i.provider);
+            const providerList = userQuery.data?.identities?.map(
+              (i) => i.provider,
+            );
 
             return (
               <motion.div
@@ -245,7 +268,9 @@ export function IntegrationsPageClient({ user }: IntegrationsPageClientProps) {
                             ? "Disconnecting..."
                             : isConnected
                               ? "Disconnect"
-                              : "Connect"}
+                              : isLoading
+                                ? "Loading..."
+                                : "Connect"}
                     </span>
                     <motion.div
                       initial={{ x: "-100%" }}

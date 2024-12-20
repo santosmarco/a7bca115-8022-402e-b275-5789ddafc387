@@ -5,6 +5,7 @@ import {
   fetchMomentByActivity,
   fetchPaginatedMoments,
   fetchVideoMoments,
+  transformMoment,
 } from "~/lib/db/moments";
 import { createClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
@@ -12,6 +13,20 @@ import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 const reactionTypeSchema = z.enum(["thumbs_up", "thumbs_down"]);
 
 export const momentsRouter = createTRPCRouter({
+  getOneById: publicProcedure
+    .input(z.object({ momentId: z.string() }))
+    .query(async ({ input }) => {
+      const supabase = await createClient();
+      const { data, error } = await supabase
+        .from("moments")
+        .select("*")
+        .eq("id", input.momentId);
+
+      if (error) throw error;
+      if (!data?.[0]) throw new TRPCError({ code: "NOT_FOUND" });
+      return transformMoment(data[0], 0);
+    }),
+
   listByVideo: publicProcedure
     .input(z.object({ videoId: z.string() }))
     .query(async ({ input }) => {
@@ -64,14 +79,14 @@ export const momentsRouter = createTRPCRouter({
     .input(
       z
         .object({
-          limit: z.number().min(1).max(100).optional().default(50),
+          limit: z.number().min(1).max(100).optional(),
           cursor: z.number().optional(),
         })
         .default({}),
     )
     .query(async ({ input }) => {
       try {
-        return await fetchPaginatedMoments(input.limit, input.cursor);
+        return await fetchPaginatedMoments(input);
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -93,11 +108,7 @@ export const momentsRouter = createTRPCRouter({
       const supabase = await createClient();
 
       try {
-        let query = supabase
-          .from("moments")
-          .select("id")
-          .eq("latest", true)
-          .limit(input.limit);
+        let query = supabase.from("moments").select("id").eq("latest", true);
 
         if (input.query) {
           query = query.textSearch(

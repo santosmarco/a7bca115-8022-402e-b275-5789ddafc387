@@ -2,7 +2,7 @@ import plugin from "tailwindcss/plugin";
 
 const scrollbarHide = plugin(({ addUtilities }) => {
   addUtilities({
-    ".scrollbar-hide": {
+    "*": {
       /* IE and Edge */
       "-ms-overflow-style": "none",
 

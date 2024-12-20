@@ -2,6 +2,7 @@
 
 import ApiVideoClient from "@api.video/nodejs-client";
 import axios from "axios";
+import { cache } from "react";
 import { z } from "zod";
 
 import { env } from "~/env";
@@ -11,9 +12,7 @@ const apiVideo = new ApiVideoClient({
   apiKey: env.API_VIDEO_API_KEY,
 });
 
-export async function listVideos(
-  ...args: Parameters<typeof apiVideo.videos.list>
-) {
+async function _listVideos(...args: Parameters<typeof apiVideo.videos.list>) {
   const { data } = await apiVideo.videos.list(...args);
   const videosWithDetails = await Promise.all(
     data.map(async (video) => {
@@ -23,6 +22,8 @@ export async function listVideos(
   );
   return videosWithDetails.map((video) => VideoWithDetails.parse(video));
 }
+
+export const listVideos = cache(_listVideos);
 
 export async function getVideo(
   ...args: Parameters<typeof apiVideo.videos.get>

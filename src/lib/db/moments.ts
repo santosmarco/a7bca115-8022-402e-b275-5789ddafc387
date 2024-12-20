@@ -1,8 +1,5 @@
-import {
-  type VideoMoment,
-  type VideoMoments,
-} from "~/lib/schemas/video-moment";
-import { type Tables } from "~/lib/supabase/database.types";
+import type { VideoMoment, VideoMoments } from "~/lib/schemas/video-moment";
+import type { Tables } from "~/lib/supabase/database.types";
 import { createClient } from "~/lib/supabase/server";
 
 export function transformMoment(
@@ -29,6 +26,8 @@ export function transformMoment(
     target_person_type: moment.target_person_type ?? "",
     target_person_reasoning: null,
     activity: moment.activity ?? "",
+    relevant: moment.relevant,
+    reactions: [],
   };
 }
 
@@ -67,17 +66,27 @@ export async function fetchMomentByActivity(
   return transformMoment(data, sequenceId);
 }
 
-export async function fetchPaginatedMoments(limit: number, cursor?: number) {
+export type PaginatedMomentsOptions = {
+  cursor?: number;
+  limit?: number;
+};
+
+export async function fetchPaginatedMoments(options: PaginatedMomentsOptions) {
   const supabase = await createClient();
-  const query = supabase
+
+  let query = supabase
     .from("moments")
     .select("*")
     .eq("latest", true)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .order("created_at", { ascending: false });
+
+  const { cursor, limit } = options;
 
   if (cursor) {
-    query.lt("created_at", new Date(cursor).toISOString());
+    query = query.lt("created_at", new Date(cursor).toISOString());
+  }
+  if (limit) {
+    query = query.limit(limit);
   }
 
   const { data, error } = await query;

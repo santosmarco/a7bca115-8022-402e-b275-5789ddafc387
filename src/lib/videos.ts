@@ -1,17 +1,13 @@
-import { z } from "zod";
+import type { ParsedVTT } from "~/lib/schemas/parsed-vtt";
 
-import { type ParsedVTT } from "~/lib/schemas/parsed-vtt";
-
+import type { getVideo } from "./api-video/videos";
 import { EmotionAnalysis, type EmotionSequence } from "./schemas/emotion";
-import { type Video } from "./schemas/video";
-import { VideoMoment } from "./schemas/video-moment";
-
-export function getVideoSummary(video: Video) {
-  return video.metadata.find((m) => m.key === "summary")?.value;
-}
+import type { Video } from "./schemas/video";
+import type { VideoMoment } from "./schemas/video-moment";
+import type { Tables } from "./supabase/database.types";
 
 export function getVideoEmotions(video: Video) {
-  const { emotion_sequences: emotionSequences } =
+  const { emotion_sequences: emotionSequences = [] } =
     EmotionAnalysis.partial().parse(
       JSON.parse(
         video.metadata.find((m) => m.key === "emotions")?.value ?? "{}",
@@ -19,22 +15,6 @@ export function getVideoEmotions(video: Video) {
     );
 
   return emotionSequences;
-}
-
-export function getVideoMoments(video: Video, category?: string) {
-  const moments = z
-    .array(VideoMoment)
-    .parse(
-      JSON.parse(
-        video.metadata.find((m) => m.key === "activities")?.value ?? "[]",
-      ),
-    );
-
-  if (category) {
-    return moments.filter((m) => m.activity === category);
-  }
-
-  return moments;
 }
 
 export function emotionToMoment(
@@ -68,11 +48,13 @@ export function emotionToMoment(
     target_person_type: emotion.speaker_name,
     target_person_reasoning: null,
     activity: "Emotion",
+    relevant: true,
+    reactions: [],
   };
 }
 
 export function getVideoMomentById(
-  video: Video,
+  video: VideoOutput,
   momentId: string,
   vtt: string,
 ) {
@@ -80,7 +62,7 @@ export function getVideoMomentById(
   const emotionMoments = emotions.map((emotion) =>
     emotionToMoment(emotion, video, vtt),
   );
-  const moments = getVideoMoments(video);
+  const moments = video.moments;
   return moments.concat(emotionMoments).find((m) => m.index === momentId);
 }
 
@@ -161,4 +143,52 @@ export function parseTimestamp(timestamp: string): number {
 export function handleMomentCategorySort(categoryA: string, categoryB: string) {
   if (categoryA === "Emotion") return 1;
   return categoryA.localeCompare(categoryB);
+}
+
+// ---
+
+export function toVideoOutput<T extends Awaited<ReturnType<typeof getVideo>>>(
+  video: T,
+  additionalData: {
+    meeting?: Tables<"meetings">;
+    moments?: VideoMoment[];
+    summary?: string;
+  },
+) {
+  const meeting = additionalData.meeting;
+  const moments = additionalData.moments ?? [];
+  const summary = additionalData.summary ?? "";
+  const vtt = meeting?.original_vtt_file;
+  const metadata = [
+    ...video.metadata.filter(
+      (m) => m.key !== "summary" && m.key !== "activities",
+    ),
+    { key: "summary", value: summary },
+    { key: "activities", value: JSON.stringify(moments) },
+  ];
+
+  return { ...video, meeting, moments, summary, vtt, metadata };
+}
+
+export type VideoOutput = Awaited<ReturnType<typeof toVideoOutput>>;
+
+export function getMomentText(
+  moment: {
+    segment_id_sequence_start: number;
+    segment_id_sequence_end: number;
+  },
+  parsedVTT: ParsedVTT[],
+): string {
+  const relevantSegments = parsedVTT.filter(
+    (segment) =>
+      segment.index >= moment.segment_id_sequence_start &&
+      segment.index <= moment.segment_id_sequence_end,
+  );
+
+  return relevantSegments
+    .map((segment) => {
+      if (segment.speaker) return `${segment.speaker}: ${segment.text}`;
+      return segment.text;
+    })
+    .join("\n");
 }

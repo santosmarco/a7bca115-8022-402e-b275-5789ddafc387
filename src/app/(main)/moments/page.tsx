@@ -3,7 +3,11 @@ import { api } from "~/trpc/server";
 import { MomentsPageClient } from "./page.client";
 
 export default async function MomentsPage() {
-  const videos = await api.videos.listAll();
+  await api.videos.listAll.prefetch({
+    moments: {
+      includeNonRelevant: true,
+    },
+  });
 
-  return <MomentsPageClient videos={videos} />;
+  return <MomentsPageClient />;
 }

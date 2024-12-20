@@ -1,9 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import _ from "lodash";
 import {
   BarChart3,
+  Brain,
   LogOut,
   Puzzle,
   TrendingUpIcon,
@@ -40,27 +40,22 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
   const pathname = usePathname();
   const supabase = createClient();
   const [profiles, setProfiles] = useState<Tables<"profiles">[]>([]);
+  const [didSetProfiles, setDidSetProfiles] = useState(false);
   const { profile: selectedProfile, setProfile: setSelectedProfile } =
     useProfile();
   const [authSectionIsHovered, setAuthSectionIsHovered] = useState(false);
 
   useEffect(() => {
+    if (didSetProfiles) return;
+
     async function fetchProfiles() {
-      if (!user.is_admin || profiles.length > 0) return;
-      const { data: allProfiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("nickname");
-      if (!allProfiles) return;
-      setProfiles(allProfiles);
-      if (!selectedProfile)
-        setSelectedProfile(
-          _.pick(user, [
-            "id",
-            "nickname",
-            "is_admin",
-          ] satisfies (keyof Tables<"profiles">)[]),
-        );
+      let query = supabase.from("profiles").select("*").order("nickname");
+      if (!user.is_admin) {
+        query = query.or(`id.eq.${user.id},coach_id.eq.${user.id}`);
+      }
+      const { data: allProfiles } = await query;
+      setProfiles(allProfiles ?? []);
+      setDidSetProfiles(true);
     }
 
     void fetchProfiles();
@@ -81,6 +76,12 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
   };
 
   const menuItems = [
+    {
+      href: "/insights",
+      icon: <Brain className="h-5 w-5" />,
+      label: "Insights",
+      isActive: pathname.startsWith("/insights"),
+    },
     {
       href: "/",
       icon: <Video className="h-5 w-5" />,
@@ -177,13 +178,17 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                         <Avatar className="h-10 w-10 border-2 border-border/50 transition-colors group-hover:border-primary/50">
                           <AvatarImage
                             src={
-                              user.user_metadata.avatar_url as
-                                | string
-                                | undefined
+                              !selectedProfile || selectedProfile.id === user.id
+                                ? (user.user_metadata.avatar_url as
+                                    | string
+                                    | undefined)
+                                : undefined
                             }
                           />
                           <AvatarFallback className="bg-primary/5">
-                            {user.email?.slice(0, 2).toUpperCase()}
+                            {(selectedProfile?.email ?? user.email)
+                              ?.slice(0, 2)
+                              .toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <motion.div
@@ -209,7 +214,7 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                           transition={{ delay: 0.1 }}
                           className="text-xs text-muted-foreground"
                         >
-                          {user.email}
+                          {selectedProfile?.email ?? user.email}
                         </motion.span>
                       </div>
                     </div>
@@ -223,11 +228,11 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                 alignOffset={-256}
                 className="mb-4 ml-4 w-56"
               >
-                {user.is_admin && profiles.length > 0 && (
+                {profiles.length > 1 && (
                   <>
                     <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
                       <User className="h-3 w-3" />
-                      Admin • Switch Profile
+                      {user.is_admin ? "Admin" : "Coach"} • Switch Profile
                     </DropdownMenuLabel>
                     {profiles.map((profile) => (
                       <DropdownMenuItem
@@ -243,7 +248,14 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                               : "bg-muted",
                           )}
                         />
-                        {profile.nickname}
+                        <span className="flex items-baseline gap-x-2">
+                          {profile.nickname}
+                          {profile.id === user.id && (
+                            <span className="text-xs text-muted-foreground">
+                              (You)
+                            </span>
+                          )}
+                        </span>
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />

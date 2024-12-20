@@ -4,6 +4,8 @@
  */
 await import("./src/env.js");
 
+import { withLogtail } from "@logtail/next";
+
 /**
  * @type {import("next").NextConfig}
  */
@@ -11,6 +13,7 @@ const nextConfig = {
   reactStrictMode: true,
   experimental: {
     typedRoutes: true,
+    instrumentationHook: true,
   },
   images: {
     domains: ["vod.api.video"],
@@ -20,4 +23,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withLogtail(nextConfig);

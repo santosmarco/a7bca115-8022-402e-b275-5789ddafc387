@@ -156,24 +156,20 @@ export function VideoPlayer({
         >
           <Tooltip open={!!hoveredMoment}>
             <div className="relative -mb-1 h-1 w-full rounded-full bg-accent">
-              {momentsShown &&
-                _.sortBy(
-                  momentsShown,
-                  (moment) => moment.segment_start_timestamp_in_seconds,
-                ).map((moment) => (
-                  <Tooltip key={moment.index}>
-                    <TooltipTrigger
-                      className="absolute top-0 h-full rounded-full bg-primary"
-                      style={{
-                        left: `${(moment.segment_start_timestamp_in_seconds / (duration ?? 1)) * 100}%`,
-                        width: `${((moment.segment_end_timestamp_in_seconds - moment.segment_start_timestamp_in_seconds) / (duration ?? 1)) * 100}%`,
-                      }}
-                    />
-                    <TooltipContent className="bg-accent text-xs text-foreground">
-                      <p>{moment.title}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
+              {momentsShown?.map((moment) => (
+                <Tooltip key={moment.index}>
+                  <TooltipTrigger
+                    className="absolute top-0 h-full rounded-full bg-primary"
+                    style={{
+                      left: `${(moment.segment_start_timestamp_in_seconds / (duration ?? 1)) * 100}%`,
+                      width: `${((moment.segment_end_timestamp_in_seconds - moment.segment_start_timestamp_in_seconds) / (duration ?? 1)) * 100}%`,
+                    }}
+                  />
+                  <TooltipContent className="bg-accent text-xs text-foreground">
+                    <p>{moment.title}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
             </div>
 
             <TooltipTrigger asChild>

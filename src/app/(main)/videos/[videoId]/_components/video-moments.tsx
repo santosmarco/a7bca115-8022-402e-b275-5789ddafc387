@@ -33,8 +33,7 @@ export function VideoMoments({
     }));
   const momentsByCategory = _.mapValues(
     _.groupBy(moments, (moment) => moment.activity),
-    (moments) =>
-      _.sortBy(moments, (moment) => moment.segment_start_timestamp_in_seconds),
+    (moments) => moments,
   );
 
   return (
@@ -70,7 +69,7 @@ export function VideoMoments({
 
       {Object.entries(momentsByCategory).map(([category, moments]) => (
         <TabsContent key={category} value={category}>
-          <ScrollArea className="h-[36rem] py-0 scrollbar-hide lg:border-t lg:border-border lg:py-4 lg:pt-0">
+          <ScrollArea className="scrollbar-hide py-0 lg:border-t lg:border-border lg:py-4 lg:pt-0">
             {moments.map((moment, index) => (
               <MomentCard
                 key={moment.index}

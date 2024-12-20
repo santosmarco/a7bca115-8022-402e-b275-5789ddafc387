@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { Tables } from "../supabase/database.types";
+
 export const VideoMoment = z
   .object({
     id: z.string().optional(),
@@ -19,6 +21,11 @@ export const VideoMoment = z
     target_person_type: z.string().nullish(),
     target_person_reasoning: z.string().nullish(),
     activity: z.string(),
+    relevant: z.boolean(),
+    reactions: z
+      .preprocess((arg) => arg, z.custom<Tables<"moment_reactions">>())
+      .array()
+      .default([]),
   })
   .transform(({ id, ...rest }) => ({ ...rest, id: id ?? rest.index }));
 export type VideoMoment = z.infer<typeof VideoMoment>;

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 
-import { type VideoWithDetails } from "~/lib/schemas/video";
+import type { VideoWithDetails } from "~/lib/schemas/video";
+import type { VideoOutput } from "~/lib/videos";
 
 import { VideoCard } from "./video-card";
 
@@ -27,7 +28,7 @@ const cardVariants = {
 };
 
 export type VideoGridProps = {
-  videos: VideoWithDetails[];
+  videos: VideoOutput[];
 };
 
 export function VideoGrid({ videos }: VideoGridProps) {
