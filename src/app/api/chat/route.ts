@@ -87,18 +87,21 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     console.log("[Chat] Supabase client initialized");
 
-    const [{ data: profile }, { data: observationPrompts }] = await Promise.all(
-      [
-        supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
-        supabase
-          .from("observation_prompts")
-          .select("*")
-          .eq("profile_id", userId)
-          .eq("type", selectedActivity)
-          .eq("latest", true)
-          .order("created_at", { ascending: false }),
-      ],
-    );
+    const [
+      { data: profile },
+      { data: observationPrompts },
+      { data: frameworks },
+    ] = await Promise.all([
+      supabase.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabase
+        .from("observation_prompts")
+        .select("*")
+        .eq("profile_id", userId)
+        .eq("type", selectedActivity)
+        .eq("latest", true)
+        .order("created_at", { ascending: false }),
+      supabase.from("coaching_frameworks").select("*"),
+    ]);
 
     const searchMomentsTool = createSearchMomentsTool(userId);
 
@@ -177,11 +180,27 @@ export async function POST(request: NextRequest) {
           new RegExp(`\\${SlashCommand.options.join("|")}`, "g"),
         ),
       );
+      const userFrameworks = _.uniq(
+        userMessageContent.match(
+          new RegExp(
+            `@(?:${(frameworks ?? []).map((f) => `(?:${f.title})`).join("|")})`,
+            "g",
+          ),
+        ),
+      ).map((f) => f.replace(/^@/, ""));
 
-      const cleanedUserMessageContent = userMessageContent.replace(
-        new RegExp(`\\${SlashCommand.options.join("|")}\\s*`, "g"),
-        "",
-      );
+      const cleanedUserMessageContent = userMessageContent
+        .replace(
+          new RegExp(`\\${SlashCommand.options.join("|")}`, "g"),
+          (match) => match.slice(1),
+        )
+        .replace(
+          new RegExp(
+            `@(?:${(frameworks ?? []).map((f) => `(?:${f.title})`).join("|")})`,
+            "g",
+          ),
+          (match) => match.slice(1),
+        );
 
       console.log(
         "[Chat] Found latest user message, searching for similar content",
@@ -236,8 +255,19 @@ export async function POST(request: NextRequest) {
           ),
         )}\n\`\`\``;
       }
+      if (userFrameworks.length > 0) {
+        for (const framework of userFrameworks) {
+          const frameworkRecord = frameworks?.find(
+            (f) =>
+              f.title.trim().toLowerCase() === framework.trim().toLowerCase(),
+          );
+          if (frameworkRecord) {
+            latestUserMessage.content += `\n\n---\n\n[!!! VERY IMPORTANT !!! ${frameworkRecord.definition_prompt}]`;
+          }
+        }
+      }
 
-      latestUserMessage.content += `\n\n---\n\n${userMessageContent}`;
+      latestUserMessage.content += `\n\n---\n\n${cleanedUserMessageContent}`;
 
       console.log("[Chat] Updated latest user message:", latestUserMessage);
     }
