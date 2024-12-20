@@ -68,7 +68,7 @@ export const SuggestionList = React.forwardRef<
       value={items[selectedIndex]?.title}
       className="border border-border"
     >
-      <CommandList className="min-w-64">
+      <CommandList className="w-auto">
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading={heading ?? "Suggestions"}>
           {items.map((item, index) => (
@@ -78,11 +78,15 @@ export const SuggestionList = React.forwardRef<
               onSelect={() => selectItem(index)}
               className={cn("flex flex-col items-start gap-1")}
             >
-              <div className="flex items-center gap-2">
-                <item.icon className="h-4 w-4" />
+              <div className="flex items-start gap-2">
+                {item.icon && <item.icon className="mt-0.5 h-4 w-4" />}
                 <span className="text-sm font-medium">{item.title}</span>
               </div>
-              <span className="text-muted-foreground">{item.description}</span>
+              {item.description && (
+                <span className="pl-6 text-muted-foreground">
+                  {item.description}
+                </span>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>

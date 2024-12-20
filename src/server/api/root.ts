@@ -5,6 +5,7 @@ import { chatsRouter } from "./routers/chats";
 import { momentsRouter } from "./routers/moments";
 import { notionRouter } from "./routers/notion";
 import { videosRouter } from "./routers/videos";
+import { coachingFrameworksRouter } from "./routers/coaching-frameworks";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   moments: momentsRouter,
   notion: notionRouter,
   videos: videosRouter,
+  coachingFrameworks: coachingFrameworksRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -29,8 +29,10 @@ import { createClient } from "~/lib/supabase/client";
 import type { RouterOutputs } from "~/trpc/react";
 
 import { ChatInput } from "../chat/chat-input";
+import { Tables } from "~/lib/supabase/database.types";
 
 type ChatInterfaceProps = {
+  frameworks: Tables<"coaching_frameworks">[];
   userId: string;
   selectedTopic: string;
   topics: string[];
@@ -117,6 +119,7 @@ export function ChatInterface({
   initialMessages,
   onTopicSelect,
   isLoading,
+  frameworks,
 }: ChatInterfaceProps) {
   const supabase = createClient();
   const [selectedMoments, setSelectedMoments] = useState<
@@ -408,6 +411,7 @@ export function ChatInterface({
           }}
         >
           <ChatInput
+            frameworks={frameworks}
             value={input}
             onChange={handleInputChange}
             onSubmit={(ev) => {

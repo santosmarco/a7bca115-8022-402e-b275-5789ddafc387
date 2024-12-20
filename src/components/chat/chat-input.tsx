@@ -8,8 +8,10 @@ import type { VideoOutput } from "~/lib/videos";
 
 import { ContentSelector } from "./content-selector";
 import { SelectedContentList } from "./selected-content-list";
+import { Tables } from "~/lib/supabase/database.types";
 
 export type ChatInputProps = {
+  frameworks: Tables<"coaching_frameworks">[];
   value: string;
   onChange: (
     event:
@@ -33,6 +35,7 @@ export function ChatInput({
   onChange,
   onSubmit,
   stop,
+  frameworks,
   isGenerating,
   moments = [],
   videos = [],
@@ -50,6 +53,7 @@ export function ChatInput({
   return (
     <div className="relative flex w-full">
       <Editor
+        frameworks={frameworks}
         onChange={onChange}
         onSubmit={onSubmit}
         className={cn(showSelectionsList && "pb-[50px]")}

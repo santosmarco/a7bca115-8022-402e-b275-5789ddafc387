@@ -12,12 +12,14 @@ import { SlashCommands } from "~/lib/editor/extensions/slash-commands";
 import { suggestion as slashCommandSuggestion } from "~/lib/editor/extensions/suggestion";
 import { MentionMark } from "~/lib/editor/marks/mention-mark";
 import { SlashCommandMark } from "~/lib/editor/marks/slash-command-mark";
+import { Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
 
 type EditorProps = Except<
   React.ComponentProps<typeof EditorContent>,
   "editor" | "onChange"
 > & {
+  frameworks: Tables<"coaching_frameworks">[];
   onChange: (
     event:
       | React.ChangeEvent<HTMLInputElement>
@@ -29,6 +31,7 @@ type EditorProps = Except<
 export function Editor({
   onChange,
   onSubmit,
+  frameworks,
   className,
   disabled,
   ...props
@@ -46,7 +49,7 @@ export function Editor({
         suggestion: slashCommandSuggestion,
       }),
       Mentions.configure({
-        suggestion: coachingFrameworkSuggestion,
+        suggestion: coachingFrameworkSuggestion(frameworks),
       }),
     ],
     content: "",
@@ -54,16 +57,7 @@ export function Editor({
     editorProps: {
       attributes: {
         class: cn(
-          "prose prose-sm min-h-[74px] min-w-full grow resize-none rounded-xl",
-          "border border-input bg-background p-3 pl-4 pr-24",
-          "ring-offset-background transition-[border]",
-          "focus:outline-none focus-visible:border-primary focus-visible:outline-none",
-          "disabled:cursor-not-allowed disabled:opacity-50",
-          "[&_p.is-editor-empty:first-child]:before:pointer-events-none",
-          "[&_p.is-editor-empty:first-child]:before:float-left",
-          "[&_p.is-editor-empty:first-child]:before:h-0",
-          "[&_p.is-editor-empty:first-child]:before:text-gray-400",
-          "[&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]",
+          "prose prose-sm min-h-[74px] min-w-full grow resize-none rounded-xl border border-input bg-background p-3 pl-4 pr-24 ring-offset-background transition-[border] focus:outline-none focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&_p.is-editor-empty:first-child]:before:pointer-events-none [&_p.is-editor-empty:first-child]:before:float-left [&_p.is-editor-empty:first-child]:before:h-0 [&_p.is-editor-empty:first-child]:before:text-gray-400 [&_p.is-editor-empty:first-child]:before:content-[attr(data-placeholder)]",
           className,
         ),
       },
@@ -74,8 +68,7 @@ export function Editor({
           !event.shiftKey &&
           !/(?:\/|@)[a-zA-Z0-9]*$/.test(view.state.doc.textContent)
         ) {
-          event.preventDefault();
-          onSubmit();
+          onSubmit(event);
           // Clear editor content after submission
           view.dispatch(view.state.tr.delete(0, view.state.doc.content.size));
           return true;

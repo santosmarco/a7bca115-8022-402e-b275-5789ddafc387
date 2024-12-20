@@ -32,6 +32,11 @@ export default function InsightsPage() {
     },
   );
 
+  const { data: frameworks, isLoading: frameworksLoading } =
+    api.coachingFrameworks.list.useQuery(undefined, {
+      refetchOnWindowFocus: false,
+    });
+
   const {
     data,
     isFetching: videosLoading,
@@ -122,7 +127,7 @@ export default function InsightsPage() {
     }
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  if (userLoading || chatLoading || !userId) {
+  if (userLoading || frameworksLoading || chatLoading || !userId) {
     return (
       <div className="mt-20 flex items-center justify-center">
         <motion.div
@@ -172,6 +177,7 @@ export default function InsightsPage() {
   return (
     <>
       <ChatInterface
+        frameworks={frameworks ?? []}
         userId={userId}
         selectedTopic={topic}
         topics={topics}

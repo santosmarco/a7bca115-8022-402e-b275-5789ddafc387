@@ -17,8 +17,9 @@ export const SUGGESTION_ITEMS = [
         .focus()
         .deleteRange(range)
         .setMark("slashCommand")
-        .insertContent([{ type: "text", text: "/moments" }])
+        .insertContent("/moments")
         .unsetMark("slashCommand")
+        .insertContent(" ")
         .run();
     },
   },
@@ -32,8 +33,9 @@ export const SUGGESTION_ITEMS = [
         .focus()
         .deleteRange(range)
         .setMark("slashCommand")
-        .insertContent([{ type: "text", text: "/meetings" }])
+        .insertContent("/meetings")
         .unsetMark("slashCommand")
+        .insertContent(" ")
         .run();
     },
   },

@@ -12,8 +12,8 @@ import {
 
 export type SuggestionItem = {
   title: string;
-  description: string;
-  icon: LucideIcon;
+  description?: string | null;
+  icon?: LucideIcon | null;
   command: NonNullable<SuggestionOptions["command"]>;
 };
 

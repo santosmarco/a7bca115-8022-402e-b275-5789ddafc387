@@ -1,43 +1,40 @@
 import TiptapSuggestion from "@tiptap/suggestion";
-import {
-  BrainIcon,
-  CompassIcon,
-  GoalIcon,
-  // Import other icons as needed
-} from "lucide-react";
 
+import { createLucideIcon } from "~/components/icons";
+import { Tables } from "~/lib/supabase/database.types";
 import {
   createSuggestion,
   type SuggestionItem,
 } from "../utils/create-suggestion";
-
-export const COACHING_FRAMEWORK_ITEMS = [
-  {
-    title: "GROW",
-    description: "Goal, Reality, Options, Way Forward",
-    icon: GoalIcon,
-    command: ({ editor, range }) => {
-      editor
-        .chain()
-        .focus()
-        .deleteRange(range)
-        .setMark("mention")
-        .insertContent([{ type: "text", text: "@GROW" }])
-        .unsetMark("mention")
-        .run();
-    },
-  },
-  // Add other coaching frameworks here
-] as const satisfies readonly SuggestionItem[];
 
 export const CoachingFrameworkSuggestion = TiptapSuggestion<
   SuggestionItem,
   SuggestionItem
 >;
 
-export const coachingFrameworkSuggestion = createSuggestion(
-  COACHING_FRAMEWORK_ITEMS,
-  {
+export const coachingFrameworkToSuggestionItem = (
+  framework: Tables<"coaching_frameworks">,
+) =>
+  ({
+    title: framework.title,
+    description: framework.description,
+    icon: framework.icon && createLucideIcon(framework.icon),
+    command: ({ editor, range }) => {
+      editor
+        .chain()
+        .focus()
+        .deleteRange(range)
+        .setMark("mention")
+        .insertContent(`@${framework.title}`)
+        .unsetMark("mention")
+        .insertContent({ type: "text", text: " " })
+        .run();
+    },
+  }) satisfies SuggestionItem;
+
+export const coachingFrameworkSuggestion = (
+  frameworks: Tables<"coaching_frameworks">[],
+) =>
+  createSuggestion(frameworks.map(coachingFrameworkToSuggestionItem), {
     heading: "Frameworks",
-  },
-);
+  });
