@@ -26,7 +26,6 @@ type EditorProps = Except<
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
   onSubmit: (event?: { preventDefault?: () => void }) => void;
-  showDisclaimer?: boolean;
 };
 
 export function Editor({
@@ -35,7 +34,6 @@ export function Editor({
   frameworks,
   className,
   disabled,
-  showDisclaimer,
   ...props
 }: EditorProps) {
   const editor = useEditor({

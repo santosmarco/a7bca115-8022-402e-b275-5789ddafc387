@@ -4,7 +4,7 @@ import type { CoreMessage } from "ai";
 import { useChat } from "ai/react";
 import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, MessageCircleIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -370,45 +370,46 @@ export function ChatInterface({
       {!isEmpty && (
         <>
           {/* Chat Header */}
-          {selectedTopic &&
-            (() => {
-              const TopicIcon = getMomentIcon(selectedTopic);
+          {(() => {
+            const TopicIcon = selectedTopic
+              ? getMomentIcon(selectedTopic)
+              : MessageCircleIcon;
 
-              return (
-                <AnimatePresence mode="wait">
-                  <motion.header
-                    key={selectedTopic}
-                    variants={headerVariants}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border"
+            return (
+              <AnimatePresence mode="wait">
+                <motion.header
+                  key={selectedTopic}
+                  variants={headerVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border"
+                >
+                  <motion.div
+                    className="flex items-center gap-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
                   >
-                    <motion.div
-                      className="flex items-center gap-2"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      <TopicIcon className="h-5 w-5 text-primary" />
-                      <h2 className="text-lg font-semibold">
-                        {selectedTopic === "Coach"
-                          ? "Exploration"
-                          : selectedTopic}
-                      </h2>
-                    </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex items-center gap-4"
-                    >
-                      <RestartChatButton onRestart={handleRestart} />
-                    </motion.div>
-                  </motion.header>
-                </AnimatePresence>
-              );
-            })()}
+                    <TopicIcon className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold">
+                      {selectedTopic === "Coach"
+                        ? "Exploration"
+                        : selectedTopic || "Conversation"}
+                    </h2>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="flex items-center gap-4"
+                  >
+                    <RestartChatButton onRestart={handleRestart} />
+                  </motion.div>
+                </motion.header>
+              </AnimatePresence>
+            );
+          })()}
 
           {/* Chat Messages */}
           <ChatMessages messages={messages}>
