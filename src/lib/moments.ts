@@ -1,3 +1,14 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  BrainIcon,
+  GoalIcon,
+  HeartIcon,
+  MessageSquareIcon,
+  PyramidIcon,
+  UserIcon,
+  UsersIcon,
+} from "lucide-react";
+
 import { type Badge } from "~/components/ui/badge";
 import { type VideoMoment } from "~/lib/schemas/video-moment";
 
@@ -31,4 +42,26 @@ function getColorFromRanking(ranking: string | null | undefined) {
   if (score >= 0.7) return "primary";
   if (score >= 0.6) return "warning";
   return "destructive";
+}
+
+export function getMomentIcon(moment: VideoMoment): LucideIcon;
+export function getMomentIcon(activity: string): LucideIcon;
+export function getMomentIcon(
+  momentOrActivity: VideoMoment | string,
+): LucideIcon {
+  return (
+    {
+      "Decision Making": BrainIcon,
+      Delegation: PyramidIcon,
+      Emotion: HeartIcon,
+      Feedback: MessageSquareIcon,
+      "Goal Setting": GoalIcon,
+      "Team Conflict": UsersIcon,
+      Coach: UserIcon,
+    }[
+      typeof momentOrActivity === "string"
+        ? momentOrActivity
+        : momentOrActivity.activity
+    ] ?? BrainIcon
+  );
 }

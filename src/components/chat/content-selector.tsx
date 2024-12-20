@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { Calendar, Clock, PinIcon, Tag, Timer } from "lucide-react";
+import { Calendar, CheckIcon, Clock, PinIcon, Tag, Timer } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "~/components/ui/button";
@@ -16,6 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import { getMomentIcon } from "~/lib/moments";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import type { VideoOutput } from "~/lib/videos";
 
@@ -46,8 +48,36 @@ export function ContentSelector({
   onSelectVideo,
   onUnselectVideo,
 }: ContentSelectorProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleMomentSelect = (moment: VideoMoment) => {
+    if (selectedMoments.some((m) => m.id === moment.id)) {
+      onUnselectMoment(moment);
+    } else if (selectedMoments.length + selectedVideos.length < 5) {
+      onSelectMoment(moment);
+      if (selectedMoments.length + selectedVideos.length >= 4) {
+        setOpen(false);
+      }
+    } else {
+      toast.error("You can only pin up to 5 items");
+    }
+  };
+
+  const handleVideoSelect = (video: VideoOutput) => {
+    if (selectedVideos.some((v) => v.videoId === video.videoId)) {
+      onUnselectVideo(video);
+    } else if (selectedMoments.length + selectedVideos.length < 5) {
+      onSelectVideo(video);
+      if (selectedMoments.length + selectedVideos.length >= 4) {
+        setOpen(false);
+      }
+    } else {
+      toast.error("You can only pin up to 5 items");
+    }
+  };
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <TooltipProvider delayDuration={0}>
         <Tooltip>
           <DropdownMenuTrigger asChild>
@@ -72,64 +102,70 @@ export function ContentSelector({
               </Button>
             </TooltipTrigger>
           </DropdownMenuTrigger>
-          <TooltipContent side="top" align="end">
+          <TooltipContent
+            side="top"
+            align="end"
+            className="border border-border bg-background"
+          >
             <p>Pin your favorite videos and moments</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <DropdownMenuContent align="end" className="w-[700px]">
+      <DropdownMenuContent side="top" align="end" className="w-[700px] p-0">
         <div className="flex divide-x divide-border">
           {/* Moments Column */}
           <div className="w-1/2">
             {moments.length > 0 && (
               <>
-                <DropdownMenuLabel className="px-3">Moments</DropdownMenuLabel>
+                <DropdownMenuLabel className="border-b border-border px-3">
+                  Moments
+                </DropdownMenuLabel>
                 <DropdownMenuGroup className="max-h-96 overflow-y-auto">
-                  {moments.map((moment) => (
-                    <div
-                      key={moment.id}
-                      className="flex cursor-pointer flex-col gap-1 border-b border-border/10 px-3 py-2 hover:bg-accent"
-                      onClick={() => {
-                        if (selectedMoments.some((m) => m.id === moment.id)) {
-                          onUnselectMoment(moment);
-                        } else if (
-                          selectedMoments.length + selectedVideos.length <
-                          5
-                        ) {
-                          onSelectMoment(moment);
-                        } else {
-                          toast.error("You can only pin up to 5 items");
-                        }
-                      }}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-medium">{moment.title}</span>
-                        {selectedMoments.some((m) => m.id === moment.id) && (
-                          <span className="text-primary">✓</span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                          <Tag className="h-3 w-3" />
-                          {moment.activity_type}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Timer className="h-3 w-3" />
-                          {formatDuration(
-                            moment.segment_end_timestamp_in_seconds -
-                              moment.segment_start_timestamp_in_seconds,
+                  {moments.map((moment) => {
+                    const Icon = getMomentIcon(moment);
+
+                    return (
+                      <div
+                        key={moment.id}
+                        className="flex cursor-pointer flex-col gap-1 border-b border-border/10 px-3 py-2 hover:bg-accent"
+                        onClick={() => handleMomentSelect(moment)}
+                      >
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <span className="font-medium">{moment.title}</span>
+                          {selectedMoments.some((m) => m.id === moment.id) && (
+                            <motion.div
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0, opacity: 0 }}
+                              transition={{ type: "spring", duration: 0.2 }}
+                            >
+                              <CheckIcon className="h-5 w-5 text-primary" />
+                            </motion.div>
                           )}
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {moment.segment_start_timestamp}
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 py-0.5 text-xs leading-none text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Icon className="h-3 w-3" />
+                            {moment.activity_type}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Timer className="h-3 w-3" />
+                            {formatDuration(
+                              moment.segment_end_timestamp_in_seconds -
+                                moment.segment_start_timestamp_in_seconds,
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {moment.segment_start_timestamp}
+                          </div>
                         </div>
+                        <p className="line-clamp-2 text-xs text-muted-foreground">
+                          {moment.summary}
+                        </p>
                       </div>
-                      <p className="line-clamp-2 text-xs text-muted-foreground">
-                        {moment.summary}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </DropdownMenuGroup>
               </>
             )}
@@ -139,36 +175,32 @@ export function ContentSelector({
           <div className="w-1/2">
             {videos.length > 0 && (
               <>
-                <DropdownMenuLabel className="px-3">Videos</DropdownMenuLabel>
+                <DropdownMenuLabel className="border-b border-border px-3">
+                  Videos
+                </DropdownMenuLabel>
                 <DropdownMenuGroup className="max-h-96 overflow-y-auto">
                   {videos.map((video) => (
                     <div
                       key={video.videoId}
                       className="flex cursor-pointer flex-col gap-1 border-b border-border/10 px-3 py-2 hover:bg-accent"
-                      onClick={() => {
-                        if (
-                          selectedVideos.some(
-                            (v) => v.videoId === video.videoId,
-                          )
-                        ) {
-                          onUnselectVideo(video);
-                        } else if (
-                          selectedMoments.length + selectedVideos.length <
-                          5
-                        ) {
-                          onSelectVideo(video);
-                        } else {
-                          toast.error("You can only pin up to 5 items");
-                        }
-                      }}
+                      onClick={() => handleVideoSelect(video)}
                     >
-                      <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center justify-between gap-2 text-sm">
                         <span className="font-medium">{video.title}</span>
                         {selectedVideos.some(
                           (v) => v.videoId === video.videoId,
-                        ) && <span className="text-primary">✓</span>}
+                        ) && (
+                          <motion.div
+                            initial={{ scale: 0, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0, opacity: 0 }}
+                            transition={{ type: "spring", duration: 0.2 }}
+                          >
+                            <CheckIcon className="h-5 w-5 text-primary" />
+                          </motion.div>
+                        )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 py-0.5 text-xs leading-none text-muted-foreground">
                         {video.publishedAt && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />

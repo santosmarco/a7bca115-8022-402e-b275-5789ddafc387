@@ -4,32 +4,24 @@ import type { CoreMessage } from "ai";
 import { useChat } from "ai/react";
 import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
-import {
-  AlertCircle,
-  Brain,
-  GitCommitHorizontalIcon,
-  Goal,
-  Heart,
-  MessageSquare,
-  User,
-  Users,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import type { ChatRequestBody } from "~/app/api/chat/route";
 import { Alert, AlertDescription, AlertTitle } from "~/components/ui/alert";
-import { Button } from "~/components/ui/button";
 import { ChatContainer, ChatMessages } from "~/components/ui/chat";
 import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { MessageList } from "~/components/ui/message-list";
 import { RestartChatButton } from "~/components/ui/restart-chat-button";
 import { convertToUIMessages } from "~/lib/ai/messages";
+import { getMomentIcon } from "~/lib/moments";
 import { createClient } from "~/lib/supabase/client";
+import type { Tables } from "~/lib/supabase/database.types";
 import type { RouterOutputs } from "~/trpc/react";
 
-import { Tables } from "~/lib/supabase/database.types";
 import { ChatInput } from "../chat/chat-input";
+import { Badge } from "../ui/badge";
 
 type ChatInterfaceProps = {
   frameworks: Tables<"coaching_frameworks">[];
@@ -95,20 +87,33 @@ const headerVariants = {
   },
 };
 
-const topicIcons: Record<string, React.ElementType> = {
-  "Decision Making": Brain,
-  Delegation: GitCommitHorizontalIcon,
-  Emotion: Heart,
-  Feedback: MessageSquare,
-  "Goal Setting": Goal,
-  "Team Conflict": Users,
-  Coach: User,
+export type TopicConfiguration = {
+  conversationStarter: string;
 };
 
-function getTopicIcon(topic: string) {
-  const Icon = topicIcons[topic] ?? Brain;
-  return Icon;
-}
+const TOPIC_CONFIGURATIONS: Record<string, TopicConfiguration> = {
+  "Decision Making": {
+    conversationStarter: "Explore my decision making",
+  },
+  Delegation: {
+    conversationStarter: "Explore my delegation",
+  },
+  Emotion: {
+    conversationStarter: "Explore my emotions",
+  },
+  Feedback: {
+    conversationStarter: "Explore my feedback",
+  },
+  "Goal Setting": {
+    conversationStarter: "Explore my goals",
+  },
+  "Team Conflict": {
+    conversationStarter: "Explore team conflict",
+  },
+  Coach: {
+    conversationStarter: "What should I discuss with my coach?",
+  },
+};
 
 export function ChatInterface({
   userId,
@@ -222,76 +227,96 @@ export function ChatInterface({
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="space-y-12 pt-12"
+          className="container mx-auto flex h-screen max-w-3xl flex-col items-center justify-center"
         >
           {/* Main CTA Section */}
           <motion.div
             variants={itemVariants}
-            className="mx-auto max-w-3xl space-y-6 px-4"
+            className="w-full space-y-16 px-4"
           >
             <motion.h2
               variants={itemVariants}
-              className="text-center text-3xl font-bold tracking-tight"
+              className="text-center text-4xl font-medium"
             >
-              Not sure where to start?
+              Where do you want to elevate?
             </motion.h2>
-            <Button
-              variant="default"
-              className="group relative w-full overflow-hidden bg-primary px-8 py-8 text-xl font-bold text-foreground/80 shadow-lg transition-all hover:scale-[1.02] hover:shadow-xl"
-              onClick={handleTopicClick("Coach")}
+
+            <form
+              className="mt-auto w-full"
+              onSubmit={(ev) => {
+                if (chatLoading || isTyping) {
+                  ev.preventDefault();
+                  return;
+                }
+
+                handleSubmit(ev);
+              }}
             >
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-foreground/20 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"
-                initial={{ x: "-100%" }}
-                whileHover={{ x: "100%" }}
-                transition={{ duration: 0.8, repeat: Number.POSITIVE_INFINITY }}
+              <ChatInput
+                isLandingPage
+                frameworks={frameworks}
+                value={input}
+                onChange={handleInputChange}
+                onSubmit={(ev) => {
+                  if (chatLoading || isTyping) {
+                    ev?.preventDefault?.();
+                    return;
+                  }
+
+                  handleSubmit(ev);
+                }}
+                stop={stop}
+                isGenerating={chatLoading}
+                moments={relevantMoments}
+                videos={relevantVideos}
+                selectedMoments={selectedMoments}
+                selectedVideos={selectedVideos}
+                onSelectMoment={(moment) =>
+                  setSelectedMoments((prev) => [...prev, moment])
+                }
+                onUnselectMoment={(moment) =>
+                  setSelectedMoments((prev) =>
+                    prev.filter((m) => m.id !== moment.id),
+                  )
+                }
+                onSelectVideo={(video) =>
+                  setSelectedVideos((prev) => [...prev, video])
+                }
+                onUnselectVideo={(video) =>
+                  setSelectedVideos((prev) =>
+                    prev.filter((v) => v.videoId !== video.videoId),
+                  )
+                }
               />
-              What should I talk to my coach about?
-            </Button>
+            </form>
           </motion.div>
 
           {/* Topic Selection Section */}
           <motion.div
             variants={itemVariants}
-            className="mx-auto max-w-3xl space-y-6 px-4"
+            className="flex w-full flex-col items-center justify-center pt-3"
           >
-            <motion.h3
-              variants={itemVariants}
-              className="text-center text-lg font-medium text-muted-foreground"
-            >
-              Or explore specific topics
-            </motion.h3>
-
             <motion.div
               variants={containerVariants}
-              className="grid grid-cols-1 gap-4 sm:grid-cols-2"
+              className="flex flex-wrap items-center justify-center gap-3 px-3"
             >
-              {topics.map((topic, index) => {
-                const TopicIcon = getTopicIcon(topic);
+              {["Coach", ...topics].map((topic, index) => {
+                const TopicIcon = getMomentIcon(topic);
+                const topicConversationStarter =
+                  TOPIC_CONFIGURATIONS[topic]?.conversationStarter;
 
                 return (
-                  <motion.div key={topic} variants={itemVariants}>
-                    <Button
-                      onClick={handleTopicClick(topic)}
-                      className="group relative h-24 w-full overflow-hidden rounded-xl border border-border bg-background p-6 text-left text-primary transition-colors hover:border-primary/50"
-                    >
-                      {/* Animated gradient background */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-br from-primary/5 via-primary/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100"
-                        initial={{ scale: 0, opacity: 0 }}
-                        whileHover={{ scale: 1, opacity: 1 }}
-                        transition={{ duration: 0.3 }}
-                      />
-
-                      {/* Content */}
-                      <div className="relative z-10 flex w-full items-center justify-between gap-4 group-hover:text-foreground">
-                        <TopicIcon className="!h-10 !w-10 rounded-lg bg-primary/10 p-2 text-primary transition-colors group-hover:bg-foreground" />
-                        <h4 className="m-0 ml-1 flex-1 text-left text-lg font-semibold">
-                          {topic}
-                        </h4>
-                      </div>
-                    </Button>
-                  </motion.div>
+                  <Badge
+                    key={topic}
+                    variant="outline"
+                    onClick={handleTopicClick(topic)}
+                    className="flex cursor-pointer items-center gap-x-2.5 px-3 py-1.5 transition-all hover:border-primary hover:bg-primary/10 active:scale-95"
+                  >
+                    <TopicIcon className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-medium">
+                      {topicConversationStarter}
+                    </span>
+                  </Badge>
                 );
               })}
             </motion.div>
@@ -345,44 +370,45 @@ export function ChatInterface({
       {!isEmpty && (
         <>
           {/* Chat Header */}
-          {(() => {
-            const TopicIcon = getTopicIcon(selectedTopic);
+          {selectedTopic &&
+            (() => {
+              const TopicIcon = getMomentIcon(selectedTopic);
 
-            return (
-              <AnimatePresence mode="wait">
-                <motion.header
-                  key={selectedTopic}
-                  variants={headerVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border"
-                >
-                  <motion.div
-                    className="flex items-center gap-2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 }}
+              return (
+                <AnimatePresence mode="wait">
+                  <motion.header
+                    key={selectedTopic}
+                    variants={headerVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border"
                   >
-                    <TopicIcon className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-semibold">
-                      {selectedTopic === "Coach"
-                        ? "Exploration"
-                        : selectedTopic}
-                    </h2>
-                  </motion.div>
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center gap-4"
-                  >
-                    <RestartChatButton onRestart={handleRestart} />
-                  </motion.div>
-                </motion.header>
-              </AnimatePresence>
-            );
-          })()}
+                    <motion.div
+                      className="flex items-center gap-2"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <TopicIcon className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-semibold">
+                        {selectedTopic === "Coach"
+                          ? "Exploration"
+                          : selectedTopic}
+                      </h2>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="flex items-center gap-4"
+                    >
+                      <RestartChatButton onRestart={handleRestart} />
+                    </motion.div>
+                  </motion.header>
+                </AnimatePresence>
+              );
+            })()}
 
           {/* Chat Messages */}
           <ChatMessages messages={messages}>

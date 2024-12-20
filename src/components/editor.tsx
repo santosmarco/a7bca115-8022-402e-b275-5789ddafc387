@@ -12,7 +12,7 @@ import { SlashCommands } from "~/lib/editor/extensions/slash-commands";
 import { suggestion as slashCommandSuggestion } from "~/lib/editor/extensions/suggestion";
 import { MentionMark } from "~/lib/editor/marks/mention-mark";
 import { SlashCommandMark } from "~/lib/editor/marks/slash-command-mark";
-import { Tables } from "~/lib/supabase/database.types";
+import type { Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
 
 type EditorProps = Except<
@@ -26,6 +26,7 @@ type EditorProps = Except<
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
   onSubmit: (event?: { preventDefault?: () => void }) => void;
+  showDisclaimer?: boolean;
 };
 
 export function Editor({
@@ -34,6 +35,7 @@ export function Editor({
   frameworks,
   className,
   disabled,
+  showDisclaimer,
   ...props
 }: EditorProps) {
   const editor = useEditor({
@@ -41,7 +43,6 @@ export function Editor({
       StarterKit,
       Placeholder.configure({
         placeholder: "Ask AI, or press '/' for commands, '@' for frameworks...",
-        showOnlyWhenEditable: true,
       }),
       SlashCommandMark,
       MentionMark,

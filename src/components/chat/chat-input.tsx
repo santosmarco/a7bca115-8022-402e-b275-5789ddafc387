@@ -1,16 +1,18 @@
+import { motion } from "framer-motion";
 import { ArrowUp, Square } from "lucide-react";
 
 import { Editor } from "~/components/editor";
 import { Button } from "~/components/ui/button";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
+import type { Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
 import type { VideoOutput } from "~/lib/videos";
 
 import { ContentSelector } from "./content-selector";
 import { SelectedContentList } from "./selected-content-list";
-import { Tables } from "~/lib/supabase/database.types";
 
 export type ChatInputProps = {
+  isLandingPage?: boolean;
   frameworks: Tables<"coaching_frameworks">[];
   value: string;
   onChange: (
@@ -29,9 +31,11 @@ export type ChatInputProps = {
   onUnselectMoment: (moment: VideoMoment) => void;
   onSelectVideo: (video: VideoOutput) => void;
   onUnselectVideo: (video: VideoOutput) => void;
+  buttonPosition?: "top" | "bottom";
 };
 
 export function ChatInput({
+  isLandingPage,
   onChange,
   onSubmit,
   stop,
@@ -45,20 +49,28 @@ export function ChatInput({
   onUnselectMoment,
   onSelectVideo,
   onUnselectVideo,
+  buttonPosition = "bottom",
   ...props
 }: ChatInputProps) {
   const showSelectionsList =
     selectedMoments.length > 0 || selectedVideos.length > 0;
 
   return (
-    <div className="relative flex w-full">
+    <div className="relative mb-4 flex w-full flex-col gap-2">
       <Editor
         frameworks={frameworks}
         onChange={onChange}
         onSubmit={onSubmit}
-        className={cn(showSelectionsList && "pb-[50px]")}
+        className={cn((showSelectionsList || isLandingPage) && "min-h-28")}
+        showDisclaimer={!isLandingPage}
         disabled={isGenerating}
       />
+
+      {!isLandingPage && (
+        <span className="absolute -bottom-6 left-0 right-0 text-center text-xs text-muted-foreground">
+          Titan AI can make mistakes. Check important info.
+        </span>
+      )}
 
       <SelectedContentList
         selectedMoments={selectedMoments}
@@ -67,7 +79,26 @@ export function ChatInput({
         onUnselectVideo={onUnselectVideo}
       />
 
-      <div className="absolute right-3 top-3 flex gap-2">
+      <motion.div
+        className={cn("absolute right-3 flex gap-2")}
+        animate={{
+          top:
+            buttonPosition === "top" ||
+            selectedMoments.length + selectedVideos.length > 0
+              ? "0.75rem" // top-3
+              : "auto",
+          bottom:
+            buttonPosition === "top" ||
+            selectedMoments.length + selectedVideos.length > 0
+              ? "auto"
+              : "0.75rem", // bottom-3
+        }}
+        transition={{
+          type: "spring",
+          damping: 20,
+          stiffness: 300,
+        }}
+      >
         <ContentSelector
           moments={moments}
           videos={videos}
@@ -100,7 +131,7 @@ export function ChatInput({
             <ArrowUp className="h-5 w-5" />
           </Button>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 }

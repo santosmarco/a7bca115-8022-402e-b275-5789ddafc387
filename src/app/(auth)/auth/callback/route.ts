@@ -7,10 +7,10 @@ import { createClient } from "~/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
-    const { searchParams, origin } = new URL(request.url);
+    const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const provider = searchParams.get("provider");
-    const next = searchParams.get("next") ?? "/";
+    const next = searchParams.get("next") ?? "";
 
     if (code) {
       const supabase = await createClient();
@@ -27,19 +27,18 @@ export async function GET(request: Request) {
 
     // Handle redirect
     const forwardedHost = request.headers.get("x-forwarded-host");
-    if (env.NODE_ENV === "development") {
-      return NextResponse.redirect(`${origin}${next}`);
-    }
 
     if (forwardedHost) {
-      return NextResponse.redirect(`https://${forwardedHost}${next}`);
+      return NextResponse.redirect(
+        `http${env.NODE_ENV !== "production" ? "" : "s"}://${forwardedHost}${next}`,
+      );
     }
 
-    return NextResponse.redirect(`${origin}${next}`);
+    return NextResponse.redirect(`${env.NEXT_PUBLIC_SITE_URL}${next}`);
   } catch (error) {
     console.error("Callback error:", error);
     // Redirect to error page or home with error param
-    return NextResponse.redirect(`${new URL(request.url).origin}/auth/error`);
+    return NextResponse.redirect(`${env.NEXT_PUBLIC_SITE_URL}/auth/error`);
   }
 }
 

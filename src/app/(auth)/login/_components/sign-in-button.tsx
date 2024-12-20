@@ -15,9 +15,9 @@ export function SignInButton() {
     void supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${getBaseUrl()}auth/callback?${new URLSearchParams({
-          provider: "google",
-        })}`,
+        redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?${new URLSearchParams(
+          { provider: "google" },
+        )}`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",
