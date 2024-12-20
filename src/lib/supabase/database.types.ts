@@ -1215,7 +1215,7 @@ export type Database = {
     Enums: {
       icon_enum:
         | "Brain"
-        | "GitCommit"
+        | "GitCommitHorizontal"
         | "Heart"
         | "MessageSquare"
         | "Goal"
@@ -1223,6 +1223,8 @@ export type Database = {
         | "UserCheck"
         | "MessageCircle"
         | "Scissors"
+        | "Activity"
+        | "SendToBack"
       meeting_bot_error_code_type:
         | "CannotJoinMeeting"
         | "TimeoutWaitingToStart"

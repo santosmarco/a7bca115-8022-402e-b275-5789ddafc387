@@ -145,6 +145,7 @@ export function MomentCard({
                   role: user.role,
                   coach_id: user.coach_id,
                   dossier: user.dossier,
+                  org_chart: user.org_chart,
                 }
               : null,
           },
@@ -201,6 +202,7 @@ export function MomentCard({
                   role: user.role,
                   coach_id: user.coach_id,
                   dossier: user.dossier,
+                  org_chart: user.org_chart,
                 }
               : null,
           },

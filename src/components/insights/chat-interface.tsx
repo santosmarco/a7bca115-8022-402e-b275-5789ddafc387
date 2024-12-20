@@ -7,7 +7,7 @@ import _ from "lodash";
 import {
   AlertCircle,
   Brain,
-  GitCommit,
+  GitCommitHorizontalIcon,
   Goal,
   Heart,
   MessageSquare,
@@ -28,8 +28,8 @@ import { convertToUIMessages } from "~/lib/ai/messages";
 import { createClient } from "~/lib/supabase/client";
 import type { RouterOutputs } from "~/trpc/react";
 
-import { ChatInput } from "../chat/chat-input";
 import { Tables } from "~/lib/supabase/database.types";
+import { ChatInput } from "../chat/chat-input";
 
 type ChatInterfaceProps = {
   frameworks: Tables<"coaching_frameworks">[];
@@ -97,7 +97,7 @@ const headerVariants = {
 
 const topicIcons: Record<string, React.ElementType> = {
   "Decision Making": Brain,
-  Delegation: GitCommit,
+  Delegation: GitCommitHorizontalIcon,
   Emotion: Heart,
   Feedback: MessageSquare,
   "Goal Setting": Goal,
