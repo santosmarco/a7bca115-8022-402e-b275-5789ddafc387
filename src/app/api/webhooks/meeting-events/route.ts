@@ -252,7 +252,10 @@ export async function POST(request: Request) {
     const bodyParseResult = MeetingBaasWebhookRequestBody.safeParse(body);
 
     if (!bodyParseResult.success) {
-      console.error("Validation error:", bodyParseResult.error);
+      console.error(
+        "Validation error:",
+        JSON.stringify(bodyParseResult.error.format(), null, 2),
+      );
       return new Response("Invalid webhook payload", { status: 400 });
     }
 
