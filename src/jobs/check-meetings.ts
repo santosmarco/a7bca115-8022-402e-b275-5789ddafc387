@@ -2,10 +2,7 @@ import { logger, schedules } from "@trigger.dev/sdk/v3";
 import dayjs from "dayjs";
 import type { calendar_v3 } from "googleapis";
 
-import {
-  getGoogleCalendar,
-  setGoogleCredentials,
-} from "~/lib/google-calendar/client";
+import { getGoogleCalendar } from "~/lib/google-calendar/client";
 import { GoogleCalendarConferenceEntryPointType } from "~/lib/google-calendar/constants";
 import type { GoogleCalendarVideoConference } from "~/lib/google-calendar/schemas";
 import { meetingBaas } from "~/lib/meeting-baas/client";
@@ -24,7 +21,7 @@ export const checkMeetings = schedules.task({
     const { data: googleCredentials, error: googleCredentialsError } =
       await supabase
         .from("integration_credentials")
-        .select("*")
+        .select("*, user:profiles(*)")
         .eq("provider", "google");
 
     if (googleCredentialsError) {
@@ -40,10 +37,13 @@ export const checkMeetings = schedules.task({
     for (const credential of googleCredentials) {
       if (credential.requires_reauth) {
         await slack.warn({
-          text: `Skipping user ${credential.user_id} - Google reauthorization required`,
+          text: `Skipping user ${credential.user_id}${
+            credential.user?.email ? ` (${credential.user.email})` : ""
+          } - Google reauthorization required`,
         });
         logger.warn("Google reauthorization required, skipping...", {
           userId: credential.user_id,
+          user: credential.user,
         });
         continue;
       }
@@ -60,11 +60,6 @@ export const checkMeetings = schedules.task({
       }
 
       try {
-        await setGoogleCredentials(
-          credential.user_id,
-          credential.refresh_token,
-        );
-
         let calendars: calendar_v3.Schema$CalendarListEntry[] = [];
         try {
           const calendarClient = await getGoogleCalendar(
@@ -87,8 +82,6 @@ export const checkMeetings = schedules.task({
                 requires_reauth: true,
                 last_refresh_attempt: new Date().toISOString(),
                 refresh_error: (apiError as Error).message,
-                access_token: null,
-                refresh_token: null,
               })
               .eq("user_id", credential.user_id)
               .eq("provider", "google");

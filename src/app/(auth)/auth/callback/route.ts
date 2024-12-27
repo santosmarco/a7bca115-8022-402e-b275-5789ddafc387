@@ -2,7 +2,7 @@ import type { AuthTokenResponse } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { env } from "~/env";
-import { setGoogleCredentials } from "~/lib/google-calendar/client";
+import { getGoogleOAuth2Client } from "~/lib/google-calendar/client";
 import { createClient } from "~/lib/supabase/server";
 
 export async function GET(request: Request) {
@@ -16,6 +16,8 @@ export async function GET(request: Request) {
       const supabase = await createClient();
       const authTokenResponse =
         await supabase.auth.exchangeCodeForSession(code);
+
+      console.log(JSON.stringify(authTokenResponse, null, 2));
 
       if (authTokenResponse.error) {
         console.error("Auth exchange error:", authTokenResponse.error);
@@ -87,7 +89,7 @@ async function handleIntegrationCredentials(
   // Handle Google-specific setup
   if (provider === "google") {
     try {
-      await setGoogleCredentials(user_id, refresh_token);
+      await getGoogleOAuth2Client(access_token, refresh_token);
     } catch (error) {
       console.error("Google setup error:", error);
       await supabase
