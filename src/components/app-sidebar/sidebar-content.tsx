@@ -8,6 +8,7 @@ import {
   Puzzle,
   TrendingUpIcon,
   User,
+  UsersIcon,
   Video,
 } from "lucide-react";
 import Link from "next/link";
@@ -106,7 +107,13 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
       label: "Integrations",
       isActive: pathname.startsWith("/integrations"),
     },
-  ];
+    (selectedProfile?.role === "coach" || selectedProfile?.is_admin) && {
+      href: "/clients",
+      icon: <UsersIcon className="h-5 w-5" />,
+      label: "Clients",
+      isActive: pathname.startsWith("/clients"),
+    },
+  ].filter((x): x is Exclude<typeof x, false | undefined> => !!x);
 
   return (
     <>
