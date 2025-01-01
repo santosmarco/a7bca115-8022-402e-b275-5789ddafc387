@@ -491,21 +491,21 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string
-          icon: Database["public"]["Enums"]["moment_icon_enum"]
+          icon: Database["public"]["Enums"]["icon_enum"]
           name: string
           slug: string
         }
         Insert: {
           color?: string | null
           created_at?: string
-          icon: Database["public"]["Enums"]["moment_icon_enum"]
+          icon: Database["public"]["Enums"]["icon_enum"]
           name: string
           slug: string
         }
         Update: {
           color?: string | null
           created_at?: string
-          icon?: Database["public"]["Enums"]["moment_icon_enum"]
+          icon?: Database["public"]["Enums"]["icon_enum"]
           name?: string
           slug?: string
         }
@@ -743,6 +743,8 @@ export type Database = {
       profiles: {
         Row: {
           coach_id: string | null
+          company: string | null
+          created_at: string | null
           dossier: string | null
           email: string | null
           id: string
@@ -750,9 +752,12 @@ export type Database = {
           nickname: string | null
           org_chart: Json | null
           role: Database["public"]["Enums"]["user_role_enum"]
+          status: Database["public"]["Enums"]["profile_status_enum"]
         }
         Insert: {
           coach_id?: string | null
+          company?: string | null
+          created_at?: string | null
           dossier?: string | null
           email?: string | null
           id: string
@@ -760,9 +765,12 @@ export type Database = {
           nickname?: string | null
           org_chart?: Json | null
           role?: Database["public"]["Enums"]["user_role_enum"]
+          status?: Database["public"]["Enums"]["profile_status_enum"]
         }
         Update: {
           coach_id?: string | null
+          company?: string | null
+          created_at?: string | null
           dossier?: string | null
           email?: string | null
           id?: string
@@ -770,6 +778,7 @@ export type Database = {
           nickname?: string | null
           org_chart?: Json | null
           role?: Database["public"]["Enums"]["user_role_enum"]
+          status?: Database["public"]["Enums"]["profile_status_enum"]
         }
         Relationships: [
           {
@@ -1055,6 +1064,51 @@ export type Database = {
           },
         ]
       }
+      user_invites: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          invited_by: string
+          last_name: string | null
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          invited_by: string
+          last_name?: string | null
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          invited_by?: string
+          last_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "user_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       meeting_bot_transcripts: {
@@ -1237,14 +1291,8 @@ export type Database = {
         | "in_call_not_recording"
         | "in_call_recording"
         | "call_ended"
-      moment_icon_enum:
-        | "Brain"
-        | "SendToBack"
-        | "Activity"
-        | "MessageSquare"
-        | "Goal"
-        | "Users"
       moment_reaction_type: "thumbs_up" | "thumbs_down"
+      profile_status_enum: "active" | "pending" | "inactive"
       user_role_enum: "user" | "coach" | "admin"
     }
     CompositeTypes: {
