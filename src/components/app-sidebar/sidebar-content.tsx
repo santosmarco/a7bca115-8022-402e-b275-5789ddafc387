@@ -61,7 +61,7 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
 
     void fetchProfiles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [didSetProfiles]);
 
   const handleSignOut = async () => {
     const { error } = await supabase.auth.signOut();
