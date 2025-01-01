@@ -69,6 +69,7 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
       console.error(error);
     }
 
+    localStorage.removeItem("profile");
     router.push("/login");
   };
 
