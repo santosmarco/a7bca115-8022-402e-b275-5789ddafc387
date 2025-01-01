@@ -340,7 +340,7 @@ export function ChatInterface({
                   }}
                   transition={{
                     duration: 2,
-                    repeat: Infinity,
+                    repeat: Number.POSITIVE_INFINITY,
                     ease: "easeInOut",
                   }}
                 >
@@ -352,7 +352,7 @@ export function ChatInterface({
                   }}
                   transition={{
                     duration: 2,
-                    repeat: Infinity,
+                    repeat: Number.POSITIVE_INFINITY,
                     ease: "easeInOut",
                   }}
                   className="text-center text-sm text-muted-foreground"
