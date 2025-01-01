@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
+import { ProfileProvider } from "~/components/profile-provider";
 import { Toaster } from "~/components/ui/sonner";
 import { TRPCReactProvider } from "~/trpc/react";
 import { HydrateClient } from "~/trpc/server";
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body>
         <NuqsAdapter>
           <TRPCReactProvider>
-            <HydrateClient>{children}</HydrateClient>
+            <HydrateClient>
+              <ProfileProvider>{children}</ProfileProvider>
+            </HydrateClient>
             <Toaster />
           </TRPCReactProvider>
         </NuqsAdapter>

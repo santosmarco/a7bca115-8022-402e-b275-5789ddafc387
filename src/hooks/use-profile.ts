@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { createStore, useStore } from "zustand";
 import { persist } from "zustand/middleware";
 
 import type { Tables } from "~/lib/supabase/database.types";
@@ -8,12 +8,14 @@ export type ProfileState = {
   setProfile: (profile: Tables<"profiles">) => void;
 };
 
-export const useProfile = create(
+export const ProfileStore = createStore(
   persist<ProfileState>(
     (set) => ({
       profile: null,
       setProfile: (profile) => set({ profile }),
     }),
-    { name: "profile" },
+    { name: "profile", skipHydration: true },
   ),
 );
+
+export const useProfile = () => useStore(ProfileStore);
