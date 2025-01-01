@@ -135,19 +135,7 @@ export function MomentCard({
             user_id: user?.id ?? "",
             reaction_type: type,
             created_at: new Date().toISOString(),
-            user: user
-              ? {
-                  id: user.id,
-                  nickname: user.nickname,
-                  email: user.email,
-                  avatar_url: user.user_metadata.avatar_url as string,
-                  is_admin: user.is_admin,
-                  role: user.role,
-                  coach_id: user.coach_id,
-                  dossier: user.dossier,
-                  org_chart: user.org_chart,
-                }
-              : null,
+            user: user ?? null,
           },
         ];
       });
@@ -192,19 +180,7 @@ export function MomentCard({
             content,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
-            user: user
-              ? {
-                  id: user.id,
-                  nickname: user.nickname,
-                  email: user.email,
-                  avatar_url: user.user_metadata.avatar_url as string,
-                  is_admin: user.is_admin,
-                  role: user.role,
-                  coach_id: user.coach_id,
-                  dossier: user.dossier,
-                  org_chart: user.org_chart,
-                }
-              : null,
+            user: user ?? null,
           },
         ];
       });
