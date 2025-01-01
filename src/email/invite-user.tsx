@@ -49,7 +49,7 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
         <Head />
 
         <Body className="mx-auto my-auto bg-neutral-950 px-0 font-sans md:px-2">
-          <Container className="mx-auto max-w-[465px] rounded-b p-5 md:my-10 md:rounded md:border md:border-neutral-700">
+          <Container className="mx-auto max-w-[465px] rounded-b p-5 md:my-8 md:rounded md:border md:border-solid md:border-neutral-700">
             <Section className="mt-8 flex justify-center">
               <Img
                 src={`${BASE_URL}/titan-logo.png`}
@@ -147,8 +147,8 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
               </Text>
 
               <Text className="mt-6 hidden text-xs text-neutral-500 md:block">
-                This email was sent to you as part of an invitation to join{" "}
-                <strong>{COMPANY_NAME}</strong>.
+                © {new Date().getFullYear()} {COMPANY_NAME}. All rights
+                reserved.
               </Text>
             </Section>
           </Container>
