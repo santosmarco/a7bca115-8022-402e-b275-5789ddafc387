@@ -42,6 +42,10 @@ export const env = createEnv({
     PINECONE_API_KEY: z.string(),
     PINECONE_HOST: z.string(),
     PINECONE_INDEX: z.string(),
+    // Resend
+    RESEND_API_KEY: z.string(),
+    // Supabase
+    SUPABASE_SERVICE_ROLE_KEY: z.string(),
   },
 
   client: {
@@ -85,12 +89,15 @@ export const env = createEnv({
     PINECONE_API_KEY: process.env.PINECONE_API_KEY,
     PINECONE_HOST: process.env.PINECONE_HOST,
     PINECONE_INDEX: process.env.PINECONE_INDEX,
+    // Resend
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
     // Client
     NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_VERCEL_URL: process.env.NEXT_PUBLIC_VERCEL_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
