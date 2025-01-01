@@ -2,6 +2,7 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 import { authRouter } from "./routers/auth";
 import { chatsRouter } from "./routers/chats";
+import { clientsRouter } from "./routers/clients";
 import { momentsRouter } from "./routers/moments";
 import { notionRouter } from "./routers/notion";
 import { videosRouter } from "./routers/videos";
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   notion: notionRouter,
   videos: videosRouter,
   coachingFrameworks: coachingFrameworksRouter,
+  clients: clientsRouter,
 });
 
 export type AppRouter = typeof appRouter;
