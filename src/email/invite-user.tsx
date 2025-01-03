@@ -19,7 +19,7 @@ import type { Tables } from "~/lib/supabase/database.types";
 
 type InviteProfile = Pick<Tables<"profiles">, "email" | "nickname">;
 
-type InvitationEmailProps = {
+export type InvitationEmailProps = {
   invite: Pick<
     Tables<"user_invites">,
     "id" | "email" | "first_name" | "last_name"
@@ -31,10 +31,10 @@ type InvitationEmailProps = {
 const BASE_URL = env.NEXT_PUBLIC_SITE_URL;
 if (!BASE_URL) throw new Error("NEXT_PUBLIC_SITE_URL is not defined");
 
-const COMPANY_NAME = "Titan";
+const COMPANY_NAME = "Titan GameTape";
 
 export function InvitationEmail({ invite }: InvitationEmailProps) {
-  const previewText = `Join ${COMPANY_NAME} - Your Invitation Inside`;
+  const previewText = `You're Invited to ${COMPANY_NAME} – Elevate Your Coaching Experience`;
   const fullName = [invite.first_name, invite.last_name]
     .filter(Boolean)
     .join(" ");
@@ -59,14 +59,17 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
                 className="h-8"
               />
             </Section>
+
             <Heading className="mx-0 my-8 p-0 text-center text-2xl font-normal text-white">
               Join <strong>{COMPANY_NAME}</strong>
             </Heading>
+
             <Text className="text-sm leading-6 text-gray-200">
               Hello {invite.first_name},
             </Text>
-            <Text className="text-sm leading-6 text-gray-200">
-              {invite.invited_by_profile && (
+
+            <Text className="text-pretty text-sm leading-6 text-gray-200">
+              {invite.invited_by_profile ? (
                 <>
                   <strong>{invite.invited_by_profile.nickname}</strong> (
                   <Link
@@ -75,12 +78,21 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
                   >
                     {invite.invited_by_profile.email}
                   </Link>
-                  )
+                  ) has invited you to join them as a client on{" "}
+                  <strong>{COMPANY_NAME}</strong>, the Meeting Intelligence
+                  Platform designed for startup leaders and their coaches to
+                  gain actionable insights from your meetings.
                 </>
-              )}{" "}
-              has invited you to join them as a client on{" "}
-              <strong>{COMPANY_NAME}</strong>.
+              ) : (
+                <>
+                  You&apos;ve been invited to join{" "}
+                  <strong>{COMPANY_NAME}</strong>, the Meeting Intelligence
+                  Platform designed for startup leaders and their coaches to
+                  gain actionable insights from your meetings.
+                </>
+              )}
             </Text>
+
             <Section className="my-8 text-center">
               <Button
                 className="rounded bg-white px-5 py-3 text-xs font-semibold text-black no-underline hover:bg-gray-100"
@@ -89,9 +101,11 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
                 Accept Invitation
               </Button>
             </Section>
+
             <Text className="text-sm leading-6 text-gray-200">
-              or copy and paste this URL into your browser:
+              or copy and paste this link into your browser:
             </Text>
+
             <Section className="my-4 rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3">
               <Link
                 href={inviteUrl.toString()}
@@ -100,13 +114,14 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
                 {inviteUrl.toString()}
               </Link>
             </Section>
+
             <Hr className="my-6 w-full border border-neutral-700" />
+
             <Text className="text-xs leading-6 text-neutral-400">
               This invitation was intended for{" "}
-              <span className="text-gray-200">{fullName}</span>. If you were not
-              expecting this invitation, you can safely ignore this email. If
-              you have any questions, please reply to this email to get in touch
-              with us.
+              <span className="text-gray-200">{fullName}</span>. If you did not
+              request this, you can safely ignore this email. For any concerns,
+              contact our support team.
             </Text>
           </Container>
 
@@ -134,21 +149,14 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
 
               <Text className="mt-8 hidden text-xs leading-relaxed text-neutral-400 md:block">
                 <span className="font-medium text-neutral-300">
-                  {COMPANY_NAME} Technologies, Inc.
+                  © {new Date().getFullYear()} Aware Healthcare Inc.
                 </span>
-                <br />
-                <span className="text-neutral-500">
-                  240 Kent Avenue
-                  <br />
-                  11249 Brooklyn
-                  <br />
-                  United States
-                </span>
-              </Text>
 
-              <Text className="mt-6 hidden text-xs text-neutral-500 md:block">
-                © {new Date().getFullYear()} {COMPANY_NAME}. All rights
-                reserved.
+                <br />
+
+                <span className="text-neutral-500">
+                  223 Bedford Ave, Brooklyn, NY
+                </span>
               </Text>
             </Section>
           </Container>
@@ -156,20 +164,14 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
           <Container className="mx-auto mt-8 px-2 text-center md:hidden">
             <Text className="mt-0 text-xs leading-relaxed text-neutral-400">
               <span className="font-medium text-neutral-300">
-                {COMPANY_NAME} Technologies, Inc.
+                © {new Date().getFullYear()} Aware Healthcare Inc.
               </span>
-              <br />
-              <span className="text-neutral-500">
-                240 Kent Avenue
-                <br />
-                11249 Brooklyn
-                <br />
-                United States
-              </span>
-            </Text>
 
-            <Text className="mt-6 text-xs text-neutral-500">
-              © {new Date().getFullYear()} {COMPANY_NAME}. All rights reserved.
+              <br />
+
+              <span className="text-neutral-500">
+                223 Bedford Ave, Brooklyn, NY
+              </span>
             </Text>
           </Container>
         </Body>

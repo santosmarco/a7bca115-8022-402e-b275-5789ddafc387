@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 import { sendInvitationEmail } from "~/lib/email";
 import { createClient } from "~/lib/supabase/server";
@@ -54,5 +55,45 @@ export const userInvitesRouter = createTRPCRouter({
       await sendInvitationEmail({ invite: userInvite });
 
       return userInvite;
+    }),
+
+  resendInvitation: publicProcedure
+    .input(
+      z.object({
+        email: z.string().email(),
+      }),
+    )
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+
+      const { data: userInvite, error: userInviteError } = await supabase
+        .from("user_invites")
+        .select("*, invited_by_profile:profiles(*)")
+        .eq("email", input.email)
+        .maybeSingle();
+
+      if (userInviteError || !userInvite) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User invite not found",
+        });
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("email", input.email)
+        .maybeSingle();
+
+      if (profile?.status === "active") {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Client is already active",
+        });
+      }
+
+      await sendInvitationEmail({ invite: userInvite });
+
+      return { success: true };
     }),
 });

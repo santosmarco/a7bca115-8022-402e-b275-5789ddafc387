@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { createClient } from "~/lib/supabase/server";
@@ -41,5 +42,78 @@ export const clientsRouter = createTRPCRouter({
         ...(clients ?? []),
         ...(userInvites ?? []).map(transformUserInviteIntoProfile),
       ];
+    }),
+
+  deactivateClient: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+
+      const { data: clientProfile, error: clientProfileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", input.id)
+        .maybeSingle();
+
+      if (clientProfileError || !clientProfile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Client not found",
+        });
+      }
+
+      if (clientProfile.status === "inactive") {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "Client is already inactive",
+        });
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status: "inactive" })
+        .eq("id", clientProfile.id);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to deactivate client",
+        });
+      }
+
+      return { success: true };
+    }),
+
+  reactivateClient: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+
+      const { data: clientProfile, error: clientProfileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", input.id)
+        .maybeSingle();
+
+      if (clientProfileError || !clientProfile) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Client not found",
+        });
+      }
+
+      const { error } = await supabase
+        .from("profiles")
+        .update({ status: "active" })
+        .eq("id", clientProfile.id);
+
+      if (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to reactivate client",
+        });
+      }
+
+      return { success: true };
     }),
 });

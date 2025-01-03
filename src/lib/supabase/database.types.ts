@@ -839,6 +839,42 @@ export type Database = {
           },
         ]
       }
+      recall_calendars: {
+        Row: {
+          created_at: string
+          id: string
+          platform: Database["public"]["Enums"]["recall_calendar_platform_type"]
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          platform: Database["public"]["Enums"]["recall_calendar_platform_type"]
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: Database["public"]["Enums"]["recall_calendar_platform_type"]
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recall_calendars_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "recall_calendars_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scheduled_meetings: {
         Row: {
           calendar_id: string
@@ -1293,6 +1329,7 @@ export type Database = {
         | "call_ended"
       moment_reaction_type: "thumbs_up" | "thumbs_down"
       profile_status_enum: "active" | "pending" | "inactive"
+      recall_calendar_platform_type: "google_calendar" | "microsoft_outlook"
       user_role_enum: "user" | "coach" | "admin"
     }
     CompositeTypes: {
