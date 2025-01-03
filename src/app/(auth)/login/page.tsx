@@ -4,11 +4,49 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 
 import titanLogo from "~/assets/titan-logo.svg";
+import { Alert, AlertTitle } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
 import { Link } from "~/components/ui/link";
+import { api } from "~/trpc/react";
 
+import { toast } from "sonner";
 import { SignInButton } from "./_components/sign-in-button";
+import { useEffect } from "react";
 
-export default function SignInPage() {
+export default function SignInPage({
+  searchParams,
+}: {
+  searchParams?: {
+    invite?: string;
+    reason?: string;
+    email?: string;
+  };
+}) {
+  const reason = searchParams?.reason;
+
+  const { mutate: resendInvitation } =
+    api.userInvites.resendInvitation.useMutation({
+      onSuccess: () => {
+        toast.success("Invitation resent", {
+          description: "Check your email for a new invitation link.",
+        });
+      },
+      onError: (err) => {
+        console.error(err);
+        toast.error("Failed to resend invitation", {
+          description: "Please try again later.",
+        });
+      },
+    });
+
+  const handleResendInvitation = () => {
+    searchParams?.email && resendInvitation({ email: searchParams.email });
+  };
+
+  useEffect(() => {
+    localStorage.removeItem("profile");
+  }, []);
+
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-background via-accent/30 to-primary/20">
       {/* Animated background elements */}
@@ -63,7 +101,62 @@ export default function SignInPage() {
             </motion.p>
           </motion.div>
 
-          <SignInButton />
+          {reason === "forbidden" && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <Alert variant="destructive" className="bg-destructive/5">
+                <AlertTitle className="mb-0 flex items-center justify-center gap-2 font-medium leading-normal text-destructive">
+                  Sign up is currently invite-only.
+                </AlertTitle>
+              </Alert>
+            </motion.div>
+          )}
+
+          {reason === "invitation-expired" && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <Alert variant="default">
+                <AlertTitle className="mb-0 flex items-center justify-center gap-2 font-medium leading-normal">
+                  Your invitation has expired.
+                  {searchParams?.email && (
+                    <>
+                      {" "}
+                      <Button
+                        variant="link"
+                        className="p-0"
+                        onClick={handleResendInvitation}
+                      >
+                        Request a new one.
+                      </Button>
+                    </>
+                  )}
+                </AlertTitle>
+              </Alert>
+            </motion.div>
+          )}
+
+          {reason === "inactive" && (
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <Alert variant="default">
+                <AlertTitle className="mb-0 flex items-center justify-center gap-2 font-medium leading-normal">
+                  Your account is inactive. Contact your coach for more
+                  information.
+                </AlertTitle>
+              </Alert>
+            </motion.div>
+          )}
+
+          <SignInButton inviteId={searchParams?.invite} hidden={!!reason} />
 
           {/* Terms */}
           <motion.p

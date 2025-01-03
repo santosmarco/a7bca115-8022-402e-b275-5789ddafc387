@@ -46,6 +46,8 @@ export const env = createEnv({
     RESEND_API_KEY: z.string(),
     // Supabase
     SUPABASE_SERVICE_ROLE_KEY: z.string(),
+    RECALL_BASE_URL: z.string().min(1).url(),
+    RECALL_API_KEY: z.string().min(1),
   },
 
   client: {
@@ -98,6 +100,8 @@ export const env = createEnv({
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    RECALL_BASE_URL: process.env.RECALL_BASE_URL,
+    RECALL_API_KEY: process.env.RECALL_API_KEY,
   },
 
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,

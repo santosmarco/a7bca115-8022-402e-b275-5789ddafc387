@@ -7,15 +7,21 @@ import { SiGoogle } from "react-icons/si";
 import { Button } from "~/components/ui/button";
 import { env } from "~/env";
 import { createClient } from "~/lib/supabase/client";
+import { cn } from "~/lib/utils";
 
-export function SignInButton() {
+export type SignInButtonProps = {
+  inviteId: string | undefined;
+  hidden: boolean;
+};
+
+export function SignInButton({ inviteId, hidden }: SignInButtonProps) {
   const supabase = createClient();
 
   const handleSignIn = useCallback(() => {
     void supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?provider=google`,
+        redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?provider=google${inviteId ? `&invite=${inviteId}` : ""}`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",
@@ -24,13 +30,14 @@ export function SignInButton() {
           "https://www.googleapis.com/auth/calendar.calendarlist.readonly https://www.googleapis.com/auth/calendar.calendars.readonly https://www.googleapis.com/auth/calendar.events.readonly https://www.googleapis.com/auth/calendar.readonly",
       },
     });
-  }, [supabase]);
+  }, [supabase, inviteId]);
 
   return (
     <motion.div
       initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5, delay: 0.6 }}
+      className={cn(hidden && "hidden")}
     >
       <Button
         variant="outline"

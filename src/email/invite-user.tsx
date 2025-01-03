@@ -38,7 +38,7 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
   const fullName = [invite.first_name, invite.last_name]
     .filter(Boolean)
     .join(" ");
-  const inviteUrl = new URL("/auth/signup", BASE_URL);
+  const inviteUrl = new URL("/login", BASE_URL);
   inviteUrl.searchParams.set("invite", invite.id);
 
   return (

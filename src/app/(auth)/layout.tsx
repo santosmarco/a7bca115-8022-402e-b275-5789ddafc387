@@ -1,9 +1,10 @@
 import "~/styles/globals.css";
 
-import { type Metadata } from "next";
+import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 
 import { TRPCReactProvider } from "~/trpc/react";
+import { HydrateClient } from "~/trpc/server";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -23,7 +24,9 @@ export default function RootLayout({
       className={`${inter.variable} dark bg-background text-foreground`}
     >
       <TRPCReactProvider>
-        <body>{children}</body>
+        <HydrateClient>
+          <body>{children}</body>
+        </HydrateClient>
       </TRPCReactProvider>
     </html>
   );
