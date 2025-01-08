@@ -18,6 +18,7 @@ import { convertToUIMessages } from "~/lib/ai/messages";
 import { getMomentIcon } from "~/lib/moments";
 import { createClient } from "~/lib/supabase/client";
 import type { Tables } from "~/lib/supabase/database.types";
+import { cn } from "~/lib/utils";
 import type { RouterOutputs } from "~/trpc/react";
 
 import { ChatInput } from "../chat/chat-input";
@@ -33,6 +34,8 @@ type ChatInterfaceProps = {
   initialMessages: CoreMessage[];
   onTopicSelect: (topic: string) => void;
   isLoading?: boolean;
+  onClick: () => void;
+  disabled: boolean;
 };
 
 const containerVariants = {
@@ -125,6 +128,8 @@ export function ChatInterface({
   onTopicSelect,
   isLoading,
   frameworks,
+  onClick,
+  disabled,
 }: ChatInterfaceProps) {
   const supabase = createClient();
   const [selectedMoments, setSelectedMoments] = useState<
@@ -287,6 +292,8 @@ export function ChatInterface({
                     prev.filter((v) => v.videoId !== video.videoId),
                   )
                 }
+                onClick={onClick}
+                disabled={disabled}
               />
             </form>
           </motion.div>
@@ -309,8 +316,12 @@ export function ChatInterface({
                   <Badge
                     key={topic}
                     variant="outline"
-                    onClick={handleTopicClick(topic)}
-                    className="flex cursor-pointer items-center gap-x-2.5 px-3 py-1.5 transition-all hover:border-primary hover:bg-primary/10 active:scale-95"
+                    onClick={disabled ? undefined : handleTopicClick(topic)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-x-2.5 px-3 py-1.5 transition-all hover:border-primary hover:bg-primary/10 active:scale-95",
+                      disabled &&
+                        "opacity-50 hover:border-border hover:bg-transparent",
+                    )}
                   >
                     <TopicIcon className="h-3.5 w-3.5 text-primary" />
                     <span className="font-medium">
@@ -471,6 +482,8 @@ export function ChatInterface({
                 prev.filter((v) => v.videoId !== video.videoId),
               )
             }
+            onClick={onClick}
+            disabled={disabled}
           />
         </form>
       )}

@@ -30,6 +30,7 @@ export interface ContentSelectorProps {
   onUnselectMoment: (moment: VideoMoment) => void;
   onSelectVideo: (video: VideoOutput) => void;
   onUnselectVideo: (video: VideoOutput) => void;
+  disabled: boolean;
 }
 
 function formatDuration(seconds: number): string {
@@ -47,6 +48,7 @@ export function ContentSelector({
   onUnselectMoment,
   onSelectVideo,
   onUnselectVideo,
+  disabled,
 }: ContentSelectorProps) {
   const [open, setOpen] = useState(false);
 
@@ -88,6 +90,7 @@ export function ContentSelector({
                 variant="outline"
                 className="relative h-8 w-8"
                 aria-label="Select content"
+                disabled={disabled}
               >
                 <PinIcon className="h-4 w-4" />
                 {selectedMoments.length + selectedVideos.length < 5 && (

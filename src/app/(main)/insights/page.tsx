@@ -5,14 +5,17 @@ import { motion } from "framer-motion";
 import _ from "lodash";
 import { BotOffIcon, MessageCircleMoreIcon } from "lucide-react";
 import { parseAsString, useQueryState } from "nuqs";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
+import { ChatContainer } from "~/components/chat/chat-container";
 import { ChatInterface } from "~/components/insights/chat-interface";
 import { useProfile } from "~/hooks/use-profile";
 import { emotionToMoment, getVideoEmotions } from "~/lib/videos";
 import { api } from "~/trpc/react";
 
 export const maxDuration = 30;
+
+const MIN_MEETINGS = 10;
 
 export default function InsightsPage() {
   const [selectedVideo, setSelectedVideo] = useQueryState(
@@ -23,6 +26,7 @@ export default function InsightsPage() {
     "topic",
     parseAsString.withOptions({ history: "push" }),
   );
+  const [shouldShowLockScreen, setShouldShowLockScreen] = useState(true);
 
   const { profile } = useProfile();
   const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery(
@@ -175,7 +179,14 @@ export default function InsightsPage() {
   }
 
   return (
-    <>
+    <ChatContainer
+      progress={{
+        completedMeetings: filteredVideos.length,
+        requiredMeetings: MIN_MEETINGS,
+      }}
+      open={filteredVideos.length < MIN_MEETINGS && shouldShowLockScreen}
+      onClose={() => setShouldShowLockScreen(false)}
+    >
       <ChatInterface
         frameworks={frameworks ?? []}
         userId={userId}
@@ -187,8 +198,10 @@ export default function InsightsPage() {
           (chat?.data?.messages as CoreMessage[] | undefined) ?? []
         }
         onTopicSelect={(topic) => void setSelectedTopic(topic)}
+        onClick={() => setShouldShowLockScreen(true)}
         isLoading={hasNextPage}
+        disabled={filteredVideos.length < MIN_MEETINGS}
       />
-    </>
+    </ChatContainer>
   );
 }

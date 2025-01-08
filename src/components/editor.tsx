@@ -3,7 +3,7 @@
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import * as React from "react";
+import type * as React from "react";
 import type { Except } from "type-fest";
 
 import { coachingFrameworkSuggestion } from "~/lib/editor/extensions/coaching-framework-suggestion";
@@ -26,6 +26,7 @@ type EditorProps = Except<
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
   onSubmit: (event?: { preventDefault?: () => void }) => void;
+  onClick: () => void;
 };
 
 export function Editor({
@@ -34,6 +35,7 @@ export function Editor({
   frameworks,
   className,
   disabled,
+  onClick,
   ...props
 }: EditorProps) {
   const editor = useEditor({
@@ -73,6 +75,9 @@ export function Editor({
           return true;
         }
         return false;
+      },
+      handleClick() {
+        onClick();
       },
     },
     onUpdate({ editor }) {

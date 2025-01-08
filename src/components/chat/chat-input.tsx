@@ -31,6 +31,8 @@ export type ChatInputProps = {
   onUnselectMoment: (moment: VideoMoment) => void;
   onSelectVideo: (video: VideoOutput) => void;
   onUnselectVideo: (video: VideoOutput) => void;
+  onClick: () => void;
+  disabled: boolean;
   buttonPosition?: "top" | "bottom";
 };
 
@@ -49,6 +51,8 @@ export function ChatInput({
   onUnselectMoment,
   onSelectVideo,
   onUnselectVideo,
+  onClick,
+  disabled,
   buttonPosition = "bottom",
   ...props
 }: ChatInputProps) {
@@ -62,6 +66,7 @@ export function ChatInput({
         onChange={onChange}
         onSubmit={onSubmit}
         className={cn((showSelectionsList || isLandingPage) && "min-h-28")}
+        onClick={onClick}
         // disabled={isGenerating}
       />
 
@@ -107,6 +112,7 @@ export function ChatInput({
           onUnselectMoment={onUnselectMoment}
           onSelectVideo={onSelectVideo}
           onUnselectVideo={onUnselectVideo}
+          disabled={disabled}
         />
 
         {isGenerating && stop ? (
