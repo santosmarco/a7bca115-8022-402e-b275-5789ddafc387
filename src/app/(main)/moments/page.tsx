@@ -3,7 +3,7 @@
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import _ from "lodash";
-import { FrownIcon, SearchX } from "lucide-react";
+import { FrownIcon, SearchX, TrendingUpDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
 import { useCallback, useEffect, useState } from "react";
@@ -297,7 +297,7 @@ export default function MomentsPage() {
             animate={{ opacity: 1 }}
             className="flex items-center justify-center py-8"
           >
-            <FrownIcon className="h-8 w-8 animate-pulse text-primary" />
+            <TrendingUpDownIcon className="h-8 w-8 animate-pulse text-primary" />
           </motion.div>
         )}
 
