@@ -4025,6 +4025,7 @@ const BASE_URL = env.RECALL_BASE_URL;
 
 export function createClient(options?: ZodiosOptions) {
   const mergedOptions = {
+    validate: "none",
     ...options,
     axiosConfig: {
       baseURL: BASE_URL,
