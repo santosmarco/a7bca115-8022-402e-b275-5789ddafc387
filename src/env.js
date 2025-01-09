@@ -12,7 +12,6 @@ export const env = createEnv({
     // Vercel
     VERCEL_URL: z.string().optional(),
     SITE_URL: z.string().optional(),
-    CRON_SECRET: z.string(),
     // Internal API Key
     INTERNAL_API_KEY: z.string(),
     // Trigger
@@ -71,7 +70,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     VERCEL_URL: process.env.VERCEL_URL,
     SITE_URL: process.env.SITE_URL,
-    CRON_SECRET: process.env.CRON_SECRET,
     INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,
     TRIGGER_API_URL: process.env.TRIGGER_API_URL,
     TRIGGER_SECRET_KEY: process.env.TRIGGER_SECRET_KEY,
