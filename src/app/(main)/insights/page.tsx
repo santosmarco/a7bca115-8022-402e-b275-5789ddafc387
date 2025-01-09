@@ -133,48 +133,62 @@ export default function InsightsPage() {
 
   if (userLoading || frameworksLoading || chatLoading || !userId) {
     return (
-      <div className="mt-20 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col items-center gap-4"
-        >
-          <MessageCircleMoreIcon className="h-10 w-10 animate-pulse text-primary" />
-          <p className="text-sm text-muted-foreground">Preparing chat...</p>
-        </motion.div>
-      </div>
+      <ChatContainer
+        progress={{
+          completedMeetings: filteredVideos.length,
+          requiredMeetings: MIN_MEETINGS,
+        }}
+      >
+        <div className="mt-20 flex items-center justify-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col items-center gap-4"
+          >
+            <MessageCircleMoreIcon className="h-10 w-10 animate-pulse text-primary" />
+            <p className="text-sm text-muted-foreground">Preparing chat...</p>
+          </motion.div>
+        </div>
+      </ChatContainer>
     );
   }
 
   if (!videosLoading && !filteredVideos.length) {
     return (
-      <div className="mt-20 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="flex flex-col items-center gap-6 text-center"
-        >
+      <ChatContainer
+        progress={{
+          completedMeetings: filteredVideos.length,
+          requiredMeetings: MIN_MEETINGS,
+        }}
+      >
+        <div className="mt-20 flex items-center justify-center">
           <motion.div
-            initial={{ rotate: -10 }}
-            animate={{ rotate: [10, -10, 10, 0] }}
-            transition={{
-              duration: 1.5,
-              times: [0.2, 0.4, 0.6, 1],
-              ease: [0.4, 0, 0.2, 1],
-            }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex flex-col items-center gap-6 text-center"
           >
-            <BotOffIcon className="h-16 w-16 text-muted-foreground" />
+            <motion.div
+              initial={{ rotate: -10 }}
+              animate={{ rotate: [10, -10, 10, 0] }}
+              transition={{
+                duration: 1.5,
+                times: [0.2, 0.4, 0.6, 1],
+                ease: [0.4, 0, 0.2, 1],
+              }}
+            >
+              <BotOffIcon className="h-16 w-16 text-muted-foreground" />
+            </motion.div>
+            <div className="max-w-sm space-y-2">
+              <p className="font-semibold">No meetings found</p>
+              <p className="text-sm text-muted-foreground">
+                Sorry, we are unable to provide insights if we don&apos;t have
+                any meetings to analyze.
+              </p>
+            </div>
           </motion.div>
-          <div className="max-w-sm space-y-2">
-            <p className="font-semibold">No meetings found</p>
-            <p className="text-sm text-muted-foreground">
-              Sorry, we are unable to provide insights if we don&apos;t have any
-              meetings to analyze.
-            </p>
-          </div>
-        </motion.div>
-      </div>
+        </div>
+      </ChatContainer>
     );
   }
 
