@@ -15,7 +15,7 @@ export async function sendInvitationEmail({ invite }: InvitationEmailProps) {
   const data = await resend.emails.send({
     from: "onboarding@emails.withtitan.com",
     to: invite.email,
-    subject: "Join Titan – Your Invitation Inside",
+    subject: "Create Your Account On Titan GameTape",
     html: emailHtml,
   });
 
