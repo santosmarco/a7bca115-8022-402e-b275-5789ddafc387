@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { JsonObject } from "~/lib/schemas/utils";
 import { createClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 
@@ -83,6 +84,7 @@ export const authRouter = createTRPCRouter({
         data: { user },
         error,
       } = await supabase.auth.getUser();
+      console.log(user);
       if (error)
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -110,12 +112,14 @@ export const authRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Profile not found",
         });
+      const userMetadata = JsonObject.parse(user.user_metadata);
       const userRole = profile.role;
       return {
         ...user,
         ...profile,
         role: userRole,
         is_admin: profile.is_admin || userRole === "admin",
+        user_metadata: userMetadata,
       };
     } catch (error) {
       throw new TRPCError({
@@ -151,5 +155,24 @@ export const authRouter = createTRPCRouter({
           cause: error,
         });
       }
+    }),
+
+  completeOnboarding: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          did_complete_onboarding: true,
+        })
+        .eq("id", input.userId);
+      if (error)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to complete onboarding: ${(error as Error).message}`,
+          cause: error,
+        });
+      return { success: true };
     }),
 });

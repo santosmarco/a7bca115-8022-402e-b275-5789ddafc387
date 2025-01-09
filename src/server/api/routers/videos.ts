@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { deleteMeeting } from "~/lib/api/meetings";
 import { getVideo, listVideos } from "~/lib/api-video/videos";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import type { Tables } from "~/lib/supabase/database.types";
@@ -197,6 +198,22 @@ export const videosRouter = createTRPCRouter({
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to get video: ${(error as Error).message}`,
+          cause: error,
+        });
+      }
+    }),
+
+  deleteMeeting: publicProcedure
+    .input(z.object({ meetingId: z.string() }))
+    .mutation(async ({ input }) => {
+      try {
+        const { meetingId } = input;
+        const response = await deleteMeeting({ videoId: meetingId });
+        return response;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to delete meeting: ${(error as Error).message}`,
           cause: error,
         });
       }
