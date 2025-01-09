@@ -334,13 +334,16 @@ export function MomentCard({
         {/* Activity Types */}
         <div className="mb-4 flex flex-wrap gap-2">
           {moment.target_person_type && (
-            <Badge variant="outline" className="rounded-full">
+            <Badge
+              variant="outline"
+              className="rounded-full border-foreground/50"
+            >
               {moment.target_person_type}
             </Badge>
           )}
           <Badge
             variant="outline"
-            className="rounded-full"
+            className="rounded-full border-foreground/50"
             {...styles.activityTypeBadge}
           >
             {moment.activity_type}
