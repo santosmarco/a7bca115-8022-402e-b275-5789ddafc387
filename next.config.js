@@ -16,7 +16,7 @@ const nextConfig = {
     instrumentationHook: true,
   },
   images: {
-    domains: ["vod.api.video"],
+    domains: ["vod.api.video", "lh3.googleusercontent.com"],
   },
   eslint: {
     ignoreDuringBuilds: true,
