@@ -1,5 +1,5 @@
-import type { AuthSession, Session, User } from "@supabase/supabase-js";
-import { NextResponse } from "next/server";
+import type { Session, User } from "@supabase/supabase-js";
+import { type NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 
 import { env } from "~/env";
@@ -9,7 +9,7 @@ import { __dangerouslyCreateAdminClient__ } from "~/lib/supabase/admin";
 import type { Tables } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   logger.info("Auth callback started", { url: request.url });
   const { code, provider, next, invite } = validateAndSetupRequest(request);
   logger.info("Request params", { code, provider, next, invite });
@@ -130,16 +130,69 @@ export async function GET(request: Request) {
   }
 }
 
-function validateAndSetupRequest(request: Request) {
+function validateAndSetupRequest(request: NextRequest) {
   logger.info("Setting up request", { url: request.url });
-  const { searchParams } = new URL(request.url);
+  const { searchParams: searchParams1 } = new URL(request.url);
+  const { searchParams: searchParams2 } = request.nextUrl ?? {};
+  const searchParams = {
+    get(key: string) {
+      return searchParams1.get(key) || searchParams2?.get(key);
+    },
+  };
+
+  let invite: string | null = null;
+  let provider: string | null = null;
+
+  // Parse and validate the state parameter
+  const stateParam = searchParams.get("state");
+  if (stateParam) {
+    try {
+      const stateData = JSON.parse(decodeURIComponent(stateParam)) as {
+        invite: string | null;
+        provider: string | null;
+        nonce: string;
+        timestamp: number;
+      };
+
+      // Validate timestamp to prevent replay attacks (15 minute window)
+      const timestamp = stateData.timestamp;
+      const fifteenMinutes = 15 * 60 * 1000;
+      const isTimestampValid =
+        timestamp && Date.now() - timestamp < fifteenMinutes;
+
+      if (!isTimestampValid) {
+        logger.warn("State timestamp invalid or expired", {
+          timestamp,
+          now: Date.now(),
+        });
+      } else if (stateData.provider !== "google") {
+        logger.warn("Invalid provider in state", {
+          provider: stateData.provider,
+        });
+      } else {
+        invite = stateData.invite ?? null;
+        provider = stateData.provider;
+      }
+    } catch (error) {
+      logger.warn("Failed to parse state parameter", {
+        stateParam,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   const result = {
     code: searchParams.get("code"),
-    provider: searchParams.get("provider"),
+    provider: provider ?? searchParams.get("provider"),
     next: searchParams.get("next") ?? "",
-    invite: searchParams.get("invite"),
+    invite: invite ?? searchParams.get("invite"),
   };
-  logger.info("Request setup result", result);
+
+  logger.info("Request setup result", {
+    ...result,
+    hasInvite: !!invite,
+    hasProvider: !!provider,
+  });
   return result;
 }
 
@@ -314,7 +367,7 @@ async function createRecallCalendar(
   }
 }
 
-function handleRedirect(request: Request, next: string): NextResponse {
+function handleRedirect(request: NextRequest, next: string): NextResponse {
   logger.info("Handling redirect", { next });
   const forwardedHost = request.headers.get("x-forwarded-host");
   logger.info("Forwarded host", { forwardedHost });

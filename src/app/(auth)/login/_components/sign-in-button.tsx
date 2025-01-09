@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useCallback } from "react";
 import { SiGoogle } from "react-icons/si";
+import { v4 as uuidv4 } from "uuid";
 
 import { Button } from "~/components/ui/button";
 import { env } from "~/env";
@@ -10,7 +11,7 @@ import { createClient } from "~/lib/supabase/client";
 import { cn } from "~/lib/utils";
 
 export type SignInButtonProps = {
-  inviteId: string | undefined;
+  inviteId: string | null;
   hidden: boolean;
 };
 
@@ -18,10 +19,20 @@ export function SignInButton({ inviteId, hidden }: SignInButtonProps) {
   const supabase = createClient();
 
   const handleSignIn = useCallback(() => {
+    const nonce = uuidv4();
+    const state = encodeURIComponent(
+      JSON.stringify({
+        invite: inviteId,
+        provider: "google",
+        nonce,
+        timestamp: Date.now(),
+      }),
+    );
+
     void supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${env.NEXT_PUBLIC_SITE_URL}/auth/callback?provider=google${inviteId ? `&invite=${inviteId}` : ""}`,
+        redirectTo: `${getBaseUrl()}auth/callback?state=${state}`,
         queryParams: {
           access_type: "offline",
           prompt: "consent",

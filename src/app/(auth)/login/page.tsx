@@ -2,6 +2,9 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { toast } from "sonner";
 
 import titanLogo from "~/assets/titan-logo.svg";
 import { Alert, AlertTitle } from "~/components/ui/alert";
@@ -9,20 +12,14 @@ import { Button } from "~/components/ui/button";
 import { Link } from "~/components/ui/link";
 import { api } from "~/trpc/react";
 
-import { toast } from "sonner";
 import { SignInButton } from "./_components/sign-in-button";
-import { useEffect } from "react";
 
-export default function SignInPage({
-  searchParams,
-}: {
-  searchParams?: {
-    invite?: string;
-    reason?: string;
-    email?: string;
-  };
-}) {
-  const reason = searchParams?.reason;
+export default function SignInPage() {
+  const searchParams = useSearchParams();
+
+  const reason = searchParams.get("reason");
+  const email = searchParams.get("email");
+  const invite = searchParams.get("invite");
 
   const { mutate: resendInvitation } =
     api.userInvites.resendInvitation.useMutation({
@@ -40,7 +37,8 @@ export default function SignInPage({
     });
 
   const handleResendInvitation = () => {
-    searchParams?.email && resendInvitation({ email: searchParams.email });
+    if (!email) return;
+    resendInvitation({ email });
   };
 
   useEffect(() => {
@@ -124,7 +122,7 @@ export default function SignInPage({
               <Alert variant="default">
                 <AlertTitle className="mb-0 flex items-center justify-center gap-2 font-medium leading-normal">
                   Your invitation has expired.
-                  {searchParams?.email && (
+                  {email && (
                     <>
                       {" "}
                       <Button
@@ -156,7 +154,7 @@ export default function SignInPage({
             </motion.div>
           )}
 
-          <SignInButton inviteId={searchParams?.invite} hidden={!!reason} />
+          <SignInButton inviteId={invite} hidden={!!reason} />
 
           {/* Terms */}
           <motion.p
