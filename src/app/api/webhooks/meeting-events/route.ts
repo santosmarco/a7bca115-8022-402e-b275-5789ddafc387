@@ -11,9 +11,9 @@ import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
 import { isTruthy } from "~/lib/utils";
 import { apiVideo } from "~/server/api/services/api-video";
 
-const MeetingBaasWebhookRequestBody = z.discriminatedUnion("event", [
+const MeetingBaasWebhookRequestBody = z.union([
   z.object({
-    event: z.literal("bot.status_change"),
+    event: z.string(),
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       status: z.object({
@@ -34,7 +34,7 @@ const MeetingBaasWebhookRequestBody = z.discriminatedUnion("event", [
     }),
   }),
   z.object({
-    event: z.literal("complete"),
+    event: z.string(),
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       mp4: z
@@ -68,7 +68,7 @@ const MeetingBaasWebhookRequestBody = z.discriminatedUnion("event", [
     }),
   }),
   z.object({
-    event: z.literal("failed"),
+    event: z.string(),
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       error: z
