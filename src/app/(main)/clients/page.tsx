@@ -559,7 +559,13 @@ export default function ClientsPage() {
                           onClick={() =>
                             row.original.status === "active" &&
                             row.original.id &&
-                            setProfile({ ...row.original, id: row.original.id })
+                            (() => {
+                              setProfile({
+                                ...row.original,
+                                id: row.original.id,
+                              });
+                              router.replace("/");
+                            })()
                           }
                           className={cn(
                             row.original.status === "active" &&
