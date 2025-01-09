@@ -19,7 +19,7 @@ class SlackService {
     text,
     channel = NOTIFICATIONS_CHANNEL,
   }: SlackMessage) {
-    if (!slackClient) {
+    if (!slackClient || env.NODE_ENV !== "production") {
       console.warn(
         "Slack notifications disabled - no SLACK_BOT_TOKEN provided",
       );
