@@ -94,13 +94,23 @@ async function uploadVideoToStorage(
   videoUrl: string,
   supabase: SupabaseServerClient,
 ): Promise<string> {
+  logger.info(`Starting video upload to storage for bot ${botId}`, {
+    videoUrl,
+  });
   try {
     // Fetch the video from the temporary AWS S3 URL
     const response = await fetch(videoUrl);
+    logger.info(`Fetch response status: ${response.status}`, {
+      headers: response.headers,
+    });
+
     if (!response.ok) throw new Error("Failed to fetch video from AWS S3");
 
     const blob = await response.blob();
+    logger.info(`Video blob size: ${blob.size} bytes`);
+
     const fileName = `${botId}.mp4`;
+    logger.info(`Uploading to Supabase Storage with filename: ${fileName}`);
 
     // Upload to Supabase Storage
     const { error } = await supabase.storage
@@ -117,9 +127,14 @@ async function uploadVideoToStorage(
       data: { publicUrl },
     } = supabase.storage.from("meetings").getPublicUrl(fileName);
 
+    logger.info(`Successfully uploaded video, public URL: ${publicUrl}`);
     return publicUrl;
   } catch (error) {
-    logger.error("Error uploading video:", error as Error);
+    logger.error("Error uploading video:", {
+      error: error,
+      botId,
+      videoUrl,
+    });
     throw new Error("Failed to upload video to storage");
   }
 }
@@ -129,15 +144,21 @@ async function uploadToApiVideo(
   videoUrl: string,
   botData: MeetingBaasBotData,
 ): Promise<string | null> {
+  logger.info(`Starting API.video upload for bot ${botId}`, {
+    botData: JSON.stringify(botData),
+  });
+
   const {
     bot: { extra },
     transcripts,
   } = botData;
 
   const tags = _.uniq(transcripts.map(({ speaker }) => speaker.trim()));
+  logger.info(`Detected speakers/tags: ${JSON.stringify(tags)}`);
 
   // Skip API video upload if no speakers/tags
   if (tags.length === 0) {
+    logger.warn(`No speakers detected for meeting ${botId}`);
     await slack.warn({
       text: `Skipping API video upload for meeting ${botId} - No speakers detected`,
     });
@@ -146,12 +167,15 @@ async function uploadToApiVideo(
 
   const event = (extra as { event?: calendar_v3.Schema$Event } | undefined)
     ?.event;
+  logger.info("Calendar event data:", { event });
 
   const metadata = [
     botId && { key: "meeting_bot_id", value: botId },
     botData && { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
     event && { key: "google_calendar_raw_data", value: JSON.stringify(event) },
   ].filter(isTruthy);
+
+  logger.info("Prepared metadata:", { metadata });
 
   try {
     await slack.send({
@@ -169,6 +193,11 @@ async function uploadToApiVideo(
       metadata,
     });
 
+    logger.info("API.video upload successful", {
+      videoId: video.videoId,
+      videoDetails: video,
+    });
+
     await slack.success({
       text: `Successfully uploaded video to api.video for meeting ${botId}`,
     });
@@ -178,7 +207,11 @@ async function uploadToApiVideo(
     await slack.error({
       text: `Failed to upload video to api.video for meeting ${botId}: ${(error as Error).message}`,
     });
-    logger.error("Error uploading to api.video:", error as Error);
+    logger.error("Error uploading to api.video:", {
+      fullError: error,
+      botId,
+      videoUrl,
+    });
     throw new Error("Failed to upload video to api.video");
   }
 }
@@ -187,15 +220,22 @@ async function updateMeetingBot(
   supabase: SupabaseServerClient,
   data: SetRequired<Partial<TablesInsert<"meeting_bots">>, "id">,
 ) {
+  logger.info("Updating meeting bot:", { data });
+
   const { error } = await supabase
     .from("meeting_bots")
     .update(data)
     .eq("id", data.id);
 
   if (error) {
-    logger.error("Update error:", error);
+    logger.error("Update error:", {
+      fullError: error,
+      data,
+    });
     throw new Error(error.message);
   }
+
+  logger.info(`Successfully updated meeting bot ${data.id}`);
 }
 
 async function handleTranscript(
@@ -205,6 +245,11 @@ async function handleTranscript(
   const {
     data: { bot_id: botId, transcript },
   } = data;
+
+  logger.info(`Processing transcript for bot ${botId}`, {
+    transcriptLength: transcript.length,
+    fullTranscript: JSON.stringify(transcript),
+  });
 
   const { data: transcriptSlices, error: transcriptSlicesError } =
     await supabase
@@ -221,11 +266,19 @@ async function handleTranscript(
       .select("*");
 
   if (transcriptSlicesError || !transcriptSlices) {
-    logger.error("Transcript slices error:", transcriptSlicesError);
+    logger.error("Transcript slices error:", {
+      fullError: transcriptSlicesError,
+      botId,
+    });
     throw new Error(
       transcriptSlicesError?.message ?? "Failed to insert transcript slices",
     );
   }
+
+  logger.info("Successfully inserted transcript slices", {
+    slicesCount: transcriptSlices.length,
+    slices: transcriptSlices,
+  });
 
   const { error: wordsError } = await supabase.from("transcript_words").insert(
     transcript.flatMap((slice, transcriptSliceIndex) =>
@@ -243,14 +296,25 @@ async function handleTranscript(
   );
 
   if (wordsError) {
-    logger.error("Transcript words error:", wordsError);
+    logger.error("Transcript words error:", {
+      fullError: wordsError,
+      botId,
+    });
     throw new Error(wordsError.message);
   }
+
+  logger.info(`Successfully processed transcript words for bot ${botId}`);
 }
 
 export async function POST(request: Request) {
+  logger.info("Received webhook request", {
+    headers: JSON.stringify(Object.fromEntries(request.headers)),
+  });
+
   try {
     const body = (await request.json()) as unknown;
+    logger.info("Webhook request body:", { body: JSON.stringify(body) });
+
     const bodyParseResult = MeetingBaasWebhookRequestBody.safeParse(body);
 
     if (!bodyParseResult.success) {
@@ -258,11 +322,17 @@ export async function POST(request: Request) {
     }
 
     const event = bodyParseResult.data!;
+    logger.info("Parsed event:", { event: JSON.stringify(event) });
+
     const supabase = await createClient();
 
     // Handle different event types
     try {
       if (event.event === "bot.status_change") {
+        logger.info(`Processing status change for bot ${event.data.bot_id}`, {
+          status: event.data.status,
+        });
+
         const { error } = await supabase
           .from("meeting_bots")
           .upsert(
@@ -271,15 +341,24 @@ export async function POST(request: Request) {
           );
 
         if (error) {
-          logger.error("Status change error:", error);
+          logger.error("Status change error:", {
+            fullError: error,
+            event,
+          });
           throw new Error(error.message);
         }
       } else if (event.event === "failed") {
+        logger.info(`Processing failure for bot ${event.data.bot_id}`, {
+          error: event.data.error,
+        });
+
         await updateMeetingBot(supabase, {
           id: event.data.bot_id,
           error_code: event.data.error,
         });
       } else if (event.event === "complete") {
+        logger.info(`Processing complete event for bot ${event.data.bot_id}`);
+
         await slack.send({
           text: `🎯 Processing complete event for meeting ${event.data.bot_id}`,
         });
@@ -287,11 +366,21 @@ export async function POST(request: Request) {
         const { bot_data, mp4 } = await meetingBaas.meetings.getMeetingData(
           event.data.bot_id,
         );
+        logger.info("Retrieved meeting data:", {
+          botData: JSON.stringify(bot_data),
+          mp4Url: mp4,
+        });
 
         const [storageUrl, apiVideoId] = await Promise.all([
           uploadVideoToStorage(event.data.bot_id, mp4, supabase),
           uploadToApiVideo(event.data.bot_id, mp4, bot_data),
         ]);
+
+        logger.info("Upload results:", {
+          storageUrl,
+          apiVideoId,
+          botId: event.data.bot_id,
+        });
 
         await updateMeetingBot(supabase, {
           id: event.data.bot_id,
@@ -305,6 +394,9 @@ export async function POST(request: Request) {
         });
 
         if (event.data.transcript?.length) {
+          logger.info("Found transcript data", {
+            transcriptLength: event.data.transcript.length,
+          });
           await slack.send({
             text: `📝 Processing transcript for meeting ${event.data.bot_id}`,
           });
@@ -316,13 +408,19 @@ export async function POST(request: Request) {
         });
       }
 
+      logger.info("Successfully processed webhook request");
       return new NextResponse(null, { status: 200 });
     } catch (error) {
-      logger.error("Event handling error:", error as Error);
+      logger.error("Event handling error:", {
+        fullError: error,
+        event,
+      });
       return new NextResponse((error as Error).message, { status: 500 });
     }
   } catch (error) {
-    logger.error("Unexpected error:", error as Error);
+    logger.error("Unexpected error:", {
+      fullError: error,
+    });
     return new NextResponse("Internal server error", { status: 500 });
   }
 }
