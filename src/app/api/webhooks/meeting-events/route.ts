@@ -28,10 +28,7 @@ const MeetingBaasWebhookRequestBody = z.union([
             "call_ended", // Bot has left the call
           ])
           .describe("The current status of the bot in the meeting"),
-        created_at: z
-          .string()
-          .datetime()
-          .describe("ISO timestamp of the status change"),
+        created_at: z.string().describe("ISO timestamp of the status change"),
       }),
     }),
   }),
