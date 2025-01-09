@@ -13,10 +13,27 @@ export type JsonValue =
   | null
   | JsonValue[]
   | { [key: string]: JsonValue };
-export const JsonValue: z.ZodType<JsonValue> = z.lazy(() =>
+export const JsonValue: z.ZodLazy<
+  z.ZodUnion<
+    [
+      z.ZodUnion<[z.ZodString, z.ZodNumber, z.ZodBoolean, z.ZodNull]>,
+      z.ZodArray<z.ZodType<JsonValue>>,
+      z.ZodRecord<z.ZodString, z.ZodType<JsonValue>>,
+    ]
+  >
+> = z.lazy(() =>
   z.union([
     z.union([z.string(), z.number(), z.boolean(), z.null()]),
     z.array(JsonValue),
     z.record(JsonValue),
   ]),
 );
+
+export const JsonPrimitive = JsonValue.schema.options[0];
+export type JsonPrimitive = z.infer<typeof JsonPrimitive>;
+
+export const JsonArray = JsonValue.schema.options[1];
+export type JsonArray = z.infer<typeof JsonArray>;
+
+export const JsonObject = JsonValue.schema.options[2];
+export type JsonObject = z.infer<typeof JsonObject>;
