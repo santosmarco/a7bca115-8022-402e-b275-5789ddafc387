@@ -184,8 +184,6 @@ export default function InsightsPage() {
         completedMeetings: filteredVideos.length,
         requiredMeetings: MIN_MEETINGS,
       }}
-      open={filteredVideos.length < MIN_MEETINGS && shouldShowLockScreen}
-      onClose={() => setShouldShowLockScreen(false)}
     >
       <ChatInterface
         frameworks={frameworks ?? []}

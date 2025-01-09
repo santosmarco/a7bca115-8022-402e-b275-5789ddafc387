@@ -223,7 +223,9 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
                           className="text-sm font-medium text-foreground"
                         >
                           {selectedProfile?.nickname ??
-                            user.user_metadata.full_name}
+                            (typeof user.user_metadata.full_name === "string"
+                              ? user.user_metadata.full_name
+                              : user.email)}
                         </motion.span>
                         <motion.span
                           initial={{ opacity: 0 }}

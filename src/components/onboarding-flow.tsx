@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { UnlockIcon } from "lucide-react";
+import { UnlockIcon, User2Icon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -17,7 +17,7 @@ const steps = [
     title: "Welcome to GameTape",
     description:
       "Get the most out of your coaching with the Meeting Intelligence Platform built for startup founders and their coaches.",
-    icon: "/placeholder.svg",
+    icon: () => <User2Icon className="h-10 w-10 text-primary" />,
     isProfileImage: true,
   },
   {
@@ -63,7 +63,7 @@ const steps = [
     title: "Unlock Incredible Insights",
     description:
       "Explore you and your team's performance in a way you've never been able to before, using real data from real meetings.",
-    icon: () => <UnlockIcon className="h-10 w-10 text-background" />,
+    icon: () => <UnlockIcon className="h-10 w-10 text-primary" />,
   },
 ];
 
@@ -126,7 +126,8 @@ export default function OnboardingFlow({ user }: OnboardingFlowProps) {
                   className="flex flex-col items-center text-center"
                 >
                   <div className="mb-6">
-                    {currentStep?.isProfileImage ? (
+                    {currentStep?.isProfileImage &&
+                    typeof user.user_metadata.avatar_url === "string" ? (
                       <div className="-mt-20 h-20 w-20 overflow-hidden rounded-full bg-muted">
                         <Image
                           src={user.user_metadata.avatar_url}
