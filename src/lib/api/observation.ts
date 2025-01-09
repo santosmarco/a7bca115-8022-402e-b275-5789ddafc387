@@ -1,7 +1,7 @@
 import axios from "axios";
 import { z } from "zod";
 
-import { env } from "~/env";
+import { client } from "./client";
 
 export const ObservationPromptResponse = z.object({
   prompt: z.string(),
@@ -17,50 +17,6 @@ export const ObservationPromptParams = z.object({
   selectedActivity: z.string(),
 });
 export type ObservationPromptParams = z.infer<typeof ObservationPromptParams>;
-
-const client = axios.create({
-  baseURL: "https://titan-backend-x.replit.app",
-  headers: {
-    "Content-Type": "application/json",
-    "X-API-Key": env.INTERNAL_API_KEY,
-  },
-});
-
-// Add request interceptor
-client.interceptors.request.use(
-  (config) => {
-    console.log("Request:", {
-      method: config.method,
-      url: config.url,
-      data: config.data,
-      headers: config.headers,
-    });
-    return config;
-  },
-  (error) => {
-    console.error("Request error:", error);
-    return Promise.reject(error);
-  },
-);
-
-// Add response interceptor
-client.interceptors.response.use(
-  (response) => {
-    console.log("Response:", {
-      status: response.status,
-      data: response.data,
-    });
-    return response;
-  },
-  (error) => {
-    console.error("Response error:", {
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    });
-    return Promise.reject(error);
-  },
-);
 
 export async function getObservationPrompt({
   userId,
