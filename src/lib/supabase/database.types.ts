@@ -334,6 +334,7 @@ export type Database = {
           meeting_baas_original_json: Json | null
           name: string | null
           original_vtt_file: string | null
+          profile_id: string | null
           searchable: unknown | null
           speaker: string | null
           summary: string | null
@@ -351,6 +352,7 @@ export type Database = {
           meeting_baas_original_json?: Json | null
           name?: string | null
           original_vtt_file?: string | null
+          profile_id?: string | null
           searchable?: unknown | null
           speaker?: string | null
           summary?: string | null
@@ -368,6 +370,7 @@ export type Database = {
           meeting_baas_original_json?: Json | null
           name?: string | null
           original_vtt_file?: string | null
+          profile_id?: string | null
           searchable?: unknown | null
           speaker?: string | null
           summary?: string | null
@@ -376,7 +379,22 @@ export type Database = {
           vectorized?: boolean
           video_api_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meetings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "meetings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       moment_comments: {
         Row: {
@@ -745,6 +763,7 @@ export type Database = {
           coach_id: string | null
           company: string | null
           created_at: string | null
+          did_complete_onboarding: boolean
           dossier: string | null
           email: string | null
           id: string
@@ -758,6 +777,7 @@ export type Database = {
           coach_id?: string | null
           company?: string | null
           created_at?: string | null
+          did_complete_onboarding?: boolean
           dossier?: string | null
           email?: string | null
           id: string
@@ -771,6 +791,7 @@ export type Database = {
           coach_id?: string | null
           company?: string | null
           created_at?: string | null
+          did_complete_onboarding?: boolean
           dossier?: string | null
           email?: string | null
           id?: string
@@ -1237,6 +1258,10 @@ export type Database = {
       }
     }
     Functions: {
+      backfill_meeting_profile_id: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       check_user_permissions: {
         Args: {
           user_id: string
@@ -1279,6 +1304,7 @@ export type Database = {
           meeting_baas_original_json: Json | null
           name: string | null
           original_vtt_file: string | null
+          profile_id: string | null
           searchable: unknown | null
           speaker: string | null
           summary: string | null
