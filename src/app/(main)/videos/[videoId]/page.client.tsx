@@ -6,6 +6,7 @@ import { CameraIcon, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsInteger, parseAsString, useQueryState } from "nuqs";
 
+import { DeleteMeetingButton } from "~/components/meetings/delete-meeting-button";
 import { PlayerProvider } from "~/components/player/provider";
 import { VideoPlayer } from "~/components/player/video";
 import { Button } from "~/components/ui/button";
@@ -96,7 +97,7 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={router.back}
+              onClick={() => router.back()}
               aria-label="Go back"
               className="h-[3.25rem] w-14 hover:bg-transparent lg:h-16"
             >
@@ -114,6 +115,16 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
             <div className="font-bold lg:text-lg">{video.title}</div>
           </motion.div>
         </motion.div>
+        {user?.role !== "coach" && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mr-4"
+          >
+            <DeleteMeetingButton meetingId={video.videoId} />
+          </motion.div>
+        )}
       </header>
 
       <div className="container mx-auto space-y-8 p-4 pt-24">
