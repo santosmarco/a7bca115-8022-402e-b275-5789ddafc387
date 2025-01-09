@@ -46,7 +46,7 @@ export function SecondConfirmationModal({
           <p className="text-sm">
             To confirm, please type:
             <br />
-            <strong>{CONFIRMATION_TEXT}</strong>
+            <strong className="select-none">{CONFIRMATION_TEXT}</strong>
           </p>
           <Input
             value={inputText}

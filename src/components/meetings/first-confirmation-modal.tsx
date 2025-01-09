@@ -50,7 +50,7 @@ export function FirstConfirmationModal({
             />
             <label
               htmlFor="understand"
-              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="-mt-0.5 text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               I understand that this action cannot be undone and all meeting
               data will be permanently deleted.
@@ -66,7 +66,7 @@ export function FirstConfirmationModal({
             />
             <label
               htmlFor="aware"
-              className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              className="-mt-0.5 text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
               I am aware that all insights, moments, and resources related to
               this meeting will also be permanently deleted.
