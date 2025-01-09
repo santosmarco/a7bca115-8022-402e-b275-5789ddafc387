@@ -2,6 +2,7 @@ import _ from "lodash";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import {
   type Bot,
@@ -113,7 +114,9 @@ async function uploadVideoToStorage(
 
     return publicUrl;
   } catch (error) {
-    console.error("Error uploading video:", error);
+    logger.error("Error uploading video", {
+      error: error as Error,
+    });
     throw new Error("Failed to upload video to storage");
   }
 }
@@ -167,7 +170,9 @@ async function uploadVideoToApiVideo(
         error instanceof Error ? error.message : "Unknown error"
       }`,
     });
-    console.error("Error uploading to api.video:", error);
+    logger.error("Error uploading to api.video", {
+      error,
+    });
     throw new Error("Failed to upload video to api.video");
   }
 }
@@ -229,6 +234,23 @@ async function handleCalendarSync(
 
   if (calendarError || !calendarData?.profile_id) {
     throw new Error("Could not find profile_id for calendar");
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", calendarData.profile_id)
+    .maybeSingle();
+
+  if (!profile) {
+    throw new Error("Could not find profile");
+  }
+
+  if (profile.role === "coach") {
+    logger.info("Skipping calendar sync for coach", {
+      profile,
+    });
+    return;
   }
 
   const calendarEvents = await recallClient.calendarV2.calendar_events_list({
@@ -404,7 +426,9 @@ function handleCalendarEventError(error: unknown, event: CalendarEvent) {
   };
 
   if (status in errorMessages) {
-    console.error(errorMessages[status as keyof typeof errorMessages]);
+    logger.error(errorMessages[status as keyof typeof errorMessages], {
+      error,
+    });
   } else {
     throw new Error(
       `Unexpected error status ${status}: ${JSON.stringify(error.response.data)}`,
@@ -430,14 +454,20 @@ export async function POST(request: Request) {
         recallClient,
       );
       await handleVideoUpload(bot, event, supabase);
-      console.log(JSON.stringify({ bot, payload, transcript }, null, 2));
+      logger.info("Bot status change", {
+        bot,
+        event,
+        transcript,
+      });
     } else if (payload.event === "calendar.sync_events") {
       await handleCalendarSync(payload, recallClient, supabase);
     }
 
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
-    console.error("Error processing webhook event:", error);
+    logger.error("Error processing webhook event:", {
+      error: error as Error,
+    });
     return new NextResponse("Internal Server Error", { status: 200 });
   }
 }
