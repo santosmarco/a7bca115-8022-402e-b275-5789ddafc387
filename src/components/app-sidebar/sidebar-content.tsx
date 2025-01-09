@@ -105,12 +105,12 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
       label: "Moments",
       isActive: pathname.startsWith("/moments"),
     },
-    {
-      href: "/reports",
-      icon: <BarChart3 className="h-5 w-5" />,
-      label: "Reports",
-      isActive: pathname.startsWith("/reports"),
-    },
+    // {
+    //   href: "/reports",
+    //   icon: <BarChart3 className="h-5 w-5" />,
+    //   label: "Reports",
+    //   isActive: pathname.startsWith("/reports"),
+    // },
     {
       href: "/integrations",
       icon: <Puzzle className="h-5 w-5" />,
