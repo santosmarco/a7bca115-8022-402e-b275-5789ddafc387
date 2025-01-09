@@ -189,6 +189,7 @@ async function uploadToApiVideo(
       mp4Support: true,
       transcript: true,
       transcriptSummary: true,
+      language: "en",
       tags,
       metadata,
     });
