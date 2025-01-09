@@ -10,25 +10,26 @@ export type ChatContainerProps = {
     completedMeetings: number;
     requiredMeetings: number;
   };
-  open: boolean;
-  onClose: () => void;
 };
 
-export function ChatContainer({
-  children,
-  progress,
-  open,
-  onClose,
-}: ChatContainerProps) {
+export function ChatContainer({ children, progress }: ChatContainerProps) {
   return (
-    <div className="relative h-full w-full" aria-hidden={open}>
+    <div
+      className="relative h-full w-full"
+      aria-hidden={progress.completedMeetings < progress.requiredMeetings}
+    >
       {/* Chat content */}
-      <div className={cn(open && "pointer-events-none blur-sm filter")}>
+      <div
+        className={cn(
+          progress.completedMeetings < progress.requiredMeetings &&
+            "pointer-events-none",
+        )}
+      >
         {children}
       </div>
 
       {/* Lock screen overlay */}
-      <LockScreenOverlay progress={progress} open={open} onClose={onClose} />
+      <LockScreenOverlay progress={progress} />
     </div>
   );
 }
