@@ -270,9 +270,14 @@ async function handleInvitedUserProfile(
 ) {
   logger.info("Handling invited user profile", { user, inviteData });
   const profileData = {
-    nickname: [inviteData.first_name, inviteData.last_name]
-      .filter(Boolean)
-      .join(" "),
+    nickname:
+      typeof user.user_metadata.full_name === "string"
+        ? user.user_metadata.full_name
+        : typeof user.user_metadata.name === "string"
+          ? user.user_metadata.name
+          : [inviteData.first_name, inviteData.last_name]
+              .filter(Boolean)
+              .join(" "),
     company: inviteData.company,
     coach_id: inviteData.invited_by,
   };
