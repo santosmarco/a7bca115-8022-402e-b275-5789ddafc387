@@ -66,7 +66,6 @@ export function ChatInput({
         onChange={onChange}
         onSubmit={onSubmit}
         className={cn((showSelectionsList || isLandingPage) && "min-h-28")}
-        onClick={onClick}
         // disabled={isGenerating}
       />
 

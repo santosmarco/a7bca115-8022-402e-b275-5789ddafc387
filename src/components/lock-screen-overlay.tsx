@@ -111,7 +111,7 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
 
       {!shouldShowLockScreen && (
         <div
-          className="fixed bottom-0 left-64 right-0 top-0 z-50"
+          className="pointer-events-none fixed bottom-0 left-64 right-0 top-0 z-50"
           onClick={() => setOpen(true)}
         />
       )}

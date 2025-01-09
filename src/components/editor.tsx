@@ -26,7 +26,6 @@ type EditorProps = Except<
       | React.ChangeEvent<HTMLTextAreaElement>,
   ) => void;
   onSubmit: (event?: { preventDefault?: () => void }) => void;
-  onClick: () => void;
 };
 
 export function Editor({
@@ -35,7 +34,6 @@ export function Editor({
   frameworks,
   className,
   disabled,
-  onClick,
   ...props
 }: EditorProps) {
   const editor = useEditor({
@@ -75,9 +73,6 @@ export function Editor({
           return true;
         }
         return false;
-      },
-      handleClick() {
-        onClick();
       },
     },
     onUpdate({ editor }) {
