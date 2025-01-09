@@ -1,8 +1,10 @@
 import type { calendar_v3 } from "googleapis";
 import _ from "lodash";
+import { NextResponse } from "next/server";
 import type { SetRequired } from "type-fest";
 import { z } from "zod";
 
+import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
 import { slack } from "~/lib/slack";
@@ -13,7 +15,7 @@ import { apiVideo } from "~/server/api/services/api-video";
 
 const MeetingBaasWebhookRequestBody = z.union([
   z.object({
-    event: z.string(),
+    event: z.literal("bot.status_change"),
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       status: z.object({
@@ -34,7 +36,7 @@ const MeetingBaasWebhookRequestBody = z.union([
     }),
   }),
   z.object({
-    event: z.string(),
+    event: z.literal("complete"),
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       mp4: z
@@ -68,7 +70,7 @@ const MeetingBaasWebhookRequestBody = z.union([
     }),
   }),
   z.object({
-    event: z.string(),
+    event: z.literal("failed"),
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       error: z
@@ -117,7 +119,7 @@ async function uploadVideoToStorage(
 
     return publicUrl;
   } catch (error) {
-    console.error("Error uploading video:", error);
+    logger.error("Error uploading video:", error as Error);
     throw new Error("Failed to upload video to storage");
   }
 }
@@ -176,7 +178,7 @@ async function uploadToApiVideo(
     await slack.error({
       text: `Failed to upload video to api.video for meeting ${botId}: ${(error as Error).message}`,
     });
-    console.error("Error uploading to api.video:", error);
+    logger.error("Error uploading to api.video:", error as Error);
     throw new Error("Failed to upload video to api.video");
   }
 }
@@ -191,7 +193,7 @@ async function updateMeetingBot(
     .eq("id", data.id);
 
   if (error) {
-    console.error("Update error:", error);
+    logger.error("Update error:", error);
     throw new Error(error.message);
   }
 }
@@ -219,7 +221,7 @@ async function handleTranscript(
       .select("*");
 
   if (transcriptSlicesError || !transcriptSlices) {
-    console.error("Transcript slices error:", transcriptSlicesError);
+    logger.error("Transcript slices error:", transcriptSlicesError);
     throw new Error(
       transcriptSlicesError?.message ?? "Failed to insert transcript slices",
     );
@@ -241,7 +243,7 @@ async function handleTranscript(
   );
 
   if (wordsError) {
-    console.error("Transcript words error:", wordsError);
+    logger.error("Transcript words error:", wordsError);
     throw new Error(wordsError.message);
   }
 }
@@ -252,14 +254,10 @@ export async function POST(request: Request) {
     const bodyParseResult = MeetingBaasWebhookRequestBody.safeParse(body);
 
     if (!bodyParseResult.success) {
-      console.error(
-        "Validation error:",
-        JSON.stringify(bodyParseResult.error.format(), null, 2),
-      );
-      return new Response("Invalid webhook payload", { status: 400 });
+      logger.error("Validation error:", bodyParseResult.error.format());
     }
 
-    const event = bodyParseResult.data;
+    const event = bodyParseResult.data!;
     const supabase = await createClient();
 
     // Handle different event types
@@ -273,7 +271,7 @@ export async function POST(request: Request) {
           );
 
         if (error) {
-          console.error("Status change error:", error);
+          logger.error("Status change error:", error);
           throw new Error(error.message);
         }
       } else if (event.event === "failed") {
@@ -318,13 +316,13 @@ export async function POST(request: Request) {
         });
       }
 
-      return new Response(null, { status: 200 });
+      return new NextResponse(null, { status: 200 });
     } catch (error) {
-      console.error("Event handling error:", error);
-      return new Response((error as Error).message, { status: 500 });
+      logger.error("Event handling error:", error as Error);
+      return new NextResponse((error as Error).message, { status: 500 });
     }
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return new Response("Internal server error", { status: 500 });
+    logger.error("Unexpected error:", error as Error);
+    return new NextResponse("Internal server error", { status: 500 });
   }
 }
