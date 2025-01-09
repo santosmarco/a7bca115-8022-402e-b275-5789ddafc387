@@ -1,6 +1,6 @@
 import type { calendar_v3 } from "googleapis";
 import _ from "lodash";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import type { SetRequired } from "type-fest";
 import { z } from "zod";
 
@@ -145,7 +145,7 @@ async function uploadToApiVideo(
   botData: MeetingBaasBotData,
 ): Promise<string | null> {
   logger.info(`Starting API.video upload for bot ${botId}`, {
-    botData: JSON.stringify(botData),
+    botData: botData,
   });
 
   const {
@@ -154,7 +154,7 @@ async function uploadToApiVideo(
   } = botData;
 
   const tags = _.uniq(transcripts.map(({ speaker }) => speaker.trim()));
-  logger.info(`Detected speakers/tags: ${JSON.stringify(tags)}`);
+  logger.info(`Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
   // Skip API video upload if no speakers/tags
   if (tags.length === 0) {
@@ -170,7 +170,7 @@ async function uploadToApiVideo(
   logger.info("Calendar event data:", { event });
 
   const metadata = [
-    botId && { key: "meeting_bot_id", value: botId },
+    botId && { key: "meeting_bot_id", value: JSON.stringify(botId) },
     botData && { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
     event && { key: "google_calendar_raw_data", value: JSON.stringify(event) },
   ].filter(isTruthy);
@@ -249,7 +249,7 @@ async function handleTranscript(
 
   logger.info(`Processing transcript for bot ${botId}`, {
     transcriptLength: transcript.length,
-    fullTranscript: JSON.stringify(transcript),
+    fullTranscript: transcript,
   });
 
   const { data: transcriptSlices, error: transcriptSlicesError } =
@@ -307,23 +307,26 @@ async function handleTranscript(
   logger.info(`Successfully processed transcript words for bot ${botId}`);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   logger.info("Received webhook request", {
-    headers: JSON.stringify(Object.fromEntries(request.headers)),
+    headers: request.headers,
   });
 
   try {
     const body = (await request.json()) as unknown;
-    logger.info("Webhook request body:", { body: JSON.stringify(body) });
+    logger.info("Webhook request body:", { body });
 
     const bodyParseResult = MeetingBaasWebhookRequestBody.safeParse(body);
 
     if (!bodyParseResult.success) {
-      logger.error("Validation error:", bodyParseResult.error.format());
+      logger.error("Validation error:", {
+        receivedBody: body,
+        error: bodyParseResult.error,
+      });
     }
 
     const event = bodyParseResult.data!;
-    logger.info("Parsed event:", { event: JSON.stringify(event) });
+    logger.info("Parsed event:", { event });
 
     const supabase = await createClient();
 
@@ -368,7 +371,7 @@ export async function POST(request: Request) {
           event.data.bot_id,
         );
         logger.info("Retrieved meeting data:", {
-          botData: JSON.stringify(bot_data),
+          botData: bot_data,
           mp4Url: mp4,
         });
 
