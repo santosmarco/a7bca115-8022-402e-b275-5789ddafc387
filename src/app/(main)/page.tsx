@@ -72,6 +72,7 @@ export default function HomePage() {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+      enabled: !!user?.did_complete_onboarding,
     },
   );
 
@@ -99,10 +100,15 @@ export default function HomePage() {
 
   // Fetch next page when scrolling near the bottom
   React.useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
+    if (
+      user?.did_complete_onboarding &&
+      inView &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
       void fetchNextPage();
     }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage, user]);
 
   if (videosLoading || userIsLoading) {
     return (
