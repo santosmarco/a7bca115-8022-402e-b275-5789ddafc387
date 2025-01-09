@@ -322,7 +322,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const event = bodyParseResult.data!;
+    const event = (bodyParseResult.data ?? body) as NonNullable<
+      typeof bodyParseResult.data
+    >;
     logger.info("Parsed event:", { event });
 
     const supabase = await createClient();
