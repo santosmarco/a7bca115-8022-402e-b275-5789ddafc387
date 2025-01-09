@@ -25,5 +25,6 @@ export function transformUserInviteIntoProfile(
     company: userInvite.company,
     created_at: userInvite.created_at,
     status: "pending",
+    did_complete_onboarding: false,
   };
 }
