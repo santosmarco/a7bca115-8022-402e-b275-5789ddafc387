@@ -216,6 +216,33 @@ export type Database = {
           },
         ]
       }
+      jobs: {
+        Row: {
+          created_at: string
+          id: string
+          logs: Json | null
+          status: string | null
+          type: string | null
+          video_api_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logs?: Json | null
+          status?: string | null
+          type?: string | null
+          video_api_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logs?: Json | null
+          status?: string | null
+          type?: string | null
+          video_api_id?: string | null
+        }
+        Relationships: []
+      }
       meeting_bots: {
         Row: {
           api_video_id: string | null
@@ -223,6 +250,7 @@ export type Database = {
           error_code:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
+          event_id: string | null
           id: string
           mp4_source_url: string | null
           raw_data: Json | null
@@ -235,6 +263,7 @@ export type Database = {
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
+          event_id?: string | null
           id: string
           mp4_source_url?: string | null
           raw_data?: Json | null
@@ -247,6 +276,7 @@ export type Database = {
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
+          event_id?: string | null
           id?: string
           mp4_source_url?: string | null
           raw_data?: Json | null
