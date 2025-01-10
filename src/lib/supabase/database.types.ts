@@ -253,6 +253,7 @@ export type Database = {
           event_id: string | null
           id: string
           mp4_source_url: string | null
+          profile_id: string | null
           raw_data: Json | null
           speakers: string[] | null
           status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
@@ -266,6 +267,7 @@ export type Database = {
           event_id?: string | null
           id: string
           mp4_source_url?: string | null
+          profile_id?: string | null
           raw_data?: Json | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
@@ -279,11 +281,27 @@ export type Database = {
           event_id?: string | null
           id?: string
           mp4_source_url?: string | null
+          profile_id?: string | null
           raw_data?: Json | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meeting_bots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "meeting_bots_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       meeting_notes_chunks: {
         Row: {
