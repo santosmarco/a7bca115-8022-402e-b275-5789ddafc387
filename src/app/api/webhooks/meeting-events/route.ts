@@ -146,9 +146,17 @@ async function uploadToApiVideo(
   });
 
   const {
-    bot: { extra },
+    bot: { extra: extra_ },
     transcripts,
   } = botData;
+
+  const extra = extra_ as
+    | {
+        event?: { raw?: calendar_v3.Schema$Event } | string;
+        google_calendar_raw_data?: { raw?: calendar_v3.Schema$Event } | string;
+        user_id?: string;
+      }
+    | undefined;
 
   const tags = _.uniq(transcripts.map(({ speaker }) => speaker.trim()));
   logger.info(`Detected speakers/tags: ${tags.join(", ")}`, { tags });
@@ -162,14 +170,34 @@ async function uploadToApiVideo(
     return null;
   }
 
-  const event = (extra as { event?: calendar_v3.Schema$Event } | undefined)
-    ?.event;
-  logger.info("Calendar event data:", { event });
+  const userId = extra?.user_id;
+  const event = extra?.event
+    ? typeof extra.event === "string"
+      ? extra.event
+      : JSON.stringify(extra.event)
+    : extra?.google_calendar_raw_data
+      ? typeof extra.google_calendar_raw_data === "string"
+        ? extra.google_calendar_raw_data
+        : JSON.stringify(extra.google_calendar_raw_data)
+      : undefined;
+
+  const eventParsed = (() => {
+    try {
+      return event
+        ? (JSON.parse(event) as { raw?: calendar_v3.Schema$Event })
+        : undefined;
+    } catch {
+      return undefined;
+    }
+  })();
+
+  logger.info("Calendar event data:", { event: eventParsed ?? event });
 
   const metadata = [
     botId && { key: "meeting_bot_id", value: JSON.stringify(botId) },
     botData && { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
-    event && { key: "google_calendar_raw_data", value: JSON.stringify(event) },
+    event && { key: "google_calendar_raw_data", value: event },
+    userId && { key: "user_id", value: userId },
   ].filter(isTruthy);
 
   logger.info("Prepared metadata:", { metadata });
@@ -180,8 +208,8 @@ async function uploadToApiVideo(
     });
 
     const video = await apiVideo.videos.create({
-      title: event?.summary ?? `Meeting Recording - ${botId}`,
-      description: event?.description ?? undefined,
+      title: eventParsed?.raw?.summary ?? `Meeting Recording - ${botId}`,
+      description: eventParsed?.raw?.description ?? undefined,
       source: videoUrl,
       mp4Support: true,
       transcript: true,

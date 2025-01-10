@@ -10,7 +10,7 @@ import {
   createClient as createRecallClient,
 } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
-import type { Json, Tables } from "~/lib/supabase/database.types";
+import type { Json, Tables, TablesInsert } from "~/lib/supabase/database.types";
 import {
   createClient as createSupabaseClient,
   type SupabaseServerClient,
@@ -54,6 +54,13 @@ type CalendarSyncEvent = z.infer<typeof CalendarSyncEvent>;
 type BotStatusChangeEvent = z.infer<typeof BotStatusChangeEvent>;
 type WebhookEvent = z.infer<typeof WebhookEvent>;
 
+type BotMetadata = {
+  event_id: string;
+  event: CalendarEvent | string;
+  user_id: string;
+  google_calendar_raw_data: CalendarEvent | string;
+};
+
 type RecallAPIError = {
   response: {
     status: number;
@@ -76,6 +83,75 @@ function isRecallAPIError(error: unknown): error is RecallAPIError {
   );
 }
 
+async function handleTranscript(
+  bot: Bot,
+  transcript: Awaited<
+    ReturnType<
+      ReturnType<typeof createRecallClient>["bot"]["bot_transcript_list"]
+    >
+  >,
+  supabase: SupabaseServerClient,
+) {
+  logger.info(`Processing transcript for bot ${bot.id}`, {
+    transcriptLength: transcript.length,
+    fullTranscript: transcript,
+  });
+
+  const { data: transcriptSlices, error: transcriptSlicesError } =
+    await supabase
+      .from("transcript_slices")
+      .insert(
+        transcript.map(
+          (slice, index): TablesInsert<"transcript_slices"> => ({
+            bot_id: bot.id,
+            speaker_name: slice.speaker,
+            index,
+          }),
+        ),
+      )
+      .select("*");
+
+  if (transcriptSlicesError || !transcriptSlices) {
+    logger.error("Transcript slices error:", {
+      fullError: transcriptSlicesError,
+      botId: bot.id,
+    });
+    throw new Error(
+      transcriptSlicesError?.message ?? "Failed to insert transcript slices",
+    );
+  }
+
+  logger.info("Successfully inserted transcript slices", {
+    slicesCount: transcriptSlices.length,
+    slices: transcriptSlices,
+  });
+
+  const { error: wordsError } = await supabase.from("transcript_words").insert(
+    transcript.flatMap((slice, transcriptSliceIndex) =>
+      slice.words.map(
+        (word, wordIndex): TablesInsert<"transcript_words"> => ({
+          bot_id: bot.id,
+          transcript_slice_id: transcriptSlices[transcriptSliceIndex]?.id,
+          start_time: word.start_timestamp,
+          end_time: word.end_timestamp,
+          content: word.text,
+          index: wordIndex,
+        }),
+      ),
+    ),
+  );
+
+  if (wordsError) {
+    logger.error("Transcript words error:", {
+      fullError: wordsError,
+      botId: bot.id,
+    });
+    throw new Error(wordsError.message);
+  }
+
+  logger.info(`Successfully processed transcript words for bot ${bot.id}`);
+}
+
 async function handleVideoUpload(
   bot: Bot,
   event: CalendarEvent | undefined,
@@ -92,8 +168,16 @@ async function uploadVideoToStorage(
   botId: string,
   supabase: SupabaseServerClient,
 ) {
+  logger.info(`Starting video upload to storage for bot ${botId}`, {
+    videoUrl,
+  });
+
   try {
     const response = await fetch(videoUrl);
+    logger.info(`Fetch response status: ${response.status}`, {
+      botId,
+    });
+
     if (!response.ok) throw new Error("Failed to fetch video from AWS S3");
 
     const blob = await response.blob();
@@ -112,6 +196,10 @@ async function uploadVideoToStorage(
       data: { publicUrl },
     } = supabase.storage.from("meetings").getPublicUrl(fileName);
 
+    logger.info(`Successfully uploaded video to storage for bot ${botId}`, {
+      publicUrl,
+    });
+
     return publicUrl;
   } catch (error) {
     logger.error("Error uploading video", {
@@ -126,6 +214,7 @@ async function uploadVideoToApiVideo(
   event: CalendarEvent | undefined,
 ) {
   const tags = _.uniq(bot.meeting_participants.map(({ name }) => name.trim()));
+  logger.info(`Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
   if (tags.length === 0) {
     await slack.warn({
@@ -136,11 +225,11 @@ async function uploadVideoToApiVideo(
 
   const metadata = [
     bot.id && { key: "meeting_bot_id", value: bot.id },
-    event && {
-      key: "google_calendar_raw_data",
-      value: JSON.stringify(event.raw),
-    },
+    event && { key: "google_calendar_raw_data", value: JSON.stringify(event) },
+    bot.metadata?.user_id && { key: "user_id", value: bot.metadata.user_id },
   ].filter(isTruthy);
+
+  logger.info("Prepared metadata:", { metadata });
 
   try {
     await slack.send({
@@ -157,6 +246,11 @@ async function uploadVideoToApiVideo(
       language: "en",
       tags,
       metadata,
+    });
+
+    logger.info("API.video upload successful", {
+      videoId: video.videoId,
+      videoDetails: video,
     });
 
     await slack.success({
@@ -298,7 +392,12 @@ async function processCalendarEvent(
 
     // Handle Google Meet meetings
     if (event.meeting_platform === "google_meet") {
-      await handleGoogleMeetMeeting(event, deduplicationKey, recallClient);
+      await handleGoogleMeetMeeting(
+        event,
+        calendarData,
+        deduplicationKey,
+        recallClient,
+      );
       return;
     }
   } catch (error) {
@@ -352,6 +451,13 @@ async function handleZoomMeeting(
     ? Math.floor(new Date(event.start_time).getTime() / 1000)
     : null;
 
+  const metadata = {
+    event_id: event.id,
+    event: event,
+    user_id: calendarData.profile_id,
+    google_calendar_raw_data: event,
+  } satisfies BotMetadata;
+
   const botResult = await meetingBaas.meetings.join({
     bot_name: BOT_NAME,
     meeting_url: event.meeting_url,
@@ -367,11 +473,7 @@ async function handleZoomMeeting(
       waiting_room_timeout: WAITING_ROOM_TIMEOUT,
       noone_joined_timeout: NOONE_JOINED_TIMEOUT,
     },
-    extra: {
-      userId: calendarData.profile_id,
-      event,
-      google_calendar_raw_data: event,
-    },
+    extra: metadata,
   });
 
   await supabase.from("meeting_bots").insert({
@@ -385,9 +487,17 @@ async function handleZoomMeeting(
 
 async function handleGoogleMeetMeeting(
   event: CalendarEvent,
+  calendarData: Tables<"recall_calendars">,
   deduplicationKey: string,
   recallClient: ReturnType<typeof createRecallClient>,
 ) {
+  const metadata = {
+    event_id: event.id,
+    event: JSON.stringify(event),
+    user_id: calendarData.profile_id,
+    google_calendar_raw_data: JSON.stringify(event),
+  } satisfies BotMetadata;
+
   await recallClient.calendarV2.calendar_events_bot_create(
     {
       deduplication_key: deduplicationKey,
@@ -400,9 +510,7 @@ async function handleGoogleMeetMeeting(
         transcription_options: {
           provider: "gladia",
         },
-        metadata: {
-          event_id: event.id,
-        },
+        metadata,
       } satisfies Partial<Bot>,
     },
     {
@@ -437,13 +545,22 @@ function handleCalendarEventError(error: unknown, event: CalendarEvent) {
 }
 
 export async function POST(request: Request) {
+  logger.info("Received webhook request", {
+    headers: request.headers,
+  });
+
   const payloadParseResult = WebhookEvent.safeParse(await request.json());
 
   if (!payloadParseResult.success) {
+    logger.error("Validation error:", {
+      error: payloadParseResult.error,
+    });
     return new NextResponse(payloadParseResult.error.message, { status: 200 });
   }
 
   const payload = payloadParseResult.data;
+  logger.info("Parsed event:", { payload });
+
   const recallClient = createRecallClient();
   const supabase = await createSupabaseClient();
 
@@ -453,16 +570,23 @@ export async function POST(request: Request) {
         payload,
         recallClient,
       );
+
       await handleVideoUpload(bot, event, supabase);
-      logger.info("Bot status change", {
-        bot,
-        event,
-        transcript,
+
+      if (transcript.length > 0) {
+        await handleTranscript(bot, transcript, supabase);
+      }
+
+      logger.info("Bot status change processed successfully", {
+        botId: bot.id,
+        eventId: event?.id,
+        transcriptLength: transcript.length,
       });
     } else if (payload.event === "calendar.sync_events") {
       await handleCalendarSync(payload, recallClient, supabase);
     }
 
+    logger.info("Successfully processed webhook request");
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
     logger.error("Error processing webhook event:", {
