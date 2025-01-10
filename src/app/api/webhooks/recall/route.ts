@@ -464,7 +464,6 @@ async function handleZoomMeeting(
     start_time: startTimeUnix,
     reserved: true,
     deduplication_key: deduplicationKey,
-    bot_image: "https://i.ibb.co/X7QvTBN/Titan-Image-1600x900.png",
     recording_mode: "speaker_view",
     speech_to_text: {
       provider: "Default",
