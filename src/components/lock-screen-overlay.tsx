@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Lock, Unlock } from "lucide-react";
 import { useState } from "react";
 
+import { cn } from "~/lib/utils";
+
 import { ProgressCircle } from "./progress-circle";
 
 export type LockScreenOverlayProps = {
@@ -111,7 +113,10 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
 
       {!shouldShowLockScreen && (
         <div
-          className="pointer-events-none fixed bottom-0 left-64 right-0 top-0 z-50"
+          className={cn(
+            "fixed bottom-0 left-64 right-0 top-0 z-50",
+            percentage >= 100 && "pointer-events-none",
+          )}
           onClick={() => setOpen(true)}
         />
       )}
