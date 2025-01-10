@@ -122,119 +122,125 @@ export const displayMomentTool = tool({
   },
 });
 
-export const listMeetingsTool = tool({
-  description:
-    "Useful when you need to get data about one or more meetings from the database.",
-  parameters: z
-    .object({
-      filters: z
-        .object({
-          meetingId: z
-            .string()
-            .optional()
-            .describe("(Optional) The ID, aka `video_api_id`, of the meeting."),
-          speaker: z
-            .string()
-            .optional()
-            .describe(
-              "(Optional) The speaker, aka `target_person`, to filter the meetings by. Generally, this is the person you are coaching.",
-            ),
-          startDate: z
-            .string()
-            .optional()
-            .describe("(Optional) The start date to filter the meetings by."),
-          endDate: z
-            .string()
-            .optional()
-            .describe("(Optional) The end date to filter the meetings by."),
-        })
-        .describe("(Optional) The filters to apply to the meetings."),
-      page: z
-        .number()
-        .optional()
-        .describe("(Optional) The page number to fetch (starts at 1)."),
-      pageSize: z
-        .number()
-        .optional()
-        .describe("(Optional) Number of items per page. Defaults to 10."),
-    })
-    .describe("The arguments for the listMeetings tool."),
-  output: z.object({
-    data: z
-      .array(
-        meetingsRowSchema
-          .pick({
-            name: true,
-            summary: true,
-            date: true,
-            speaker: true,
+export const listMeetingsTool = (profileId: string) =>
+  tool({
+    description:
+      "Useful when you need to get data about one or more meetings from the database.",
+    parameters: z
+      .object({
+        filters: z
+          .object({
+            meetingId: z
+              .string()
+              .optional()
+              .describe(
+                "(Optional) The ID, aka `video_api_id`, of the meeting.",
+              ),
+            speaker: z
+              .string()
+              .optional()
+              .describe(
+                "(Optional) The speaker, aka `target_person`, to filter the meetings by. Generally, this is the person you are coaching.",
+              ),
+            startDate: z
+              .string()
+              .optional()
+              .describe("(Optional) The start date to filter the meetings by."),
+            endDate: z
+              .string()
+              .optional()
+              .describe("(Optional) The end date to filter the meetings by."),
           })
-          .extend({
-            id: z.string(),
-            momentIds: z.array(z.string()),
-          }),
-      )
-      .nullable(),
-    error: z.string().nullable(),
-    page: z.number(),
-    pageSize: z.number(),
-    hasMore: z.boolean().nullable(),
-  }),
-  execute: async ({
-    filters: { meetingId, speaker, startDate, endDate },
-    page,
-    pageSize,
-  }) => {
-    const supabase = await createClient();
-
-    page ??= 1;
-    pageSize ??= 10;
-
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize - 1;
-
-    const query = supabase
-      .from("meetings")
-      .select("*, moments(*)")
-      .order("date", { ascending: false })
-      .range(start, end);
-
-    if (meetingId) {
-      query.eq("video_api_id", meetingId);
-    }
-    if (speaker) {
-      query.eq("speaker", speaker);
-    }
-    if (startDate) {
-      query.gte("date", startDate);
-    }
-    if (endDate) {
-      query.lte("date", endDate);
-    }
-
-    const result = await query;
-
-    const data =
-      result.data?.map((meeting) => ({
-        id: meeting.video_api_id,
-        name: meeting.name,
-        date: meeting.date,
-        speaker: meeting.speaker,
-        summary: meeting.summary,
-        momentIds: meeting.moments?.map((moment) => moment.id) ?? [],
-      })) ?? null;
-
-    return {
-      data,
-      error: result.error?.message ?? null,
+          .describe("(Optional) The filters to apply to the meetings."),
+        page: z
+          .number()
+          .optional()
+          .describe("(Optional) The page number to fetch (starts at 1)."),
+        pageSize: z
+          .number()
+          .optional()
+          .describe("(Optional) Number of items per page. Defaults to 10."),
+      })
+      .describe("The arguments for the listMeetings tool."),
+    output: z.object({
+      data: z
+        .array(
+          meetingsRowSchema
+            .pick({
+              name: true,
+              summary: true,
+              date: true,
+              speaker: true,
+            })
+            .extend({
+              id: z.string(),
+              momentIds: z.array(z.string()),
+            }),
+        )
+        .nullable(),
+      error: z.string().nullable(),
+      page: z.number(),
+      pageSize: z.number(),
+      hasMore: z.boolean().nullable(),
+    }),
+    execute: async ({
+      filters: { meetingId, speaker, startDate, endDate },
       page,
       pageSize,
-      hasMore: result.data && result.data.length === pageSize,
-    };
-  },
-});
+    }) => {
+      const supabase = await createClient();
 
-export type ListMeetingsToolOutput = ToolOutput<typeof listMeetingsTool>;
+      page ??= 1;
+      pageSize ??= 10;
+
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize - 1;
+
+      const query = supabase
+        .from("meetings")
+        .select("*, moments(*)")
+        .eq("profile_id", profileId)
+        .order("date", { ascending: false })
+        .range(start, end);
+
+      if (meetingId) {
+        query.eq("video_api_id", meetingId);
+      }
+      if (speaker) {
+        query.eq("speaker", speaker);
+      }
+      if (startDate) {
+        query.gte("date", startDate);
+      }
+      if (endDate) {
+        query.lte("date", endDate);
+      }
+
+      const result = await query;
+
+      const data =
+        result.data?.map((meeting) => ({
+          id: meeting.video_api_id,
+          name: meeting.name,
+          date: meeting.date,
+          speaker: meeting.speaker,
+          summary: meeting.summary,
+          momentIds: meeting.moments?.map((moment) => moment.id) ?? [],
+        })) ?? null;
+
+      return {
+        data,
+        error: result.error?.message ?? null,
+        page,
+        pageSize,
+        hasMore: result.data && result.data.length === pageSize,
+      };
+    },
+  });
+
+export type ListMeetingsToolOutput = ToolOutput<
+  ReturnType<typeof listMeetingsTool>
+>;
 
 export const searchMomentsTool = (profileId: string) =>
   tool({

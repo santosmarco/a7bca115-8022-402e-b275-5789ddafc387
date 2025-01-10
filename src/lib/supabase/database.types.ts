@@ -738,49 +738,38 @@ export type Database = {
           },
         ]
       }
-      profile_meetings: {
+      profile_enhancements: {
         Row: {
           created_at: string
+          dossier: string | null
           id: string
-          meetings_id: string | null
+          org_chart: Json | null
           profile_id: string | null
         }
         Insert: {
           created_at?: string
+          dossier?: string | null
           id?: string
-          meetings_id?: string | null
+          org_chart?: Json | null
           profile_id?: string | null
         }
         Update: {
           created_at?: string
+          dossier?: string | null
           id?: string
-          meetings_id?: string | null
+          org_chart?: Json | null
           profile_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_metings_meetings_id_fkey"
-            columns: ["meetings_id"]
-            isOneToOne: false
-            referencedRelation: "meetings"
-            referencedColumns: ["video_api_id"]
-          },
-          {
-            foreignKeyName: "profiles_metings_meetings_id_fkey"
-            columns: ["meetings_id"]
-            isOneToOne: false
-            referencedRelation: "meetings_with_profile"
-            referencedColumns: ["video_api_id"]
-          },
-          {
-            foreignKeyName: "profiles_metings_profile_id_fkey"
+            foreignKeyName: "profile_enhancements_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "meetings_with_profile"
             referencedColumns: ["profile_id"]
           },
           {
-            foreignKeyName: "profiles_metings_profile_id_fkey"
+            foreignKeyName: "profile_enhancements_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
@@ -794,12 +783,10 @@ export type Database = {
           company: string | null
           created_at: string | null
           did_complete_onboarding: boolean
-          dossier: string | null
           email: string | null
           id: string
           is_admin: boolean
           nickname: string | null
-          org_chart: Json | null
           role: Database["public"]["Enums"]["user_role_enum"]
           status: Database["public"]["Enums"]["profile_status_enum"]
         }
@@ -808,12 +795,10 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           did_complete_onboarding?: boolean
-          dossier?: string | null
           email?: string | null
           id: string
           is_admin?: boolean
           nickname?: string | null
-          org_chart?: Json | null
           role?: Database["public"]["Enums"]["user_role_enum"]
           status?: Database["public"]["Enums"]["profile_status_enum"]
         }
@@ -822,12 +807,10 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           did_complete_onboarding?: boolean
-          dossier?: string | null
           email?: string | null
           id?: string
           is_admin?: boolean
           nickname?: string | null
-          org_chart?: Json | null
           role?: Database["public"]["Enums"]["user_role_enum"]
           status?: Database["public"]["Enums"]["profile_status_enum"]
         }

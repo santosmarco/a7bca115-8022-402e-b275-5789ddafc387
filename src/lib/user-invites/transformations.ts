@@ -18,8 +18,6 @@ export function transformUserInviteIntoProfile(
     email: userInvite.email,
     is_admin: false,
     role: "user",
-    dossier: null,
-    org_chart: {},
     coach_id: userInvite.invited_by_profile?.id ?? null,
     coach: userInvite.invited_by_profile ? [userInvite.invited_by_profile] : [],
     company: userInvite.company,
