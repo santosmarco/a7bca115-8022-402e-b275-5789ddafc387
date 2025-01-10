@@ -205,7 +205,11 @@ export async function POST(request: NextRequest) {
 
       const results = await searchSimilar(
         `${profile?.nickname ? `${profile.nickname}: ` : ""}${cleanedUserMessageContent}`,
-        { topK: 15, minScore: 0.4 },
+        {
+          topK: 15,
+          minScore: 0.4,
+          filter: { profile_id: { $eq: userId } },
+        },
       );
 
       console.log("[Chat] Found similar results:", results);
