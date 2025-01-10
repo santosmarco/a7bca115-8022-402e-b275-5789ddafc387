@@ -2,7 +2,6 @@ import { openai } from "@ai-sdk/openai";
 import { convertToCoreMessages, type CoreMessage, streamText } from "ai";
 import _ from "lodash";
 import { type NextRequest, NextResponse } from "next/server";
-import { cache } from "react";
 import dedent from "ts-dedent";
 import { z } from "zod";
 
@@ -10,10 +9,9 @@ import {
   displayMomentTool,
   explainTool,
   explainTools,
-  listMeetingsTool,
+  listMeetingsTool as createListMeetingsTool,
   searchMomentsTool as createSearchMomentsTool,
 } from "~/lib/ai/tools";
-import { getObservationPrompt } from "~/lib/api/observation";
 import { SlashCommand } from "~/lib/commands/schemas";
 import { searchSimilar } from "~/lib/pinecone/search";
 import { UIMessage } from "~/lib/schemas/ai";
@@ -26,8 +24,6 @@ import { api } from "~/trpc/server";
 export const dynamic = "force-dynamic";
 
 export const maxDuration = 60;
-
-const cachedGetObservationPrompt = cache(getObservationPrompt);
 
 export const ChatRequestBody = z
   .object({
@@ -103,6 +99,7 @@ export async function POST(request: NextRequest) {
       supabase.from("coaching_frameworks").select("*"),
     ]);
 
+    const listMeetingsTool = createListMeetingsTool(userId);
     const searchMomentsTool = createSearchMomentsTool(userId);
 
     const observationPrompt = observationPrompts?.[0];
