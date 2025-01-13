@@ -17,6 +17,8 @@ import {
 import { env } from "~/env";
 import type { Tables } from "~/lib/supabase/database.types";
 
+import tailwindEmailConfig from "./tailwind.config";
+
 type InviteProfile = Pick<Tables<"profiles">, "email" | "nickname">;
 
 export type InvitationEmailProps = {
@@ -45,36 +47,36 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
     <Html>
       <Preview>{previewText}</Preview>
 
-      <Tailwind>
+      <Tailwind config={tailwindEmailConfig}>
         <Head />
 
-        <Body className="mx-auto my-auto bg-neutral-950 px-0 font-sans md:px-2">
-          <Container className="mx-auto max-w-[465px] rounded-b p-5 md:my-8 md:rounded md:border md:border-solid md:border-neutral-700">
-            <Section className="mt-8 flex justify-center">
+        <Body className="mx-auto my-auto bg-white px-0 font-sans md:px-2">
+          <Container className="mx-auto max-w-[465px] rounded-b p-5 md:my-8 md:rounded md:border md:border-solid md:border-neutral-300">
+            <Section className="mx-auto mt-8 w-full text-center">
               <Img
-                src={`${BASE_URL}/titan-logo.png`}
+                src={`${BASE_URL}/titan-logo-black.png`}
                 width="auto"
                 height="32"
                 alt="Titan Logo"
-                className="h-8"
+                className="inline h-8"
               />
             </Section>
 
-            <Heading className="mx-0 my-8 p-0 text-center text-2xl font-normal text-white">
+            <Heading className="mx-0 my-8 p-0 text-center text-2xl font-normal text-black">
               Join <strong>{COMPANY_NAME}</strong>
             </Heading>
 
-            <Text className="text-sm leading-6 text-gray-200">
+            <Text className="text-sm leading-6 text-gray-800">
               Hello {invite.first_name},
             </Text>
 
-            <Text className="text-pretty text-sm leading-6 text-gray-200">
+            <Text className="text-pretty text-sm leading-6 text-gray-800">
               {invite.invited_by_profile ? (
                 <>
                   <strong>{invite.invited_by_profile.nickname}</strong> (
                   <Link
                     href={`mailto:${invite.invited_by_profile.email}`}
-                    className="text-blue-400 no-underline hover:text-blue-300"
+                    className="text-blue-600 no-underline hover:text-blue-700"
                   >
                     {invite.invited_by_profile.email}
                   </Link>
@@ -95,50 +97,50 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
 
             <Section className="my-8 text-center">
               <Button
-                className="rounded bg-white px-5 py-3 text-xs font-semibold text-black no-underline hover:bg-gray-100"
+                className="rounded bg-black px-5 py-3 text-xs font-semibold text-white no-underline hover:bg-gray-900"
                 href={inviteUrl.toString()}
               >
                 Accept Invitation
               </Button>
             </Section>
 
-            <Text className="text-sm leading-6 text-gray-200">
+            <Text className="text-sm leading-6 text-gray-800">
               or copy and paste this link into your browser:
             </Text>
 
-            <Section className="my-4 rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-3">
+            <Section className="my-4 rounded-lg border border-neutral-300 bg-neutral-200 px-4 py-3">
               <Link
                 href={inviteUrl.toString()}
-                className="break-all text-sm text-blue-400 no-underline hover:text-blue-300"
+                className="break-all text-sm text-blue-600 no-underline hover:text-blue-700"
               >
                 {inviteUrl.toString()}
               </Link>
             </Section>
 
-            <Hr className="my-6 w-full border border-neutral-700" />
+            <Hr className="my-6 w-full border border-neutral-300" />
 
-            <Text className="text-xs leading-6 text-neutral-400">
+            <Text className="text-xs leading-6 text-neutral-600">
               This invitation was intended for{" "}
-              <span className="text-gray-200">{fullName}</span>. If you did not
+              <span className="text-gray-800">{fullName}</span>. If you did not
               request this, you can safely ignore this email. For any concerns,
               contact our support team.
             </Text>
           </Container>
 
-          <Container className="bg-neutral-800/50 px-2 md:border-none md:bg-transparent md:px-0">
+          <Container className="bg-neutral-200/50 px-2 md:border-none md:bg-transparent md:px-0">
             <Section className="text-center">
-              <Text className="text-xs leading-6 text-neutral-400">
+              <Text className="text-xs leading-6 text-neutral-600">
                 By accepting this invitation, you agree to our{" "}
                 <span className="block md:inline">
                   <Link
-                    className="text-blue-500 no-underline transition-colors hover:text-blue-400"
+                    className="text-blue-500 no-underline transition-colors hover:text-blue-600"
                     href={`${BASE_URL}/terms`}
                   >
                     Terms of Service
                   </Link>{" "}
                   and{" "}
                   <Link
-                    className="text-blue-500 no-underline transition-colors hover:text-blue-400"
+                    className="text-blue-500 no-underline transition-colors hover:text-blue-600"
                     href={`${BASE_URL}/privacy`}
                   >
                     Privacy Policy
@@ -147,8 +149,8 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
                 </span>
               </Text>
 
-              <Text className="mt-8 hidden text-xs leading-relaxed text-neutral-400 md:block">
-                <span className="font-medium text-neutral-300">
+              <Text className="mt-8 hidden text-xs leading-relaxed text-neutral-600 md:block">
+                <span className="font-medium text-neutral-700">
                   © {new Date().getFullYear()} Aware Healthcare Inc.
                 </span>
 
@@ -162,8 +164,8 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
           </Container>
 
           <Container className="mx-auto mt-8 px-2 text-center md:hidden">
-            <Text className="mt-0 text-xs leading-relaxed text-neutral-400">
-              <span className="font-medium text-neutral-300">
+            <Text className="mt-0 text-xs leading-relaxed text-neutral-600">
+              <span className="font-medium text-neutral-700">
                 © {new Date().getFullYear()} Aware Healthcare Inc.
               </span>
 
