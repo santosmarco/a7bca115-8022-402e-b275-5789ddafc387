@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BarChart3,
   Brain,
+  CogIcon,
   LogOut,
   Puzzle,
   TrendingUpIcon,
@@ -122,6 +122,13 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
       icon: <UsersIcon className="h-5 w-5" />,
       label: "Clients",
       isActive: pathname.startsWith("/clients"),
+    },
+    (user.role === "user" ||
+      (user.is_admin && selectedProfile?.role !== "coach")) && {
+      href: "/settings",
+      icon: <CogIcon className="h-5 w-5" />,
+      label: "Settings",
+      isActive: pathname === "/settings",
     },
   ].filter((x): x is Exclude<typeof x, false | undefined> => !!x);
 
