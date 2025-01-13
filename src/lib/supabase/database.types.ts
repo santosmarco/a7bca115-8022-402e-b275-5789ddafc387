@@ -9,6 +9,74 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      calendar_events: {
+        Row: {
+          created_at: string
+          end_time: string
+          ical_uid: string
+          id: string
+          is_deleted: boolean
+          meeting_platform:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url: string | null
+          platform:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id: string
+          raw: Json | null
+          recall_calendar_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at: string
+          end_time: string
+          ical_uid: string
+          id?: string
+          is_deleted: boolean
+          meeting_platform?:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url?: string | null
+          platform?:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id: string
+          raw?: Json | null
+          recall_calendar_id: string
+          start_time: string
+          updated_at: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          ical_uid?: string
+          id?: string
+          is_deleted?: boolean
+          meeting_platform?:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url?: string | null
+          platform?:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id?: string
+          raw?: Json | null
+          recall_calendar_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_recall_calendar_id_fkey"
+            columns: ["recall_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "recall_calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_integrations: {
         Row: {
           email: string
@@ -254,7 +322,11 @@ export type Database = {
           id: string
           mp4_source_url: string | null
           profile_id: string | null
+          provider:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           raw_data: Json | null
+          recall_calendar_id: string | null
           speakers: string[] | null
           status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
         }
@@ -268,7 +340,11 @@ export type Database = {
           id: string
           mp4_source_url?: string | null
           profile_id?: string | null
+          provider?:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           raw_data?: Json | null
+          recall_calendar_id?: string | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
         }
@@ -282,7 +358,11 @@ export type Database = {
           id?: string
           mp4_source_url?: string | null
           profile_id?: string | null
+          provider?:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           raw_data?: Json | null
+          recall_calendar_id?: string | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
         }
@@ -299,6 +379,13 @@ export type Database = {
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_bots_recall_calendar_id_fkey"
+            columns: ["recall_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "recall_calendars"
             referencedColumns: ["id"]
           },
         ]
@@ -1197,6 +1284,51 @@ export type Database = {
           },
         ]
       }
+      user_settings: {
+        Row: {
+          created_at: string
+          id: number
+          profile_id: string
+          should_join_external_meetings: boolean
+          should_join_not_the_owner_meetings: boolean
+          should_join_pending_meeting: boolean
+          should_join_team_meetings: boolean
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          profile_id: string
+          should_join_external_meetings?: boolean
+          should_join_not_the_owner_meetings?: boolean
+          should_join_pending_meeting?: boolean
+          should_join_team_meetings?: boolean
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          profile_id?: string
+          should_join_external_meetings?: boolean
+          should_join_not_the_owner_meetings?: boolean
+          should_join_pending_meeting?: boolean
+          should_join_team_meetings?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "user_settings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       meeting_bot_transcripts: {
@@ -1384,6 +1516,26 @@ export type Database = {
         | "in_call_not_recording"
         | "in_call_recording"
         | "call_ended"
+        | "ready"
+        | "recording_permission_allowed"
+        | "recording_permission_denied"
+        | "done"
+        | "fatal"
+        | "analysis_done"
+        | "analysis_failed"
+        | "media_expired"
+        | "recording_done"
+      meeting_bots_provider_enum: "meeting_baas" | "recall"
+      meeting_platform_enum:
+        | "zoom"
+        | "google_meet"
+        | "goto_meeting"
+        | "microsoft_teams"
+        | "microsoft_teams_live"
+        | "webex"
+        | "chime_sdk"
+        | "webrtc"
+        | "slack_huddle_observer"
       moment_reaction_type: "thumbs_up" | "thumbs_down"
       profile_status_enum: "active" | "pending" | "inactive"
       recall_calendar_platform_type: "google_calendar" | "microsoft_outlook"
