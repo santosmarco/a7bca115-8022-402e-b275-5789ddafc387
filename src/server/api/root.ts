@@ -3,11 +3,12 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { authRouter } from "./routers/auth";
 import { chatsRouter } from "./routers/chats";
 import { clientsRouter } from "./routers/clients";
+import { coachingFrameworksRouter } from "./routers/coaching-frameworks";
 import { momentsRouter } from "./routers/moments";
 import { notionRouter } from "./routers/notion";
+import { settingsRouter } from "./routers/settings";
 import { userInvitesRouter } from "./routers/user-invites";
 import { videosRouter } from "./routers/videos";
-import { coachingFrameworksRouter } from "./routers/coaching-frameworks";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
   coachingFrameworks: coachingFrameworksRouter,
   clients: clientsRouter,
   userInvites: userInvitesRouter,
+  settings: settingsRouter,
 });
 
 export type AppRouter = typeof appRouter;
