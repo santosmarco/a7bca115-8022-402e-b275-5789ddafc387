@@ -63,6 +63,7 @@ const integrations = [
     description: "Automatically analyze and process your Zoom recordings.",
     provider: "zoom",
     icon: SiZoom,
+    comingSoon: true,
   },
   {
     name: "Slack",
