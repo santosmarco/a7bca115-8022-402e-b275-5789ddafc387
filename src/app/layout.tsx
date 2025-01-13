@@ -31,9 +31,11 @@ export default function RootLayout({
         <NuqsAdapter>
           <TRPCReactProvider>
             <HydrateClient>
-              <ProfileProvider>{children}</ProfileProvider>
+              <ProfileProvider>
+                {children}
+                <Toaster />
+              </ProfileProvider>
             </HydrateClient>
-            <Toaster />
           </TRPCReactProvider>
         </NuqsAdapter>
       </body>
