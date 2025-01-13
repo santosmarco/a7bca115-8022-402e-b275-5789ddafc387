@@ -276,6 +276,8 @@ export const checkMeetings = schedules.task({
                                       const result =
                                         await meetingBaas.meetings.join({
                                           bot_name: "Notetaker",
+                                          bot_image:
+                                            "https://files.slack.com/files-pri/T07J0D5HJJZ-F088FCR2AEP/zoom_screen.png",
                                           reserved: true,
                                           meeting_url: meetingUrl,
                                           recording_mode: "speaker_view",
