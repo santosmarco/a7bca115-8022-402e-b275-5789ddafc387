@@ -80,8 +80,12 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
                   >
                     {percentage >= 100 ? (
                       <Unlock className="h-8 w-8 text-primary" />
-                    ) : (
+                    ) : percentage < 50 ? (
                       <Lock className="h-8 w-8 text-primary" />
+                    ) : (
+                      <div className="z-50 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/80 to-primary shadow-lg ring-2 ring-primary">
+                        <Lock className="h-5 w-5 text-background" />
+                      </div>
                     )}
                   </motion.div>
                 </div>
