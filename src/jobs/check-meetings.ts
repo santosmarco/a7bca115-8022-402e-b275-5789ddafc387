@@ -278,8 +278,6 @@ export const checkMeetings = schedules.task({
                                           bot_name: "Notetaker",
                                           reserved: true,
                                           meeting_url: meetingUrl,
-                                          bot_image:
-                                            "https://i.ibb.co/X7QvTBN/Titan-Image-1600x900.png",
                                           recording_mode: "speaker_view",
                                           speech_to_text: {
                                             provider: "Default",
