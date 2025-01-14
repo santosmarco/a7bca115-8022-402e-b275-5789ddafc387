@@ -91,18 +91,19 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
         >
           <div className="space-y-6">
             <div className="flex flex-col space-y-2">
-              <h2 className="text-base font-medium text-foreground">
+              <h2 className="text-lg font-medium text-foreground">
                 Joining Preferences
               </h2>
 
               <p className="text-sm text-muted-foreground">
                 Choose which meetings on your calendar you&apos;d like Titan to
-                automatically join. You can use the desktop app to record
-                meetings Titan doesn&apos;t join.
+                automatically join.
               </p>
             </div>
 
             <div className="space-y-4 pt-2">
+              <h3 className="text-base font-medium text-foreground">Include</h3>
+
               <ToggleSetting
                 value={settings.should_join_team_meetings}
                 onChange={(value) =>
@@ -153,10 +154,14 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                 disabled={isCoach}
               />
 
+              <h3 className="pt-2 text-base font-medium text-foreground">
+                Exclude
+              </h3>
+
               <ToggleSetting
-                value={settings.should_join_pending_meeting}
+                value={settings.should_not_join_pending_meetings}
                 onChange={(value) =>
-                  updateSetting("should_join_pending_meeting", value)
+                  updateSetting("should_not_join_pending_meetings", value)
                 }
                 title="Pending meetings"
                 description="Meetings you haven't yet accepted or declined"
@@ -164,9 +169,9 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
               />
 
               <ToggleSetting
-                value={settings.should_join_not_the_owner_meetings}
+                value={settings.should_not_join_pending_meetings}
                 onChange={(value) =>
-                  updateSetting("should_join_not_the_owner_meetings", value)
+                  updateSetting("should_not_join_pending_meetings", value)
                 }
                 title="Meetings organized by others"
                 description="Meetings where you are an invitee, not the organizer"

@@ -417,6 +417,48 @@ export type Database = {
         }
         Relationships: []
       }
+      meeting_processing_status: {
+        Row: {
+          created_at: string | null
+          embed_meeting_status: string | null
+          embed_moments_status: string | null
+          embed_notes_status: string | null
+          embed_qna_status: string | null
+          id: string | null
+          meetings_status: string | null
+          moments_status: string | null
+          observation_status: string | null
+          segments_status: string | null
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          embed_meeting_status?: string | null
+          embed_moments_status?: string | null
+          embed_notes_status?: string | null
+          embed_qna_status?: string | null
+          id?: string | null
+          meetings_status?: string | null
+          moments_status?: string | null
+          observation_status?: string | null
+          segments_status?: string | null
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          embed_meeting_status?: string | null
+          embed_moments_status?: string | null
+          embed_notes_status?: string | null
+          embed_qna_status?: string | null
+          id?: string | null
+          meetings_status?: string | null
+          moments_status?: string | null
+          observation_status?: string | null
+          segments_status?: string | null
+          video_id?: string | null
+        }
+        Relationships: []
+      }
       meeting_tags: {
         Row: {
           category: string | null
@@ -1290,27 +1332,27 @@ export type Database = {
           id: number
           profile_id: string
           should_join_external_meetings: boolean
-          should_join_not_the_owner_meetings: boolean
-          should_join_pending_meeting: boolean
           should_join_team_meetings: boolean
+          should_not_join_owned_by_others_meetings: boolean
+          should_not_join_pending_meetings: boolean
         }
         Insert: {
           created_at?: string
           id?: number
           profile_id: string
           should_join_external_meetings?: boolean
-          should_join_not_the_owner_meetings?: boolean
-          should_join_pending_meeting?: boolean
           should_join_team_meetings?: boolean
+          should_not_join_owned_by_others_meetings?: boolean
+          should_not_join_pending_meetings?: boolean
         }
         Update: {
           created_at?: string
           id?: number
           profile_id?: string
           should_join_external_meetings?: boolean
-          should_join_not_the_owner_meetings?: boolean
-          should_join_pending_meeting?: boolean
           should_join_team_meetings?: boolean
+          should_not_join_owned_by_others_meetings?: boolean
+          should_not_join_pending_meetings?: boolean
         }
         Relationships: [
           {
