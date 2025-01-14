@@ -2,6 +2,7 @@ import _ from "lodash";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { GoogleCalendarEvent } from "~/lib/google-calendar/schemas";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import {
@@ -384,6 +385,14 @@ async function processCalendarEvent(
     // Remove any existing bots before creating new ones
     await cleanupExistingBots(event, recallClient, supabase);
 
+    const shouldScheduleBot = await evaluateShouldScheduleBot(
+      event,
+      calendarData.profile_id,
+      supabase,
+    );
+
+    if (!shouldScheduleBot) return;
+
     // Handle Zoom meetings differently from other platforms
     if (event.meeting_platform === "zoom") {
       await handleZoomMeeting(event, calendarData, deduplicationKey, supabase);
@@ -432,6 +441,70 @@ async function cleanupExistingBots(
   }
 
   await Promise.allSettled(cleanupPromises);
+}
+
+async function evaluateShouldScheduleBot(
+  event: CalendarEvent,
+  profile_id: string,
+  supabase: SupabaseServerClient,
+) {
+  const { data: userSettings } = await supabase
+    .from("user_settings")
+    .select("*, profile:profiles(*)")
+    .eq("profile_id", profile_id)
+    .maybeSingle();
+
+  if (!userSettings?.profile) return false;
+
+  // Parse raw event data against schema
+  const parseResult = GoogleCalendarEvent.safeParse(event.raw);
+  if (!parseResult.success) {
+    logger.error("Failed to parse event data", {
+      error: parseResult.error,
+      eventId: event.id,
+    });
+    return false;
+  }
+
+  const calendarEvent = parseResult.data;
+  const userEmail = userSettings.profile.email;
+
+  if (!userEmail) return false;
+
+  // Get user's domain for internal/external check
+  const userDomain = userEmail.split("@")[1];
+
+  // Check if user is the organizer
+  const isOrganizer = calendarEvent.organizer?.email === userEmail;
+
+  // Check if user's response is pending
+  const userAttendee = calendarEvent.attendees?.find(
+    (attendee) => attendee.email === userEmail,
+  );
+  const isPending = userAttendee?.responseStatus === "needsAction";
+
+  // Check if all attendees are internal
+  const isInternalMeeting =
+    calendarEvent.attendees?.every((attendee) => {
+      const attendeeDomain = attendee.email?.split("@")[1];
+      return attendeeDomain === userDomain;
+    }) ?? true;
+
+  // Apply exclusion rules first
+  if (userSettings.should_not_join_pending_meetings && isPending) {
+    return false;
+  }
+
+  if (userSettings.should_not_join_owned_by_others_meetings && !isOrganizer) {
+    return false;
+  }
+
+  // Apply inclusion rules
+  if (isInternalMeeting) {
+    return userSettings.should_join_team_meetings;
+  }
+
+  return userSettings.should_join_external_meetings;
 }
 
 async function handleZoomMeeting(
