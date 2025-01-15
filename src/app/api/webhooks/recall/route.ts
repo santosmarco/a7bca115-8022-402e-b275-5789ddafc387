@@ -9,6 +9,7 @@ import {
   type Bot,
   type CalendarEvent,
   createClient as createRecallClient,
+  status__2 as BotStatuses,
 } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
 import type { Json, Tables, TablesInsert } from "~/lib/supabase/database.types";
@@ -40,6 +41,12 @@ const BotStatusChangeEvent = z
     data: z
       .object({
         bot_id: z.string(),
+        status: z
+          .object({
+            code: BotStatuses.unwrap().unwrap().element.optional(),
+          })
+          .passthrough()
+          .optional(),
       })
       .passthrough(),
   })
@@ -696,6 +703,7 @@ export async function POST(request: Request) {
       await supabase
         .from("meeting_bots")
         .update({
+          status: payload.data.status?.code,
           mp4_source_url: videoUploadResult?.storageUrl,
           api_video_id: videoUploadResult?.apiVideoId,
           speakers: bot.meeting_participants.map(({ name }) => name),
