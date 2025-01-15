@@ -694,11 +694,19 @@ export async function POST(request: Request) {
         recallClient,
       );
 
-      const videoUploadResult = await handleVideoUpload(
-        bot,
-        supabase,
-        recallClient,
-      );
+      let videoUploadResult: Awaited<ReturnType<typeof handleVideoUpload>>;
+
+      if (bot.status === "done") {
+        videoUploadResult = await handleVideoUpload(
+          bot,
+          supabase,
+          recallClient,
+        );
+
+        if (transcript.length > 0) {
+          await handleTranscript(bot, transcript, supabase);
+        }
+      }
 
       await supabase
         .from("meeting_bots")
@@ -713,10 +721,6 @@ export async function POST(request: Request) {
           } as Json,
         })
         .eq("id", bot.id);
-
-      if (transcript.length > 0) {
-        await handleTranscript(bot, transcript, supabase);
-      }
 
       logger.info("Bot status change processed successfully", {
         botId: bot.id,
