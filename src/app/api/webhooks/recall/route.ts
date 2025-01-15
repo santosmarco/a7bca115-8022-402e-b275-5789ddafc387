@@ -327,7 +327,7 @@ async function handleCalendarSync(
 ) {
   const { data: calendarData, error: calendarError } = await supabase
     .from("recall_calendars")
-    .select("*")
+    .select("*, profile:profiles(*)")
     .eq("id", payload.data.calendar_id)
     .maybeSingle();
 
@@ -335,19 +335,13 @@ async function handleCalendarSync(
     throw new Error("Could not find profile_id for calendar");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", calendarData.profile_id)
-    .maybeSingle();
-
-  if (!profile) {
+  if (!calendarData.profile) {
     throw new Error("Could not find profile");
   }
 
-  if (profile.role === "coach") {
+  if (calendarData.profile.role === "coach") {
     logger.info("Skipping calendar sync for coach", {
-      profile,
+      profile: calendarData.profile,
     });
     return;
   }
@@ -555,13 +549,19 @@ async function handleZoomMeeting(
     extra: metadata,
   });
 
-  await supabase.from("meeting_bots").insert({
-    id: botResult.bot_id,
-    raw_data: {
-      google_calendar_raw_data: event,
-    } as Json,
-    event_id: event.id,
-  });
+  await supabase.from("meeting_bots").upsert(
+    {
+      id: botResult.bot_id,
+      raw_data: {
+        google_calendar_raw_data: event,
+      } as Json,
+      event_id: event.id,
+      recall_calendar_id: calendarData.id,
+      provider: "meeting_baas",
+      profile_id: calendarData.profile_id,
+    },
+    { onConflict: "id" },
+  );
 }
 
 async function handleGoogleMeetMeeting(
@@ -599,14 +599,21 @@ async function handleGoogleMeetMeeting(
       },
     );
 
-  await supabase.from("meeting_bots").insert(
-    calendarEventResult.bots.map((bot) => ({
-      id: bot.bot_id,
-      raw_data: {
-        google_calendar_raw_data: event,
-      } as Json,
-      event_id: event.id,
-    })),
+  await supabase.from("meeting_bots").upsert(
+    calendarEventResult.bots.map(
+      (bot) =>
+        ({
+          id: bot.bot_id,
+          raw_data: {
+            google_calendar_raw_data: event,
+          } as Json,
+          event_id: event.id,
+          recall_calendar_id: calendarData.id,
+          provider: "recall",
+          profile_id: calendarData.profile_id,
+        }) satisfies TablesInsert<"meeting_bots">,
+    ),
+    { onConflict: "id" },
   );
 }
 
