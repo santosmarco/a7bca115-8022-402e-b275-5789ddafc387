@@ -169,9 +169,12 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
               />
 
               <ToggleSetting
-                value={settings.should_not_join_pending_meetings}
+                value={settings.should_not_join_owned_by_others_meetings}
                 onChange={(value) =>
-                  updateSetting("should_not_join_pending_meetings", value)
+                  updateSetting(
+                    "should_not_join_owned_by_others_meetings",
+                    value,
+                  )
                 }
                 title="Meetings organized by others"
                 description="Meetings where you are an invitee, not the organizer"
