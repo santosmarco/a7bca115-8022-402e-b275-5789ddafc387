@@ -227,6 +227,111 @@ export type Database = {
         }
         Relationships: []
       }
+      deletion_processing_status: {
+        Row: {
+          chats_supabase: string | null
+          chats_supabase_affected_row: number | null
+          chunks_pinecone: string | null
+          chunks_pinecone_affected_row: number | null
+          chunks_supabase: string | null
+          chunks_supabase_affected_row: number | null
+          id: string | null
+          meeting_notes_pinecone: string | null
+          meeting_notes_pinecone_affected_row: number | null
+          meeting_notes_supabase: string | null
+          meeting_notes_supabase_affected_row: number | null
+          meeting_supabase: string | null
+          meeting_supabase_affected_row: number | null
+          moments_meta_supabase: string | null
+          moments_meta_supabase_affected_row: number | null
+          moments_pinecone: string | null
+          moments_pinecone_affected_row: number | null
+          moments_supabase: string | null
+          moments_supabase_affected_row: number | null
+          observation_prompts_supabase: string | null
+          observation_prompts_supabase_affected_row: number | null
+          profile_id: string | null
+          qna_chunks_pinecone: string | null
+          qna_chunks_pinecone_affected_row: number | null
+          qna_chunks_supabase: string | null
+          qna_chunks_supabase_affected_row: number | null
+          segments_supabase: string | null
+          segments_supabase_affected_row: number | null
+          status: string | null
+          video: string | null
+          video_affected_row: number | null
+          video_id: string | null
+        }
+        Insert: {
+          chats_supabase?: string | null
+          chats_supabase_affected_row?: number | null
+          chunks_pinecone?: string | null
+          chunks_pinecone_affected_row?: number | null
+          chunks_supabase?: string | null
+          chunks_supabase_affected_row?: number | null
+          id?: string | null
+          meeting_notes_pinecone?: string | null
+          meeting_notes_pinecone_affected_row?: number | null
+          meeting_notes_supabase?: string | null
+          meeting_notes_supabase_affected_row?: number | null
+          meeting_supabase?: string | null
+          meeting_supabase_affected_row?: number | null
+          moments_meta_supabase?: string | null
+          moments_meta_supabase_affected_row?: number | null
+          moments_pinecone?: string | null
+          moments_pinecone_affected_row?: number | null
+          moments_supabase?: string | null
+          moments_supabase_affected_row?: number | null
+          observation_prompts_supabase?: string | null
+          observation_prompts_supabase_affected_row?: number | null
+          profile_id?: string | null
+          qna_chunks_pinecone?: string | null
+          qna_chunks_pinecone_affected_row?: number | null
+          qna_chunks_supabase?: string | null
+          qna_chunks_supabase_affected_row?: number | null
+          segments_supabase?: string | null
+          segments_supabase_affected_row?: number | null
+          status?: string | null
+          video?: string | null
+          video_affected_row?: number | null
+          video_id?: string | null
+        }
+        Update: {
+          chats_supabase?: string | null
+          chats_supabase_affected_row?: number | null
+          chunks_pinecone?: string | null
+          chunks_pinecone_affected_row?: number | null
+          chunks_supabase?: string | null
+          chunks_supabase_affected_row?: number | null
+          id?: string | null
+          meeting_notes_pinecone?: string | null
+          meeting_notes_pinecone_affected_row?: number | null
+          meeting_notes_supabase?: string | null
+          meeting_notes_supabase_affected_row?: number | null
+          meeting_supabase?: string | null
+          meeting_supabase_affected_row?: number | null
+          moments_meta_supabase?: string | null
+          moments_meta_supabase_affected_row?: number | null
+          moments_pinecone?: string | null
+          moments_pinecone_affected_row?: number | null
+          moments_supabase?: string | null
+          moments_supabase_affected_row?: number | null
+          observation_prompts_supabase?: string | null
+          observation_prompts_supabase_affected_row?: number | null
+          profile_id?: string | null
+          qna_chunks_pinecone?: string | null
+          qna_chunks_pinecone_affected_row?: number | null
+          qna_chunks_supabase?: string | null
+          qna_chunks_supabase_affected_row?: number | null
+          segments_supabase?: string | null
+          segments_supabase_affected_row?: number | null
+          status?: string | null
+          video?: string | null
+          video_affected_row?: number | null
+          video_id?: string | null
+        }
+        Relationships: []
+      }
       integration_credentials: {
         Row: {
           access_token: string | null
@@ -1328,6 +1433,7 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          bot_name: string | null
           created_at: string
           id: number
           profile_id: string
@@ -1337,6 +1443,7 @@ export type Database = {
           should_not_join_pending_meetings: boolean
         }
         Insert: {
+          bot_name?: string | null
           created_at?: string
           id?: number
           profile_id: string
@@ -1346,6 +1453,7 @@ export type Database = {
           should_not_join_pending_meetings?: boolean
         }
         Update: {
+          bot_name?: string | null
           created_at?: string
           id?: number
           profile_id?: string

@@ -6,7 +6,7 @@ import { env } from "~/env";
 import { logger } from "~/lib/logging/server";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { __dangerouslyCreateAdminClient__ } from "~/lib/supabase/admin";
-import type { Tables } from "~/lib/supabase/database.types";
+import type { Tables, TablesUpdate } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
@@ -280,7 +280,7 @@ async function handleInvitedUserProfile(
               .join(" "),
     company: inviteData.company,
     coach_id: inviteData.invited_by,
-  };
+  } satisfies TablesUpdate<"profiles">;
   logger.info("Profile data prepared", { profileData });
 
   const { data: existingProfile } = await supabase
@@ -291,16 +291,43 @@ async function handleInvitedUserProfile(
   logger.info("Existing profile check", { existingProfile });
 
   await Promise.all([
-    existingProfile
+    (existingProfile
       ? supabase
           .from("profiles")
           .update(profileData)
           .eq("id", existingProfile.id)
-      : supabase.from("profiles").insert({
-          id: user.id,
-          email: user.email,
-          ...profileData,
-        }),
+          .select("*")
+          .maybeSingle()
+      : supabase
+          .from("profiles")
+          .insert({
+            id: user.id,
+            email: user.email,
+            ...profileData,
+          })
+          .select("*")
+          .maybeSingle()
+    ).then(async ({ data: profile }) => {
+      const { data: userSettings } = await supabase
+        .from("user_settings")
+        .select("*")
+        .eq("profile_id", user.id)
+        .maybeSingle();
+
+      if (userSettings) {
+        await supabase
+          .from("user_settings")
+          .update({
+            bot_name: `${profile?.nickname ?? profileData.nickname}'s Notetaker`,
+          })
+          .eq("id", userSettings.id);
+      } else {
+        await supabase.from("user_settings").insert({
+          profile_id: user.id,
+          bot_name: `${profile?.nickname ?? profileData.nickname}'s Notetaker`,
+        });
+      }
+    }),
     supabase.from("user_invites").delete().eq("id", inviteData.id),
   ]);
   logger.info("Invited user profile handled successfully", { userId: user.id });

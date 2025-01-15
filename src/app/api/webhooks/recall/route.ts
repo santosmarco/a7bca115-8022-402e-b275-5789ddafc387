@@ -19,7 +19,6 @@ import {
 import { isTruthy } from "~/lib/utils";
 import { apiVideo } from "~/server/api/services/api-video";
 
-const BOT_NAME = "Notetaker";
 const WAITING_ROOM_TIMEOUT = 60 * 60;
 const NOONE_JOINED_TIMEOUT = 60 * 60;
 
@@ -406,6 +405,7 @@ async function processCalendarEvent(
         calendarData,
         deduplicationKey,
         recallClient,
+        supabase,
       );
       return;
     }
@@ -520,6 +520,8 @@ async function handleZoomMeeting(
     return;
   }
 
+  const botName = await getBotName(calendarData.profile_id, supabase);
+
   const startTimeUnix = event.start_time
     ? Math.floor(new Date(event.start_time).getTime() / 1000)
     : null;
@@ -532,7 +534,7 @@ async function handleZoomMeeting(
   } satisfies BotMetadata;
 
   const botResult = await meetingBaas.meetings.join({
-    bot_name: BOT_NAME,
+    bot_name: botName,
     bot_image:
       "https://files.slack.com/files-pri/T07J0D5HJJZ-F088FCR2AEP/zoom_screen.png",
     meeting_url: event.meeting_url,
@@ -564,7 +566,10 @@ async function handleGoogleMeetMeeting(
   calendarData: Tables<"recall_calendars">,
   deduplicationKey: string,
   recallClient: ReturnType<typeof createRecallClient>,
+  supabase: SupabaseServerClient,
 ) {
+  const botName = await getBotName(calendarData.profile_id, supabase);
+
   const metadata = {
     event_id: event.id,
     event: JSON.stringify(event),
@@ -576,7 +581,7 @@ async function handleGoogleMeetMeeting(
     {
       deduplication_key: deduplicationKey,
       bot_config: {
-        bot_name: BOT_NAME,
+        bot_name: botName,
         automatic_leave: {
           waiting_room_timeout: WAITING_ROOM_TIMEOUT,
           noone_joined_timeout: NOONE_JOINED_TIMEOUT,
@@ -591,6 +596,19 @@ async function handleGoogleMeetMeeting(
       params: { id: event.id },
     },
   );
+}
+
+async function getBotName(
+  profile_id: string,
+  supabase: SupabaseServerClient,
+): Promise<string> {
+  const { data: userSettings } = await supabase
+    .from("user_settings")
+    .select("*")
+    .eq("profile_id", profile_id)
+    .maybeSingle();
+
+  return userSettings?.bot_name ?? "Notetaker";
 }
 
 function handleCalendarEventError(error: unknown, event: CalendarEvent) {
