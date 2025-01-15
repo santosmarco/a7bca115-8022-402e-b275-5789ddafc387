@@ -393,9 +393,6 @@ async function processCalendarEvent(
   }
 
   try {
-    // Remove any existing bots before creating new ones
-    await cleanupExistingBots(event, recallClient, supabase);
-
     const shouldScheduleBot = await evaluateShouldScheduleBot(
       event,
       calendarData.profile_id,
@@ -443,12 +440,15 @@ async function cleanupExistingBots(
 
   const { data: meetingBots } = await supabase
     .from("meeting_bots")
-    .select("*")
-    .eq("event_id", event.id);
+    .delete()
+    .eq("event_id", event.id)
+    .select("*");
 
   if (meetingBots && meetingBots.length > 0) {
     cleanupPromises.push(
-      ...meetingBots.map((bot) => meetingBaas.meetings.leave(bot.id)),
+      ...meetingBots
+        .filter((bot) => !bot.provider || bot.provider === "meeting_baas")
+        .map((bot) => meetingBaas.meetings.leave(bot.id)),
     );
   }
 
@@ -696,7 +696,7 @@ export async function POST(request: Request) {
 
       let videoUploadResult: Awaited<ReturnType<typeof handleVideoUpload>>;
 
-      if (bot.status === "done") {
+      if (payload.data.status?.code === "done") {
         videoUploadResult = await handleVideoUpload(
           bot,
           supabase,
