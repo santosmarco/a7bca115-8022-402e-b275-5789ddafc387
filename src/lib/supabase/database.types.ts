@@ -420,6 +420,7 @@ export type Database = {
         Row: {
           api_video_id: string | null
           created_at: string
+          deduplication_key: string | null
           error_code:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
@@ -438,6 +439,7 @@ export type Database = {
         Insert: {
           api_video_id?: string | null
           created_at?: string
+          deduplication_key?: string | null
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
@@ -456,6 +458,7 @@ export type Database = {
         Update: {
           api_video_id?: string | null
           created_at?: string
+          deduplication_key?: string | null
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
