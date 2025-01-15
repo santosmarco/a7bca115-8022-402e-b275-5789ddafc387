@@ -157,8 +157,14 @@ async function handleVideoUpload(
 ) {
   if (!bot.video_url) return;
 
-  void uploadVideoToStorage(bot.video_url, bot.id, supabase);
-  void uploadVideoToApiVideo(bot, recallClient);
+  const [storageUrl, apiVideoId] = await Promise.all([
+    uploadVideoToStorage(bot.video_url, bot.id, supabase).catch(
+      () => undefined,
+    ),
+    uploadVideoToApiVideo(bot, recallClient).catch(() => undefined),
+  ]);
+
+  return { storageUrl, apiVideoId };
 }
 
 async function uploadVideoToStorage(
@@ -681,7 +687,24 @@ export async function POST(request: Request) {
         recallClient,
       );
 
-      await handleVideoUpload(bot, supabase, recallClient);
+      const videoUploadResult = await handleVideoUpload(
+        bot,
+        supabase,
+        recallClient,
+      );
+
+      await supabase
+        .from("meeting_bots")
+        .update({
+          mp4_source_url: videoUploadResult?.storageUrl,
+          api_video_id: videoUploadResult?.apiVideoId,
+          speakers: bot.meeting_participants.map(({ name }) => name),
+          raw_data: {
+            meeting_baas_raw_data: { bot, event },
+            google_calendar_raw_data: event,
+          } as Json,
+        })
+        .eq("id", bot.id);
 
       if (transcript.length > 0) {
         await handleTranscript(bot, transcript, supabase);
