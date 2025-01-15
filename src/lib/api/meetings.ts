@@ -4,7 +4,7 @@ import { z } from "zod";
 import { client } from "./client";
 
 export const MeetingDeleteResponse = z.object({
-  job_id: z.string(),
+  deletion_id: z.string(),
   video_id: z.string(),
 });
 export type MeetingDeleteResponse = z.infer<typeof MeetingDeleteResponse>;
