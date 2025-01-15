@@ -532,8 +532,7 @@ async function handleZoomMeeting(
 
   const botResult = await meetingBaas.meetings.join({
     bot_name: botName,
-    bot_image:
-      "https://files.slack.com/files-pri/T07J0D5HJJZ-F088FCR2AEP/zoom_screen.png",
+    bot_image: "https://i.ibb.co/X7QvTBN/Titan-Image-1600x900.png",
     meeting_url: event.meeting_url,
     start_time: startTimeUnix,
     reserved: true,
