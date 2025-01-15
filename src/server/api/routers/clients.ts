@@ -17,9 +17,7 @@ export const clientsRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const supabase = await createClient();
 
-      const clientsQuery = supabase
-        .from("profiles")
-        .select("*, coach:profiles!coach_id(*)");
+      const clientsQuery = supabase.from("profiles").select("*");
 
       if (!input.loadAll) {
         clientsQuery.eq("coach_id", input.userId);
@@ -38,8 +36,25 @@ export const clientsRouter = createTRPCRouter({
         userInvitesQuery,
       ]);
 
+      const clientsWithCoach = await Promise.all(
+        (clients ?? []).map(async (client) => {
+          if (client.coach_id) {
+            const { data: coach } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", client.coach_id)
+              .maybeSingle();
+
+            if (coach) {
+              return { ...client, coach: [coach] };
+            }
+          }
+          return { ...client, coach: [] };
+        }),
+      );
+
       return [
-        ...(clients ?? []),
+        ...clientsWithCoach,
         ...(userInvites ?? []).map(transformUserInviteIntoProfile),
       ];
     }),
