@@ -564,9 +564,8 @@ async function handleZoomMeeting(
       recall_calendar_id: calendarData.id,
       provider: "meeting_baas",
       profile_id: calendarData.profile_id,
-      deduplication_key: deduplicationKey,
     },
-    { onConflict: "deduplication_key" },
+    { onConflict: "id" },
   );
 }
 
@@ -617,10 +616,9 @@ async function handleGoogleMeetMeeting(
           recall_calendar_id: calendarData.id,
           provider: "recall",
           profile_id: calendarData.profile_id,
-          deduplication_key: deduplicationKey,
         }) satisfies TablesInsert<"meeting_bots">,
     ),
-    { onConflict: "deduplication_key" },
+    { onConflict: "id" },
   );
 }
 
