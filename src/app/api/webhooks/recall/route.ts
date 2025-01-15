@@ -56,9 +56,7 @@ type WebhookEvent = z.infer<typeof WebhookEvent>;
 
 type BotMetadata = {
   event_id: string;
-  event: CalendarEvent | string;
   user_id: string;
-  google_calendar_raw_data: CalendarEvent | string;
 };
 
 type RecallAPIError = {
@@ -154,13 +152,13 @@ async function handleTranscript(
 
 async function handleVideoUpload(
   bot: Bot,
-  event: CalendarEvent | undefined,
   supabase: SupabaseServerClient,
+  recallClient: ReturnType<typeof createRecallClient>,
 ) {
   if (!bot.video_url) return;
 
   void uploadVideoToStorage(bot.video_url, bot.id, supabase);
-  void uploadVideoToApiVideo(bot, event);
+  void uploadVideoToApiVideo(bot, recallClient);
 }
 
 async function uploadVideoToStorage(
@@ -211,8 +209,15 @@ async function uploadVideoToStorage(
 
 async function uploadVideoToApiVideo(
   bot: Bot,
-  event: CalendarEvent | undefined,
+  recallClient: ReturnType<typeof createRecallClient>,
 ) {
+  const event =
+    typeof bot.metadata?.event_id === "string"
+      ? await recallClient.calendarV2.calendar_events_retrieve({
+          params: { id: bot.metadata?.event_id },
+        })
+      : undefined;
+
   const tags = _.uniq(bot.meeting_participants.map(({ name }) => name.trim()));
   logger.info(`Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
@@ -528,9 +533,7 @@ async function handleZoomMeeting(
 
   const metadata = {
     event_id: event.id,
-    event: event,
     user_id: calendarData.profile_id,
-    google_calendar_raw_data: event,
   } satisfies BotMetadata;
 
   const botResult = await meetingBaas.meetings.join({
@@ -572,29 +575,38 @@ async function handleGoogleMeetMeeting(
 
   const metadata = {
     event_id: event.id,
-    event: JSON.stringify(event),
     user_id: calendarData.profile_id,
-    google_calendar_raw_data: JSON.stringify(event),
   } satisfies BotMetadata;
 
-  await recallClient.calendarV2.calendar_events_bot_create(
-    {
-      deduplication_key: deduplicationKey,
-      bot_config: {
-        bot_name: botName,
-        automatic_leave: {
-          waiting_room_timeout: WAITING_ROOM_TIMEOUT,
-          noone_joined_timeout: NOONE_JOINED_TIMEOUT,
-        },
-        transcription_options: {
-          provider: "gladia",
-        },
-        metadata,
-      } satisfies Partial<Bot>,
-    },
-    {
-      params: { id: event.id },
-    },
+  const calendarEventResult =
+    await recallClient.calendarV2.calendar_events_bot_create(
+      {
+        deduplication_key: deduplicationKey,
+        bot_config: {
+          bot_name: botName,
+          automatic_leave: {
+            waiting_room_timeout: WAITING_ROOM_TIMEOUT,
+            noone_joined_timeout: NOONE_JOINED_TIMEOUT,
+          },
+          transcription_options: {
+            provider: "gladia",
+          },
+          metadata,
+        } satisfies Partial<Bot>,
+      },
+      {
+        params: { id: event.id },
+      },
+    );
+
+  await supabase.from("meeting_bots").insert(
+    calendarEventResult.bots.map((bot) => ({
+      id: bot.bot_id,
+      raw_data: {
+        google_calendar_raw_data: event,
+      } as Json,
+      event_id: event.id,
+    })),
   );
 }
 
@@ -663,7 +675,7 @@ export async function POST(request: Request) {
         recallClient,
       );
 
-      await handleVideoUpload(bot, event, supabase);
+      await handleVideoUpload(bot, supabase, recallClient);
 
       if (transcript.length > 0) {
         await handleTranscript(bot, transcript, supabase);

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
+import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
 import type { Json, TablesInsert } from "~/lib/supabase/database.types";
 import { createClient, type SupabaseServerClient } from "~/lib/supabase/server";
@@ -155,6 +156,7 @@ async function uploadToApiVideo(
         event?: { raw?: calendar_v3.Schema$Event } | string;
         google_calendar_raw_data?: { raw?: calendar_v3.Schema$Event } | string;
         user_id?: string;
+        event_id?: string;
       }
     | undefined;
 
@@ -171,15 +173,22 @@ async function uploadToApiVideo(
   }
 
   const userId = extra?.user_id;
-  const event = extra?.event
-    ? typeof extra.event === "string"
-      ? extra.event
-      : JSON.stringify(extra.event)
-    : extra?.google_calendar_raw_data
-      ? typeof extra.google_calendar_raw_data === "string"
-        ? extra.google_calendar_raw_data
-        : JSON.stringify(extra.google_calendar_raw_data)
-      : undefined;
+  const event =
+    extra?.event_id && typeof extra.event_id === "string"
+      ? JSON.stringify(
+          await createRecallClient().calendarV2.calendar_events_retrieve({
+            params: { id: extra.event_id },
+          }),
+        )
+      : extra?.event
+        ? typeof extra.event === "string"
+          ? extra.event
+          : JSON.stringify(extra.event)
+        : extra?.google_calendar_raw_data
+          ? typeof extra.google_calendar_raw_data === "string"
+            ? extra.google_calendar_raw_data
+            : JSON.stringify(extra.google_calendar_raw_data)
+          : undefined;
 
   const eventParsed = (() => {
     try {
