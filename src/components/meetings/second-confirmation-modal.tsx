@@ -19,7 +19,7 @@ interface SecondConfirmationModalProps {
   isDeleting: boolean;
 }
 
-const CONFIRMATION_TEXT = "delete the meeting and all associated resources";
+const CONFIRMATION_TEXT = "delete";
 
 export function SecondConfirmationModal({
   isOpen,
