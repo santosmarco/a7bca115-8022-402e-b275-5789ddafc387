@@ -97,7 +97,7 @@ async function handleTranscript(
   >,
   supabase: SupabaseServerClient,
 ) {
-  logger.info(`Processing transcript for bot ${bot.id}`, {
+  logger.info(`📝 Processing transcript for bot ${bot.id}`, {
     transcriptLength: transcript.length,
     fullTranscript: transcript,
   });
@@ -117,7 +117,7 @@ async function handleTranscript(
       .select("*");
 
   if (transcriptSlicesError || !transcriptSlices) {
-    logger.error("Transcript slices error:", {
+    logger.error("❌ Transcript slices error:", {
       fullError: transcriptSlicesError,
       botId: bot.id,
     });
@@ -126,7 +126,7 @@ async function handleTranscript(
     );
   }
 
-  logger.info("Successfully inserted transcript slices", {
+  logger.info("✅ Successfully inserted transcript slices", {
     slicesCount: transcriptSlices.length,
     slices: transcriptSlices,
   });
@@ -147,14 +147,14 @@ async function handleTranscript(
   );
 
   if (wordsError) {
-    logger.error("Transcript words error:", {
+    logger.error("❌ Transcript words error:", {
       fullError: wordsError,
       botId: bot.id,
     });
     throw new Error(wordsError.message);
   }
 
-  logger.info(`Successfully processed transcript words for bot ${bot.id}`);
+  logger.info(`✨ Successfully processed transcript words for bot ${bot.id}`);
 }
 
 async function handleVideoUpload(
@@ -164,12 +164,21 @@ async function handleVideoUpload(
 ) {
   if (!bot.video_url) return;
 
+  logger.info(`🎥 Starting video upload process for bot ${bot.id}`, {
+    videoUrl: bot.video_url,
+  });
+
   const [storageUrl, apiVideoId] = await Promise.all([
     uploadVideoToStorage(bot.video_url, bot.id, supabase).catch(
       () => undefined,
     ),
     uploadVideoToApiVideo(bot, recallClient).catch(() => undefined),
   ]);
+
+  logger.info(`📊 Video upload results for bot ${bot.id}`, {
+    storageUrl,
+    apiVideoId,
+  });
 
   return { storageUrl, apiVideoId };
 }
@@ -179,13 +188,13 @@ async function uploadVideoToStorage(
   botId: string,
   supabase: SupabaseServerClient,
 ) {
-  logger.info(`Starting video upload to storage for bot ${botId}`, {
+  logger.info(`📤 Starting video upload to storage for bot ${botId}`, {
     videoUrl,
   });
 
   try {
     const response = await fetch(videoUrl);
-    logger.info(`Fetch response status: ${response.status}`, {
+    logger.info(`📡 Fetch response status: ${response.status}`, {
       botId,
     });
 
@@ -193,6 +202,11 @@ async function uploadVideoToStorage(
 
     const blob = await response.blob();
     const fileName = `${botId}.mp4`;
+
+    logger.info(`💾 Uploading blob to storage for bot ${botId}`, {
+      blobSize: blob.size,
+      fileName,
+    });
 
     const { error } = await supabase.storage
       .from("meetings")
@@ -207,14 +221,16 @@ async function uploadVideoToStorage(
       data: { publicUrl },
     } = supabase.storage.from("meetings").getPublicUrl(fileName);
 
-    logger.info(`Successfully uploaded video to storage for bot ${botId}`, {
+    logger.info(`✅ Successfully uploaded video to storage for bot ${botId}`, {
       publicUrl,
     });
 
     return publicUrl;
   } catch (error) {
-    logger.error("Error uploading video", {
+    logger.error("❌ Error uploading video", {
       error: error as Error,
+      botId,
+      videoUrl,
     });
     throw new Error("Failed to upload video to storage");
   }
@@ -224,6 +240,8 @@ async function uploadVideoToApiVideo(
   bot: Bot,
   recallClient: ReturnType<typeof createRecallClient>,
 ) {
+  logger.info(`🎬 Starting API.video upload for bot ${bot.id}`);
+
   const event =
     typeof bot.metadata?.event_id === "string"
       ? await recallClient.calendarV2.calendar_events_retrieve({
@@ -232,11 +250,11 @@ async function uploadVideoToApiVideo(
       : undefined;
 
   const tags = _.uniq(bot.meeting_participants.map(({ name }) => name.trim()));
-  logger.info(`Detected speakers/tags: ${tags.join(", ")}`, { tags });
+  logger.info(`🏷️ Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
   if (tags.length === 0) {
     await slack.warn({
-      text: `Skipping API video upload for meeting ${bot.id} - No speakers detected`,
+      text: `⚠️ Skipping API video upload for meeting ${bot.id} - No speakers detected`,
     });
     return null;
   }
@@ -247,7 +265,7 @@ async function uploadVideoToApiVideo(
     bot.metadata?.user_id && { key: "user_id", value: bot.metadata.user_id },
   ].filter(isTruthy);
 
-  logger.info("Prepared metadata:", { metadata });
+  logger.info("📋 Prepared metadata:", { metadata });
 
   try {
     await slack.send({
@@ -266,24 +284,25 @@ async function uploadVideoToApiVideo(
       metadata,
     });
 
-    logger.info("API.video upload successful", {
+    logger.info("✅ API.video upload successful", {
       videoId: video.videoId,
       videoDetails: video,
     });
 
     await slack.success({
-      text: `Successfully uploaded video to api.video for meeting ${bot.id}`,
+      text: `🎉 Successfully uploaded video to api.video for meeting ${bot.id}`,
     });
 
     return video.videoId;
   } catch (error) {
     await slack.error({
-      text: `Failed to upload video to api.video for meeting ${bot.id}: ${
+      text: `❌ Failed to upload video to api.video for meeting ${bot.id}: ${
         error instanceof Error ? error.message : "Unknown error"
       }`,
     });
-    logger.error("Error uploading to api.video", {
+    logger.error("❌ Error uploading to api.video", {
       error,
+      botId: bot.id,
     });
     throw new Error("Failed to upload video to api.video");
   }
@@ -668,27 +687,28 @@ function handleCalendarEventError(error: unknown, event: CalendarEvent) {
 }
 
 export async function POST(request: Request) {
-  logger.info("Received webhook request", {
+  logger.info("📥 Received webhook request", {
     headers: request.headers,
   });
 
   const payloadParseResult = WebhookEvent.safeParse(await request.json());
 
   if (!payloadParseResult.success) {
-    logger.error("Validation error:", {
+    logger.error("❌ Validation error:", {
       error: payloadParseResult.error,
     });
     return new NextResponse(payloadParseResult.error.message, { status: 200 });
   }
 
   const payload = payloadParseResult.data;
-  logger.info("Parsed event:", { payload });
+  logger.info("✅ Parsed event:", { payload });
 
   const recallClient = createRecallClient();
   const supabase = await createSupabaseClient();
 
   try {
     if (payload.event === "bot.status_change") {
+      logger.info(`🤖 Processing bot status change for ${payload.data.bot_id}`);
       const { bot, event, transcript } = await handleBotStatusChange(
         payload,
         recallClient,
@@ -696,7 +716,8 @@ export async function POST(request: Request) {
 
       let videoUploadResult: Awaited<ReturnType<typeof handleVideoUpload>>;
 
-      if (payload.data.status?.code === "done") {
+      if (bot.status === "done") {
+        logger.info(`🎯 Bot ${bot.id} is done, processing outputs`);
         videoUploadResult = await handleVideoUpload(
           bot,
           supabase,
@@ -722,19 +743,22 @@ export async function POST(request: Request) {
         })
         .eq("id", bot.id);
 
-      logger.info("Bot status change processed successfully", {
+      logger.info("✨ Bot status change processed successfully", {
         botId: bot.id,
         eventId: event?.id,
         transcriptLength: transcript.length,
       });
     } else if (payload.event === "calendar.sync_events") {
+      logger.info(
+        `📅 Processing calendar sync for ${payload.data.calendar_id}`,
+      );
       await handleCalendarSync(payload, recallClient, supabase);
     }
 
-    logger.info("Successfully processed webhook request");
+    logger.info("✅ Successfully processed webhook request");
     return new NextResponse("OK", { status: 200 });
   } catch (error) {
-    logger.error("Error processing webhook event:", {
+    logger.error("❌ Error processing webhook event:", {
       error: error as Error,
     });
     return new NextResponse("Internal Server Error", { status: 200 });
