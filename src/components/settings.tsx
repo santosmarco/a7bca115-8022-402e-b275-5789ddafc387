@@ -26,14 +26,13 @@ export type SettingsProps = {
 const fadeIn = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4 },
+  transition: { duration: 0.2 },
 };
 
 const stagger = {
   animate: {
     transition: {
-      delayChildren: 0.2,
-      staggerChildren: 0.1,
+      staggerChildren: 0.05,
     },
   },
 };
@@ -143,7 +142,7 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                 </p>
               </div>
 
-              <div className="space-y-6 pt-4">
+              <div className="space-y-4 pt-6">
                 <div className="flex flex-col space-y-3">
                   <label htmlFor="bot-name" className="text-sm font-medium">
                     Bot name
@@ -179,7 +178,7 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                 </p>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-4 pt-6">
                 <h3 className="text-base font-medium text-foreground">
                   Include
                 </h3>
@@ -236,7 +235,7 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                   />
                 </div>
 
-                <h3 className="text-base font-medium text-foreground">
+                <h3 className="pt-1 text-base font-medium text-foreground">
                   Exclude
                 </h3>
 
