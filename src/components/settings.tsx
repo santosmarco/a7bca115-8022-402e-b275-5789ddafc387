@@ -2,8 +2,10 @@
 
 import { motion } from "framer-motion";
 import type React from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { Input } from "~/components/ui/input";
 import { Switch } from "~/components/ui/switch";
 import {
   Tooltip,
@@ -24,47 +26,87 @@ export type SettingsProps = {
 const fadeIn = {
   initial: { opacity: 0, y: 10 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.2 },
+  transition: { duration: 0.4 },
 };
 
 const stagger = {
   animate: {
     transition: {
-      staggerChildren: 0.05,
+      delayChildren: 0.2,
+      staggerChildren: 0.1,
     },
   },
 };
 
 export function Settings({ user, settings: initialSettings }: SettingsProps) {
   const utils = api.useUtils();
-  const supabase = createClient();
   const isCoach = user.role === "coach";
+  const [botName, setBotName] = useState(initialSettings.bot_name ?? "");
+  const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const updateSetting = async (
-    key: keyof typeof initialSettings,
-    value: boolean,
-  ) => {
-    if (isCoach) return;
+  const updateSetting = useCallback(
+    async (key: keyof typeof initialSettings, value: boolean | string) => {
+      const supabase = createClient();
 
-    // Optimistically update the UI
-    utils.settings.retrieveForProfile.setData(
-      { profileId: initialSettings.profile_id },
-      (old) => (old ? { ...old, [key]: value } : old),
-    );
+      if (isCoach || initialSettings[key] === value) return;
 
-    // Update in database
-    await supabase
-      .from("user_settings")
-      .update({ [key]: value })
-      .eq("profile_id", initialSettings.profile_id);
+      // Optimistically update the UI
+      utils.settings.retrieveForProfile.setData(
+        { profileId: initialSettings.profile_id },
+        (old) => (old ? { ...old, [key]: value } : old),
+      );
 
-    // Invalidate to ensure consistency
-    await utils.settings.retrieveForProfile.invalidate({
-      profileId: initialSettings.profile_id,
-    });
+      // Update in database
+      void (async () => {
+        await supabase
+          .from("user_settings")
+          .update({ [key]: value })
+          .eq("profile_id", initialSettings.profile_id);
 
-    toast.success("Saved");
-  };
+        // Invalidate to ensure consistency
+        await utils.settings.retrieveForProfile.invalidate({
+          profileId: initialSettings.profile_id,
+        });
+      })();
+
+      toast.success("Saved");
+    },
+    [isCoach, utils.settings.retrieveForProfile, initialSettings],
+  );
+
+  const debouncedUpdateBotName = useCallback(
+    (value: string) => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      saveTimeoutRef.current = setTimeout(() => {
+        void (async () => {
+          if (value !== initialSettings.bot_name) {
+            await updateSetting("bot_name", value);
+          }
+        })();
+      }, 500);
+    },
+    [initialSettings.bot_name, updateSetting],
+  );
+
+  const handleBotNameBlur = useCallback(async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    if (botName !== initialSettings.bot_name) {
+      await updateSetting("bot_name", botName);
+    }
+  }, [botName, initialSettings.bot_name, updateSetting]);
+
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const settings =
     utils.settings.retrieveForProfile.getData({
@@ -76,7 +118,7 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
       initial="initial"
       animate="animate"
       variants={stagger}
-      className="p-4 text-foreground md:p-6"
+      className="text-foreground"
     >
       <motion.div variants={fadeIn} className="mx-auto max-w-2xl space-y-6">
         <div className="flex items-center justify-between">
@@ -87,99 +129,142 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
 
         <motion.div
           variants={fadeIn}
-          className="rounded-lg border border-border bg-card p-6"
+          className="rounded-xl border border-border bg-card shadow-sm"
         >
-          <div className="space-y-6">
-            <div className="flex flex-col space-y-2">
-              <h2 className="text-lg font-medium text-foreground">
-                Joining Preferences
-              </h2>
+          <div className="space-y-6 divide-y divide-border">
+            <div className="p-6 md:p-8">
+              <div className="flex flex-col space-y-2">
+                <h2 className="text-lg font-medium text-foreground">
+                  Bot Preferences
+                </h2>
 
-              <p className="text-sm text-muted-foreground">
-                Choose which meetings on your calendar you&apos;d like Titan to
-                automatically join.
-              </p>
+                <p className="text-sm text-muted-foreground">
+                  Customize how your bot appears and behaves in meetings.
+                </p>
+              </div>
+
+              <div className="space-y-6 pt-4">
+                <div className="flex flex-col space-y-3">
+                  <label htmlFor="bot-name" className="text-sm font-medium">
+                    Bot name
+                  </label>
+                  <Input
+                    id="bot-name"
+                    placeholder="Enter your bot's name"
+                    value={botName}
+                    onChange={(e) => {
+                      setBotName(e.target.value);
+                      debouncedUpdateBotName(e.target.value);
+                    }}
+                    onBlur={handleBotNameBlur}
+                    disabled={isCoach}
+                    className="max-w-full"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This is how your bot will appear in meetings
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-4 pt-2">
-              <h3 className="text-base font-medium text-foreground">Include</h3>
+            <div className="p-6 md:p-8">
+              <div className="space-y-2">
+                <h2 className="text-lg font-medium text-foreground">
+                  Joining Preferences
+                </h2>
 
-              <ToggleSetting
-                value={settings.should_join_team_meetings}
-                onChange={(value) =>
-                  updateSetting("should_join_team_meetings", value)
-                }
-                title="Team meetings"
-                description={
-                  <p>
-                    Meetings where everyone invited has{" "}
-                    {settings.profile?.email ? (
+                <p className="text-sm text-muted-foreground">
+                  Choose which meetings on your calendar you&apos;d like Titan
+                  to automatically join.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <h3 className="text-base font-medium text-foreground">
+                  Include
+                </h3>
+
+                <div className="space-y-3">
+                  <ToggleSetting
+                    value={settings.should_join_team_meetings}
+                    onChange={(value) =>
+                      updateSetting("should_join_team_meetings", value)
+                    }
+                    title="Team meetings"
+                    description={
+                      <p>
+                        Meetings where everyone invited has{" "}
+                        {settings.profile?.email ? (
+                          <>
+                            an{" "}
+                            <span className="rounded-sm bg-accent px-1 py-0.5 text-foreground/80 transition-all group-hover:bg-accent-foreground/10 group-hover:text-foreground">
+                              {settings.profile?.email?.split("@")?.[1]}
+                            </span>{" "}
+                            email address
+                          </>
+                        ) : (
+                          "a company email"
+                        )}
+                      </p>
+                    }
+                    disabled={isCoach}
+                  />
+
+                  <ToggleSetting
+                    value={settings.should_join_external_meetings}
+                    onChange={(value) =>
+                      updateSetting("should_join_external_meetings", value)
+                    }
+                    title="External meetings"
+                    description={
                       <>
-                        an{" "}
-                        <span className="rounded-sm bg-accent px-1 py-0.5 text-foreground/80 transition-all group-hover:bg-accent-foreground/10 group-hover:text-foreground">
-                          {settings.profile?.email?.split("@")?.[1]}
-                        </span>{" "}
-                        email address
+                        Meetings where some people invited don&apos;t have{" "}
+                        {settings.profile?.email ? (
+                          <>
+                            an{" "}
+                            <span className="rounded-sm bg-accent px-1 py-0.5 text-foreground/80 transition-all group-hover:bg-accent-foreground/10 group-hover:text-foreground">
+                              {settings.profile?.email?.split("@")?.[1]}
+                            </span>{" "}
+                            email address
+                          </>
+                        ) : (
+                          "a company email"
+                        )}
                       </>
-                    ) : (
-                      "a company email"
-                    )}
-                  </p>
-                }
-                disabled={isCoach}
-              />
+                    }
+                    disabled={isCoach}
+                  />
+                </div>
 
-              <ToggleSetting
-                value={settings.should_join_external_meetings}
-                onChange={(value) =>
-                  updateSetting("should_join_external_meetings", value)
-                }
-                title="External meetings"
-                description={
-                  <>
-                    Meetings where some people invited don&apos;t have{" "}
-                    {settings.profile?.email ? (
-                      <>
-                        an{" "}
-                        <span className="rounded-sm bg-accent px-1 py-0.5 text-foreground/80 transition-all group-hover:bg-accent-foreground/10 group-hover:text-foreground">
-                          {settings.profile?.email?.split("@")?.[1]}
-                        </span>{" "}
-                        email address
-                      </>
-                    ) : (
-                      "a company email"
-                    )}
-                  </>
-                }
-                disabled={isCoach}
-              />
+                <h3 className="text-base font-medium text-foreground">
+                  Exclude
+                </h3>
 
-              <h3 className="pt-2 text-base font-medium text-foreground">
-                Exclude
-              </h3>
+                <div className="space-y-3">
+                  <ToggleSetting
+                    value={settings.should_not_join_pending_meetings}
+                    onChange={(value) =>
+                      updateSetting("should_not_join_pending_meetings", value)
+                    }
+                    title="Pending meetings"
+                    description="Meetings you haven't yet accepted or declined"
+                    disabled={isCoach}
+                  />
 
-              <ToggleSetting
-                value={settings.should_not_join_pending_meetings}
-                onChange={(value) =>
-                  updateSetting("should_not_join_pending_meetings", value)
-                }
-                title="Pending meetings"
-                description="Meetings you haven't yet accepted or declined"
-                disabled={isCoach}
-              />
-
-              <ToggleSetting
-                value={settings.should_not_join_owned_by_others_meetings}
-                onChange={(value) =>
-                  updateSetting(
-                    "should_not_join_owned_by_others_meetings",
-                    value,
-                  )
-                }
-                title="Meetings organized by others"
-                description="Meetings where you are an invitee, not the organizer"
-                disabled={isCoach}
-              />
+                  <ToggleSetting
+                    value={settings.should_not_join_owned_by_others_meetings}
+                    onChange={(value) =>
+                      updateSetting(
+                        "should_not_join_owned_by_others_meetings",
+                        value,
+                      )
+                    }
+                    title="Meetings organized by others"
+                    description="Meetings where you are an invitee, not the organizer"
+                    disabled={isCoach}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -210,7 +295,7 @@ function ToggleSetting({
           <motion.div
             variants={fadeIn}
             className={cn(
-              "group flex cursor-pointer items-center justify-between rounded-md bg-secondary/40 p-4 transition-colors hover:bg-secondary",
+              "group flex cursor-pointer items-center justify-between rounded-lg bg-secondary/40 p-4 transition-all hover:bg-secondary/60",
               disabled && "pointer-events-none opacity-50",
             )}
             onClick={() => !disabled && onChange(!value)}
