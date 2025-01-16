@@ -740,7 +740,13 @@ export async function POST(request: Request) {
         void recallClient.bot
           .bot_analyze_create(
             {
-              gladia_v2_async_transcription: {},
+              gladia_v2_async_transcription: {
+                custom_vocabulary: bot.meeting_participants.map(
+                  ({ name }) => name,
+                ),
+                name_consistency: true,
+                punctuation_enhanced: true,
+              },
             },
             { params: { id: bot.id } },
           )
