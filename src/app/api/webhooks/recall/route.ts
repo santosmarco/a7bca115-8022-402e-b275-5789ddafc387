@@ -729,17 +729,17 @@ export async function POST(request: Request) {
 
       let videoUploadResult: Awaited<ReturnType<typeof handleVideoUpload>>;
 
-      if (bot.status === "done") {
+      if (payload.data.status?.code === "done") {
         logger.info(`🎯 Bot ${bot.id} is done, processing outputs`);
         videoUploadResult = await handleVideoUpload(
           bot,
           supabase,
           recallClient,
         );
+      }
 
-        if (transcript.length > 0) {
+      if (payload.data.status?.code === "analysis_done") {
           await handleTranscript(bot, transcript, supabase);
-        }
       }
 
       await supabase
