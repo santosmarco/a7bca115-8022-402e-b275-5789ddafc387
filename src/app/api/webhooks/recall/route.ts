@@ -416,7 +416,7 @@ async function processCalendarEvent(
   recallClient: ReturnType<typeof createRecallClient>,
   supabase: SupabaseServerClient,
 ) {
-  const deduplicationKey = `${payload.data.calendar_id}-${calendarData.profile_id}-${event.id}`;
+  const deduplicationKey = `${event.meeting_url}-${calendarData.profile_id}`;
 
   // Handle deleted or invalid meetings
   if (event.is_deleted || !event.meeting_url) {
