@@ -70,6 +70,8 @@ import {
   FormMessage,
 } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Switch } from "~/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -298,6 +300,7 @@ function NewClientDialog() {
       lastName: "",
       email: "",
       companyName: "",
+      role: "user",
     },
   });
   const { mutate: inviteClient, isPending } =
@@ -348,19 +351,14 @@ function NewClientDialog() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {profile?.is_admin && (
               <div className="mb-10">
-                <Tabs
-                  defaultValue="client"
-                  onValueChange={(value) => setIsCoach(value === "coach")}
-                >
-                  <TabsList className="w-full">
-                    <TabsTrigger value="client" className="flex-1">
-                      Client
-                    </TabsTrigger>
-                    <TabsTrigger value="coach" className="flex-1">
-                      Coach
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="isCoach">Invite as Coach</Label>
+                  <Switch
+                    id="isCoach"
+                    checked={isCoach}
+                    onCheckedChange={setIsCoach}
+                  />
+                </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-4">
