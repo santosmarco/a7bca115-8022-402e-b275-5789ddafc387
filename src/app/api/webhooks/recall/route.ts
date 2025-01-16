@@ -249,6 +249,19 @@ async function uploadVideoToApiVideo(
         })
       : undefined;
 
+  const existingVideo = await apiVideo.videos.list({
+    metadata: {
+      meeting_bot_id: bot.id,
+    },
+  });
+
+  if (existingVideo.data?.length && existingVideo.data.length > 0) {
+    logger.info("🎥 API.video video already exists", {
+      videoId: existingVideo.data?.[0]?.videoId,
+    });
+    return existingVideo.data?.[0]?.videoId;
+  }
+
   const tags = _.uniq(bot.meeting_participants.map(({ name }) => name.trim()));
   logger.info(`🏷️ Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
