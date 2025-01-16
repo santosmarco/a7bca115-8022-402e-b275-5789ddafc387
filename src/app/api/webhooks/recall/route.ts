@@ -1,3 +1,4 @@
+import axios from "axios";
 import _ from "lodash";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -193,14 +194,17 @@ async function uploadVideoToStorage(
   });
 
   try {
-    const response = await fetch(videoUrl);
+    const response = await axios.get(videoUrl, {
+      responseType: "blob",
+    });
     logger.info(`📡 Fetch response status: ${response.status}`, {
       botId,
     });
 
-    if (!response.ok) throw new Error("Failed to fetch video from AWS S3");
+    if (response.status !== 200)
+      throw new Error("Failed to fetch video from AWS S3");
 
-    const blob = await response.blob();
+    const blob = response.data as Blob;
     const fileName = `${botId}.mp4`;
 
     logger.info(`💾 Uploading blob to storage for bot ${botId}`, {
@@ -213,6 +217,10 @@ async function uploadVideoToStorage(
       .upload(fileName, blob, {
         contentType: "video/mp4",
         upsert: true,
+        metadata: {
+          meeting_bot_id: botId,
+          meeting_url: videoUrl,
+        },
       });
 
     if (error) throw error;
