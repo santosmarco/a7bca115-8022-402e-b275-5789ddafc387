@@ -2011,7 +2011,7 @@ export type GladiaV2AsyncTranscription = z.infer<
 
 export const BotAnalysis = z
   .object({
-    job_id: z.string().uuid(),
+    job_id: z.string().uuid().nullish(),
     assemblyai_async_transcription: AssemblyaiAsyncTranscription.nullish(),
     speechmatics_async_transcription: SpeechmaticsAsyncTranscription.nullish(),
     rev_async_transcription: RevAsyncTranscription.nullish(),

@@ -736,10 +736,28 @@ export async function POST(request: Request) {
           supabase,
           recallClient,
         );
+
+        void recallClient.bot
+          .bot_analyze_create(
+            {
+              gladia_v2_async_transcription: {},
+            },
+            { params: { id: bot.id } },
+          )
+          .then((res) => {
+            logger.info("🎯 Bot analysis started", {
+              jobId: res.job_id,
+            });
+          })
+          .catch((error: Error) => {
+            logger.error("❌ Error starting bot analysis", {
+              error,
+            });
+          });
       }
 
       if (payload.data.status?.code === "analysis_done") {
-          await handleTranscript(bot, transcript, supabase);
+        await handleTranscript(bot, transcript, supabase);
       }
 
       await supabase
