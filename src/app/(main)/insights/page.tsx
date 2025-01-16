@@ -133,12 +133,6 @@ export default function InsightsPage() {
 
   if (userLoading || frameworksLoading || chatLoading || !userId) {
     return (
-      <ChatContainer
-        progress={{
-          completedMeetings: filteredVideos.length,
-          requiredMeetings: MIN_MEETINGS,
-        }}
-      >
         <div className="mt-20 flex items-center justify-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -150,7 +144,6 @@ export default function InsightsPage() {
             <p className="text-sm text-muted-foreground">Preparing chat...</p>
           </motion.div>
         </div>
-      </ChatContainer>
     );
   }
 
@@ -212,7 +205,7 @@ export default function InsightsPage() {
         onTopicSelect={(topic) => void setSelectedTopic(topic)}
         onClick={() => setShouldShowLockScreen(true)}
         isLoading={hasNextPage}
-        disabled={filteredVideos.length < MIN_MEETINGS}
+        disabled={videosLoading && filteredVideos.length < MIN_MEETINGS}
       />
     </ChatContainer>
   );
