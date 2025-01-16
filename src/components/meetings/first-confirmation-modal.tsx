@@ -32,11 +32,11 @@ export function FirstConfirmationModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            Confirm Meeting Deletion
+            Delete Meeting and All Associated Data
           </DialogTitle>
           <DialogDescription>
-            This action is irreversible and will permanently delete all
-            associated data.
+          Deleting this will permanently remove the video recording, all associated metadata, moments, chat history, and insights. 
+          This action is irreversible.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -52,8 +52,7 @@ export function FirstConfirmationModal({
               htmlFor="understand"
               className="-mt-0.5 text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I understand that this action cannot be undone and all meeting
-              data will be permanently deleted.
+              I understand that this action cannot be undone and the video, metadata, and recordings will be permanently deleted.
             </label>
           </div>
           <div className="flex items-start space-x-2">
@@ -68,7 +67,7 @@ export function FirstConfirmationModal({
               htmlFor="aware"
               className="-mt-0.5 text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              I am aware that all insights, moments, and resources related to
+              I am aware that all insights chats, moments, and resources related to
               this meeting will also be permanently deleted.
             </label>
           </div>
