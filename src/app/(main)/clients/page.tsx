@@ -78,6 +78,7 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import {
   Tooltip,
   TooltipContent,
@@ -287,6 +288,7 @@ const formSchema = UserInviteCreate.omit({
 
 function NewClientDialog() {
   const [open, setOpen] = React.useState(false);
+  const [isCoach, setIsCoach] = React.useState(false);
   const utils = api.useUtils();
   const { profile } = useProfile();
   const form = useForm<z.infer<typeof formSchema>>({
@@ -301,7 +303,9 @@ function NewClientDialog() {
   const { mutate: inviteClient, isPending } =
     api.userInvites.create.useMutation({
       onSuccess: () => {
-        toast.success("Client has been invited successfully.");
+        toast.success(
+          `${isCoach ? "Coach" : "Client"} has been invited successfully.`,
+        );
         form.reset();
         setOpen(false);
         void utils.clients.getClients.invalidate();
@@ -321,6 +325,7 @@ function NewClientDialog() {
       email: values.email,
       companyName: values.companyName,
       userId: profile.id,
+      role: isCoach ? "coach" : "user",
     });
   }
 
@@ -329,18 +334,35 @@ function NewClientDialog() {
       <DialogTrigger asChild>
         <Button size="sm" variant="secondary">
           <Plus className="h-4 w-4" />
-          Invite Client
+          Invite User
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Invite New Client</DialogTitle>
+          <DialogTitle>Invite New User</DialogTitle>
           <DialogDescription>
-            Fill in the details below to invite a new client.
+            Fill in the details below to invite a new user.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {profile?.is_admin && (
+              <div className="mb-10">
+                <Tabs
+                  defaultValue="client"
+                  onValueChange={(value) => setIsCoach(value === "coach")}
+                >
+                  <TabsList className="w-full">
+                    <TabsTrigger value="client" className="flex-1">
+                      Client
+                    </TabsTrigger>
+                    <TabsTrigger value="coach" className="flex-1">
+                      Coach
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -408,7 +430,9 @@ function NewClientDialog() {
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? "Inviting..." : "Invite Client"}
+                {isPending
+                  ? "Inviting..."
+                  : `Invite ${isCoach ? "Coach" : "Client"}`}
               </Button>
             </div>
           </form>
@@ -672,7 +696,7 @@ function ActionsCell({
   );
 
   const handleResendInvitation = (clientEmail: string) => () => {
-    resendInvitation({ email: clientEmail });
+    resendInvitation({ email: clientEmail, role: "user" });
   };
 
   const handleDeactivateClient = (clientId: string) => () => {

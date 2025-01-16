@@ -17,6 +17,7 @@ export const userInvitesRouter = createTRPCRouter({
         .from("profiles")
         .select("id")
         .eq("email", input.email)
+        .eq("role", input.role)
         .maybeSingle();
 
       if (checkError) {
@@ -41,6 +42,7 @@ export const userInvitesRouter = createTRPCRouter({
           company: input.companyName,
           email: input.email,
           invited_by: input.userId,
+          role: input.role,
         })
         .select("*, invited_by_profile:profiles(*)")
         .single();
@@ -61,6 +63,7 @@ export const userInvitesRouter = createTRPCRouter({
     .input(
       z.object({
         email: z.string().email(),
+        role: z.enum(["coach", "user"]),
       }),
     )
     .mutation(async ({ input }) => {
@@ -70,6 +73,7 @@ export const userInvitesRouter = createTRPCRouter({
         .from("user_invites")
         .select("*, invited_by_profile:profiles(*)")
         .eq("email", input.email)
+        .eq("role", input.role)
         .maybeSingle();
 
       if (userInviteError || !userInvite) {

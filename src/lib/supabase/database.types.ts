@@ -532,7 +532,7 @@ export type Database = {
           embed_moments_status: string | null
           embed_notes_status: string | null
           embed_qna_status: string | null
-          id: string | null
+          id: string
           meetings_status: string | null
           moments_status: string | null
           observation_status: string | null
@@ -545,7 +545,7 @@ export type Database = {
           embed_moments_status?: string | null
           embed_notes_status?: string | null
           embed_qna_status?: string | null
-          id?: string | null
+          id: string
           meetings_status?: string | null
           moments_status?: string | null
           observation_status?: string | null
@@ -558,7 +558,7 @@ export type Database = {
           embed_moments_status?: string | null
           embed_notes_status?: string | null
           embed_qna_status?: string | null
-          id?: string | null
+          id?: string
           meetings_status?: string | null
           moments_status?: string | null
           observation_status?: string | null
@@ -1398,6 +1398,7 @@ export type Database = {
           id: string
           invited_by: string
           last_name: string | null
+          role: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Insert: {
           company?: string | null
@@ -1407,6 +1408,7 @@ export type Database = {
           id?: string
           invited_by: string
           last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Update: {
           company?: string | null
@@ -1416,6 +1418,7 @@ export type Database = {
           id?: string
           invited_by?: string
           last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role_enum"] | null
         }
         Relationships: [
           {

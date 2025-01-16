@@ -134,18 +134,18 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
             <div className="p-6 md:p-8">
               <div className="flex flex-col space-y-2">
                 <h2 className="text-lg font-medium text-foreground">
-                  Bot Preferences
+                  Notetaker Preferences
                 </h2>
 
                 <p className="text-sm text-muted-foreground">
-                  Customize how your bot appears and behaves in meetings.
+                  Customize how your notetaker appears and behaves in meetings.
                 </p>
               </div>
 
               <div className="space-y-4 pt-6">
                 <div className="flex flex-col space-y-3">
                   <label htmlFor="bot-name" className="text-sm font-medium">
-                    Bot name
+                    Notetaker name
                   </label>
                   <Input
                     id="bot-name"
@@ -160,7 +160,7 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                     className="max-w-full"
                   />
                   <p className="text-xs text-muted-foreground">
-                    This is how your bot will appear in meetings
+                    This is how your notetaker will appear in meetings
                   </p>
                 </div>
               </div>

@@ -17,7 +17,7 @@ export function transformUserInviteIntoProfile(
       .join(" "),
     email: userInvite.email,
     is_admin: false,
-    role: "user",
+    role: userInvite.role ?? "user",
     coach_id: userInvite.invited_by_profile?.id ?? null,
     coach: userInvite.invited_by_profile ? [userInvite.invited_by_profile] : [],
     company: userInvite.company,

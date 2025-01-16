@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(
           `${env.NEXT_PUBLIC_SITE_URL}/login?reason=invitation-expired&email=${encodeURIComponent(
             user.email ?? "",
-          )}`,
+          )}&role=user`,
         );
       }
       await handleInvitedUserProfile(supabase, user, inviteData);
@@ -280,6 +280,7 @@ async function handleInvitedUserProfile(
               .join(" "),
     company: inviteData.company,
     coach_id: inviteData.invited_by,
+    role: inviteData.role === "user" ? "user" : "coach",
   } satisfies TablesUpdate<"profiles">;
   logger.info("Profile data prepared", { profileData });
 
@@ -348,20 +349,20 @@ async function setupGoogleCalendar(
     .maybeSingle();
   logger.info("Existing calendar check", { existingCalendar });
 
-  // if (!existingCalendar && profile.role !== "coach") {
-  //   logger.info("Creating new recall calendar", { userId: user.id });
-  //   const recallCalendar = await createRecallCalendar(
-  //     user,
-  //     session.provider_refresh_token,
-  //   );
-  //   logger.info("Recall calendar created", { recallCalendar });
-  //   await supabase.from("recall_calendars").insert({
-  //     id: recallCalendar.id,
-  //     profile_id: user.id,
-  //     platform: "google_calendar",
-  //   });
-  //   logger.info("Calendar setup complete", { userId: user.id });
-  // }
+  if (!existingCalendar && profile.role !== "coach") {
+    logger.info("Creating new recall calendar", { userId: user.id });
+    const recallCalendar = await createRecallCalendar(
+      user,
+      session.provider_refresh_token,
+    );
+    logger.info("Recall calendar created", { recallCalendar });
+    await supabase.from("recall_calendars").insert({
+      id: recallCalendar.id,
+      profile_id: user.id,
+      platform: "google_calendar",
+    });
+    logger.info("Calendar setup complete", { userId: user.id });
+  }
 }
 
 async function createRecallCalendar(

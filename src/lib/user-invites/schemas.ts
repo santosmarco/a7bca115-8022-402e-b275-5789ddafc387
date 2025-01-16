@@ -8,5 +8,6 @@ export const UserInviteCreate = z.object({
     message: "Must be a valid email address",
   }),
   userId: z.string(),
+  role: z.enum(["coach", "user"]),
 });
 export type UserInviteCreate = z.infer<typeof UserInviteCreate>;

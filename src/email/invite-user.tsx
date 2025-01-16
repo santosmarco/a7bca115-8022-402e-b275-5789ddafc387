@@ -24,7 +24,7 @@ type InviteProfile = Pick<Tables<"profiles">, "email" | "nickname">;
 export type InvitationEmailProps = {
   invite: Pick<
     Tables<"user_invites">,
-    "id" | "email" | "first_name" | "last_name"
+    "id" | "email" | "first_name" | "last_name" | "role"
   > & {
     invited_by_profile: InviteProfile | null;
   };
@@ -71,7 +71,14 @@ export function InvitationEmail({ invite }: InvitationEmailProps) {
             </Text>
 
             <Text className="text-pretty text-sm leading-6 text-gray-800">
-              {invite.invited_by_profile ? (
+              {invite.role === "coach" ? (
+                <>
+                  <strong>Titan</strong> has invited you to join as a coach on{" "}
+                  <strong>{COMPANY_NAME}</strong>, the Meeting Intelligence
+                  Platform designed for startup leaders and their coaches to
+                  gain actionable insights from meetings.
+                </>
+              ) : invite.invited_by_profile ? (
                 <>
                   <strong>{invite.invited_by_profile.nickname}</strong> (
                   <Link
@@ -188,6 +195,7 @@ const previewProps = {
     email: "test@test.com",
     first_name: "John",
     last_name: null,
+    role: "user" as const,
     invited_by_profile: {
       nickname: "John Doe",
       email: "john@doe.com",

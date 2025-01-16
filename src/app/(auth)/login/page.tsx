@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 import titanLogo from "~/assets/titan-logo.svg";
 import { Alert, AlertTitle } from "~/components/ui/alert";
@@ -20,6 +21,11 @@ export default function SignInPage() {
   const reason = searchParams.get("reason");
   const email = searchParams.get("email");
   const invite = searchParams.get("invite");
+  const role = z
+    .enum(["user", "coach"])
+    .nullish()
+    .catch("user")
+    .parse(searchParams.get("role"));
 
   const { mutate: resendInvitation } =
     api.userInvites.resendInvitation.useMutation({
@@ -38,7 +44,7 @@ export default function SignInPage() {
 
   const handleResendInvitation = () => {
     if (!email) return;
-    resendInvitation({ email });
+    resendInvitation({ email, role: role ?? "user" });
   };
 
   useEffect(() => {
