@@ -737,7 +737,7 @@ export async function POST(request: Request) {
 
       let videoUploadResult: Awaited<ReturnType<typeof handleVideoUpload>>;
 
-      if (payload.data.status?.code === "done") {
+      if (payload.data.status?.code === "done" && bot.video_url) {
         logger.info(`🎯 Bot ${bot.id} is done, processing outputs`);
         videoUploadResult = await handleVideoUpload(
           bot,
