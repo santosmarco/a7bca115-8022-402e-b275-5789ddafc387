@@ -174,19 +174,22 @@ async function handleVideoUpload(
     videoUrl: bot.video_url,
   });
 
-  const [storageUrl, apiVideoId] = await Promise.all([
-    uploadVideoToStorage(bot.video_url, bot.id, supabase).catch(
-      () => undefined,
-    ),
-    uploadVideoToApiVideo(bot, recallClient).catch(() => undefined),
-  ]);
+  // Start storage upload in background and don't wait for it
+  void uploadVideoToStorage(bot.video_url, bot.id, supabase);
+
+  // Only wait for API video upload since it's faster
+  const apiVideoId = await uploadVideoToApiVideo(bot, recallClient).catch(
+    () => undefined,
+  );
 
   log.info(`📊 Video upload results for bot ${bot.id}`, {
-    storageUrl,
     apiVideoId,
   });
 
-  return { storageUrl, apiVideoId };
+  return {
+    storageUrl: `https://db.withtitan.com/storage/v1/object/public/meetings/${bot.id}.mp4`,
+    apiVideoId,
+  };
 }
 
 async function uploadVideoToStorage(
@@ -194,59 +197,69 @@ async function uploadVideoToStorage(
   botId: string,
   supabase: SupabaseServerClient,
 ) {
-  log.info(`📤 Starting video upload to storage for bot ${botId}`, {
-    videoUrl,
-  });
-
-  try {
-    const response = await axios.get(videoUrl, {
-      responseType: "blob",
-    });
-    log.info(`📡 Fetch response status: ${response.status}`, {
-      botId,
-    });
-
-    if (response.status !== 200)
-      throw new Error("Failed to fetch video from AWS S3");
-
-    const blob = response.data as Blob;
-    const fileName = `${botId}.mp4`;
-
-    log.info(`💾 Uploading blob to storage for bot ${botId}`, {
-      blobSize: blob.size,
-      fileName,
-    });
-
-    const { error } = await supabase.storage
-      .from("meetings")
-      .upload(fileName, blob, {
-        contentType: "video/mp4",
-        upsert: true,
-        metadata: {
-          meeting_bot_id: botId,
-          meeting_url: videoUrl,
-        },
-      });
-
-    if (error) throw error;
-
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("meetings").getPublicUrl(fileName);
-
-    log.info(`✅ Successfully uploaded video to storage for bot ${botId}`, {
-      publicUrl,
-    });
-
-    return publicUrl;
-  } catch (error) {
-    log.error("❌ Error uploading video", {
-      error: error as Error,
-      botId,
+  // Start the upload process in the background
+  void (async () => {
+    log.info(`📤 Starting video upload to storage for bot ${botId}`, {
       videoUrl,
     });
-    throw new Error("Failed to upload video to storage");
-  }
+
+    try {
+      const response = await axios.get(videoUrl, {
+        responseType: "blob",
+      });
+      log.info(`📡 Fetch response status: ${response.status}`, {
+        botId,
+      });
+
+      if (response.status !== 200)
+        throw new Error("Failed to fetch video from AWS S3");
+
+      const blob = response.data as Blob;
+      const fileName = `${botId}.mp4`;
+
+      log.info(`💾 Uploading blob to storage for bot ${botId}`, {
+        blobSize: blob.size,
+        fileName,
+      });
+
+      const { error } = await supabase.storage
+        .from("meetings")
+        .upload(fileName, blob, {
+          contentType: "video/mp4",
+          upsert: true,
+          metadata: {
+            meeting_bot_id: botId,
+            meeting_url: videoUrl,
+          },
+        });
+
+      if (error) throw error;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("meetings").getPublicUrl(fileName);
+
+      log.info(`✅ Successfully uploaded video to storage for bot ${botId}`, {
+        publicUrl,
+      });
+    } catch (error) {
+      log.error("❌ Error uploading video", {
+        error: error as Error,
+        botId,
+        videoUrl,
+      });
+
+      // Log error to monitoring but don't throw since this is a background task
+      await slack.error({
+        text: `❌ Failed to upload video to storage for meeting ${botId}: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      });
+    }
+  })();
+
+  // Return immediately since the upload is happening in the background
+  return undefined;
 }
 
 async function uploadVideoToApiVideo(
@@ -752,49 +765,49 @@ export async function POST(request: Request) {
           recallClient,
         );
 
-        void recallClient.bot
-          .bot_analyze_create(
-            {
-              gladia_v2_async_transcription: {
-                custom_vocabulary: bot.meeting_participants.map(
-                  ({ name }) => name,
-                ),
-                name_consistency: true,
-                punctuation_enhanced: true,
-              },
-            },
-            { params: { id: bot.id } },
-          )
-          .then((res) => {
-            logger.info("🎯 Bot analysis started", {
-              jobId: res.job_id,
-            });
-          })
-          .catch((error: Error) => {
-            logger.error("❌ Error starting bot analysis", {
-              error,
-            });
-          });
-      }
+        if (transcript.length > 0) {
+          await handleTranscript(bot, transcript, supabase);
+        }
 
-      if (payload.data.status?.code === "analysis_done") {
-        await handleTranscript(bot, transcript, supabase);
+        // void recallClient.bot
+        //   .bot_analyze_create(
+        //     {
+        //       gladia_v2_async_transcription: {
+        //         custom_vocabulary: bot.meeting_participants.map(
+        //           ({ name }) => name,
+        //         ),
+        //         name_consistency: true,
+        //         punctuation_enhanced: true,
+        //       },
+        //     },
+        //     { params: { id: bot.id } },
+        //   )
+        //   .then((res) => {
+        //     logger.info("🎯 Bot analysis started", {
+        //       jobId: res.job_id,
+        //     });
+        //   })
+        //   .catch((error: Error) => {
+        //     logger.error("❌ Error starting bot analysis", {
+        //       error,
+        //     });
+        //   });
       }
 
       await supabase
         .from("meeting_bots")
         .update({
           ...(payload.data.status?.code && {
-          status: payload.data.status?.code,
+            status: payload.data.status?.code,
           }),
           ...(videoUploadResult?.storageUrl && {
-          mp4_source_url: videoUploadResult?.storageUrl,
+            mp4_source_url: videoUploadResult?.storageUrl,
           }),
           ...(videoUploadResult?.apiVideoId && {
-          api_video_id: videoUploadResult?.apiVideoId,
+            api_video_id: videoUploadResult?.apiVideoId,
           }),
           ...(bot?.meeting_participants?.length && {
-          speakers: bot.meeting_participants.map(({ name }) => name),
+            speakers: bot.meeting_participants.map(({ name }) => name),
           }),
           raw_data: {
             meeting_baas_raw_data: { bot, event },
