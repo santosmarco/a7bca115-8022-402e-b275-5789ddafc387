@@ -611,6 +611,7 @@ async function handleZoomMeeting(
       recall_calendar_id: calendarData.id,
       provider: "meeting_baas",
       profile_id: calendarData.profile_id,
+      deduplication_key: deduplicationKey,
     },
     { onConflict: "id" },
   );
@@ -663,6 +664,7 @@ async function handleGoogleMeetMeeting(
           recall_calendar_id: calendarData.id,
           provider: "recall",
           profile_id: calendarData.profile_id,
+          deduplication_key: deduplicationKey,
         }) satisfies TablesInsert<"meeting_bots">,
     ),
     { onConflict: "id" },
@@ -777,10 +779,18 @@ export async function POST(request: Request) {
       await supabase
         .from("meeting_bots")
         .update({
+          ...(payload.data.status?.code && {
           status: payload.data.status?.code,
+          }),
+          ...(videoUploadResult?.storageUrl && {
           mp4_source_url: videoUploadResult?.storageUrl,
+          }),
+          ...(videoUploadResult?.apiVideoId && {
           api_video_id: videoUploadResult?.apiVideoId,
+          }),
+          ...(bot?.meeting_participants?.length && {
           speakers: bot.meeting_participants.map(({ name }) => name),
+          }),
           raw_data: {
             meeting_baas_raw_data: { bot, event },
             google_calendar_raw_data: event,
@@ -789,9 +799,9 @@ export async function POST(request: Request) {
         .eq("id", bot.id);
 
       logger.info("✨ Bot status change processed successfully", {
-        botId: bot.id,
-        eventId: event?.id,
-        transcriptLength: transcript.length,
+        bot,
+        event,
+        transcript,
       });
     } else if (payload.event === "calendar.sync_events") {
       logger.info(
