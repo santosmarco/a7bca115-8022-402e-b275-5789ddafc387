@@ -924,30 +924,6 @@ export type Database = {
           },
         ]
       }
-      moments_segment: {
-        Row: {
-          created_at: string
-          id: string
-          moments_id: string
-          segment_id: string
-          video_api_id: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          moments_id: string
-          segment_id: string
-          video_api_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          moments_id?: string
-          segment_id?: string
-          video_api_id?: string
-        }
-        Relationships: []
-      }
       observation_prompts: {
         Row: {
           created_at: string
@@ -1028,21 +1004,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      onboarding_task_specs: {
-        Row: {
-          created_at: string
-          id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-        }
-        Relationships: []
       }
       profile_enhancements: {
         Row: {
@@ -1735,6 +1696,7 @@ export type Database = {
         | "analysis_failed"
         | "media_expired"
         | "recording_done"
+        | "in_waiting_for_host"
       meeting_bots_provider_enum: "meeting_baas" | "recall"
       meeting_platform_enum:
         | "zoom"

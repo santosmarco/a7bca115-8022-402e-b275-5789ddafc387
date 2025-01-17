@@ -27,6 +27,7 @@ const MeetingBaasWebhookRequestBody = z.union([
             "in_call_not_recording", // Bot joined but not recording
             "in_call_recording", // Bot is recording audio/video
             "call_ended", // Bot has left the call
+            "in_waiting_for_host", // Bot is waiting for host to start the meeting
           ])
           .describe("The current status of the bot in the meeting"),
         created_at: z.string().describe("ISO timestamp of the status change"),
