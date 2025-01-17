@@ -6,6 +6,7 @@ import { clientsRouter } from "./routers/clients";
 import { coachingFrameworksRouter } from "./routers/coaching-frameworks";
 import { momentsRouter } from "./routers/moments";
 import { notionRouter } from "./routers/notion";
+import { onboardingRouter } from "./routers/onboarding";
 import { settingsRouter } from "./routers/settings";
 import { userInvitesRouter } from "./routers/user-invites";
 import { videosRouter } from "./routers/videos";
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   clients: clientsRouter,
   userInvites: userInvitesRouter,
   settings: settingsRouter,
+  onboarding: onboardingRouter,
 });
 
 export type AppRouter = typeof appRouter;
