@@ -391,6 +391,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
+    const { data: meetingBot } = await supabase
+      .from("meeting_bots")
+      .select("*")
+      .eq("id", event.data.bot_id)
+      .single();
+
+    if (!meetingBot) {
+      log.warn("Meeting bot not found", {
+        botId: event.data.bot_id,
+      });
+      await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {});
+      return new NextResponse("Meeting bot not found", { status: 200 });
+    }
+
     // Handle different event types
     try {
       if (event.event === "bot.status_change") {
@@ -484,12 +498,12 @@ export async function POST(request: NextRequest) {
         fullError: error,
         event,
       });
-      return new NextResponse((error as Error).message, { status: 500 });
+      return new NextResponse((error as Error).message, { status: 200 });
     }
   } catch (error) {
     log.error("Unexpected error:", {
       fullError: error,
     });
-    return new NextResponse("Internal server error", { status: 500 });
+    return new NextResponse("Internal server error", { status: 200 });
   }
 }
