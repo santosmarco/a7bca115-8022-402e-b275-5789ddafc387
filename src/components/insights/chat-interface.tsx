@@ -5,6 +5,7 @@ import { useChat } from "ai/react";
 import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
 import { AlertCircle, MessageCircleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,6 +15,7 @@ import { ChatContainer, ChatMessages } from "~/components/ui/chat";
 import { LoadingSpinner } from "~/components/ui/loading-spinner";
 import { MessageList } from "~/components/ui/message-list";
 import { RestartChatButton } from "~/components/ui/restart-chat-button";
+import { useOnboardingTasks } from "~/hooks/use-onboarding-tasks";
 import { convertToUIMessages } from "~/lib/ai/messages";
 import { getMomentIcon } from "~/lib/moments";
 import { createClient } from "~/lib/supabase/client";
@@ -131,6 +133,7 @@ export function ChatInterface({
   onClick,
   disabled,
 }: ChatInterfaceProps) {
+  const router = useRouter();
   const supabase = createClient();
   const [selectedMoments, setSelectedMoments] = useState<
     RouterOutputs["moments"]["listAll"]["moments"]
@@ -138,6 +141,8 @@ export function ChatInterface({
   const [selectedVideos, setSelectedVideos] = useState<
     RouterOutputs["videos"]["listAll"]
   >([]);
+
+  const { completeTask } = useOnboardingTasks();
 
   const {
     messages,
@@ -172,6 +177,11 @@ export function ChatInterface({
   const isTyping = lastMessage?.role === "user";
 
   const handleTopicClick = (topic: string) => () => {
+    if (topic === "Team Conflict") {
+      void completeTask("explore_team_conflict_chat");
+    } else if (topic === "Feedback") {
+      void completeTask("explore_feedback_chat");
+    }
     onTopicSelect(topic);
   };
 
@@ -182,7 +192,8 @@ export function ChatInterface({
       .eq("user_id", userId)
       .eq("topic", selectedTopic);
     setMessages([]);
-    await reload();
+    void reload();
+    router.push("/insights");
   };
 
   useEffect(
@@ -254,6 +265,8 @@ export function ChatInterface({
                   return;
                 }
 
+                void completeTask("explore_discovery_chat");
+
                 handleSubmit(ev);
               }}
             >
@@ -267,6 +280,8 @@ export function ChatInterface({
                     ev?.preventDefault?.();
                     return;
                   }
+
+                  void completeTask("explore_discovery_chat");
 
                   handleSubmit(ev);
                 }}
@@ -406,7 +421,7 @@ export function ChatInterface({
                     <h2 className="text-lg font-semibold">
                       {selectedTopic === "Coach"
                         ? "Exploration"
-                        : selectedTopic || "Conversation"}
+                        : selectedTopic || "Exploration"}
                     </h2>
                   </motion.div>
                   <motion.div
@@ -457,6 +472,8 @@ export function ChatInterface({
                 ev?.preventDefault?.();
                 return;
               }
+
+              void completeTask("ask_follow_up");
 
               handleSubmit(ev);
             }}

@@ -1,3 +1,5 @@
+"use client";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ClockIcon,
@@ -7,7 +9,7 @@ import {
   ThumbsUp,
   VideoIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -24,6 +26,7 @@ import {
 import { Form, FormControl, FormField, FormItem } from "~/components/ui/form";
 import { Input } from "~/components/ui/input";
 import { Separator } from "~/components/ui/separator";
+import { useOnboardingTasks } from "~/hooks/use-onboarding-tasks";
 import { useValidatedForm } from "~/hooks/use-validated-form";
 import { getMomentStyles } from "~/lib/moments";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
@@ -68,6 +71,7 @@ export function MomentCard({
   const [isOpen, setIsOpen] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const utils = api.useUtils();
+  const { completeTask } = useOnboardingTasks();
 
   const form = useValidatedForm(commentSchema, {
     defaultValues: {
@@ -198,6 +202,11 @@ export function MomentCard({
       toast.error("Failed to add comment. Please try again.");
     },
   });
+
+  const handleSkipToMoment = useCallback(() => {
+    void completeTask("watch_moment");
+    onSkipToMoment?.(moment);
+  }, [completeTask, onSkipToMoment, moment]);
 
   const styles = getMomentStyles(moment);
 
@@ -415,7 +424,7 @@ export function MomentCard({
                     )}
                   >
                     <Button
-                      onClick={() => onSkipToMoment(moment)}
+                      onClick={handleSkipToMoment}
                       disabled={hasMoreThumbsDown}
                     >
                       {jumpToLabel ?? "Jump To"}

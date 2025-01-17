@@ -29,7 +29,9 @@ import { useProfile } from "~/hooks/use-profile";
 import { createClient } from "~/lib/supabase/client";
 import type { Tables } from "~/lib/supabase/database.types";
 import { cn } from "~/lib/utils";
-import type { RouterOutputs } from "~/trpc/react";
+import { api, type RouterOutputs } from "~/trpc/react";
+
+import { TaskList } from "../onboarding-task-list";
 
 export type SidebarContentProps = {
   user: RouterOutputs["auth"]["getUser"];
@@ -45,6 +47,9 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
   const { profile: selectedProfile, setProfile: setSelectedProfile } =
     useProfile();
   const [authSectionIsHovered, setAuthSectionIsHovered] = useState(false);
+  const { data: tasks } = api.onboarding.getTaskList.useQuery({
+    profileId: selectedProfile?.id ?? user.id,
+  });
 
   useEffect(() => {
     if (didSetProfiles) return;
@@ -169,6 +174,8 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
           ))}
         </AnimatePresence>
       </nav>
+
+      <TaskList tasks={tasks} />
 
       {/* Footer with Auth */}
       <motion.div

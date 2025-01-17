@@ -13,6 +13,7 @@ import {
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
+import { useOnboardingTasks } from "~/hooks/use-onboarding-tasks";
 import { cn } from "~/lib/utils";
 
 interface RestartChatButtonProps {
@@ -24,9 +25,14 @@ export function RestartChatButton({
   onRestart,
   className,
 }: RestartChatButtonProps) {
-  const handleRestart = () => {
+  const { completeTask } = useOnboardingTasks();
+
+  const handleRestart = async () => {
+    const completedTask = await completeTask("reset_chat");
+    if (!completedTask?.isNew) {
+      toast.success("Chat restarted successfully");
+    }
     onRestart();
-    toast.success("Chat restarted successfully");
   };
 
   return (

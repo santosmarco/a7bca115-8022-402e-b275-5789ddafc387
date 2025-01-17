@@ -51,7 +51,7 @@ export const onboardingRouter = createTRPCRouter({
         .maybeSingle();
 
       if (existingTaskCompletion) {
-        return existingTaskCompletion;
+        return { ...existingTaskCompletion, isNew: false };
       }
 
       const { data: newTaskCompletion } = await supabase
@@ -62,6 +62,6 @@ export const onboardingRouter = createTRPCRouter({
         })
         .select("*");
 
-      return newTaskCompletion;
+      return { ...newTaskCompletion, isNew: true };
     }),
 });

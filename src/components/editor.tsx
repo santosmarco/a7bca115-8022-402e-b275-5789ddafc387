@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import type * as React from "react";
 import type { Except } from "type-fest";
 
+import { useOnboardingTasks } from "~/hooks/use-onboarding-tasks";
 import { coachingFrameworkSuggestion } from "~/lib/editor/extensions/coaching-framework-suggestion";
 import { Mentions } from "~/lib/editor/extensions/mentions";
 import { SlashCommands } from "~/lib/editor/extensions/slash-commands";
@@ -36,6 +37,8 @@ export function Editor({
   disabled,
   ...props
 }: EditorProps) {
+  const { completeTask } = useOnboardingTasks();
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -76,8 +79,12 @@ export function Editor({
       },
     },
     onUpdate({ editor }) {
+      const editorText = editor.getText();
+      if (editorText.includes("/moments")) {
+        void completeTask("use_moments_command");
+      }
       onChange({
-        target: { value: editor.getText() },
+        target: { value: editorText },
       } as React.ChangeEvent<HTMLInputElement>);
     },
   });
