@@ -429,6 +429,7 @@ export async function POST(request: NextRequest) {
           api_video_id: apiVideoId,
           speakers: event.data.speakers,
           profile_id: bot_data.bot.extra?.user_id,
+          event_id: bot_data.bot.extra?.event_id,
           provider: "meeting_baas",
           raw_data: {
             meeting_baas_raw_data: { bot_data, event },
