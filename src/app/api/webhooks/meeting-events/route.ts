@@ -395,6 +395,7 @@ export async function POST(request: NextRequest) {
         await updateMeetingBot(supabase, {
           id: event.data.bot_id,
           error_code: event.data.error,
+          provider: "meeting_baas",
         });
       } else if (event.event === "complete") {
         logger.info(`Processing complete event for bot ${event.data.bot_id}`);
@@ -427,6 +428,8 @@ export async function POST(request: NextRequest) {
           mp4_source_url: storageUrl,
           api_video_id: apiVideoId,
           speakers: event.data.speakers,
+          profile_id: bot_data.bot.extra?.user_id,
+          provider: "meeting_baas",
           raw_data: {
             meeting_baas_raw_data: { bot_data, event },
             google_calendar_raw_data: bot_data.bot.extra?.event,
