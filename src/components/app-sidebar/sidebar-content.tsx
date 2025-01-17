@@ -175,7 +175,9 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
         </AnimatePresence>
       </nav>
 
-      <TaskList tasks={tasks} />
+      {(selectedProfile ?? user).did_complete_post_ten_meeting_onboarding && (
+        <TaskList tasks={tasks} />
+      )}
 
       {/* Footer with Auth */}
       <motion.div

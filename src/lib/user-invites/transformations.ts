@@ -24,5 +24,6 @@ export function transformUserInviteIntoProfile(
     created_at: userInvite.created_at,
     status: "pending",
     did_complete_onboarding: false,
+    did_complete_post_ten_meeting_onboarding: false,
   };
 }
