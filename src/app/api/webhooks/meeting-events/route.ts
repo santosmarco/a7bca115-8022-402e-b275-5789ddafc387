@@ -78,13 +78,19 @@ const MeetingBaasWebhookRequestBody = z.union([
     data: z.object({
       bot_id: z.string().describe("The identifier of the bot"),
       error: z
-        .enum([
-          "CannotJoinMeeting", // Bot unable to join the provided meeting URL
-          "TimeoutWaitingToStart", // Bot quit after waiting room timeout
-          "BotNotAccepted", // Bot was refused entry to meeting
-          "InternalError", // Unexpected error occurred
-          "InvalidMeetingUrl", // Invalid meeting URL provided
-        ])
+        .string()
+        .transform((str) =>
+          str === "Waiting room timeout" ? "TimeoutWaitingToStart" : str,
+        )
+        .pipe(
+          z.enum([
+            "CannotJoinMeeting", // Bot unable to join the provided meeting URL
+            "TimeoutWaitingToStart", // Bot quit after waiting room timeout
+            "BotNotAccepted", // Bot was refused entry to meeting
+            "InternalError", // Unexpected error occurred
+            "InvalidMeetingUrl", // Invalid meeting URL provided
+          ]),
+        )
         .describe("Type of error that caused the meeting to fail"),
     }),
   }),
