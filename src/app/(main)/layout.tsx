@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { AppSidebar } from "~/components/app-sidebar";
 import OnboardingFlow from "~/components/onboarding-flow";
+import { OnboardingFlowStage2 } from "~/components/onboarding-flow-stage-2";
 import { ProfileWarning } from "~/components/profile-warning";
 import { api } from "~/trpc/server";
 
@@ -26,6 +27,9 @@ export default async function MainLayout({
         <main className="p-4 py-12 lg:p-12">
           {user && !user.did_complete_onboarding && (
             <OnboardingFlow user={user} />
+          )}
+          {user && !user.did_complete_post_ten_meeting_onboarding && (
+            <OnboardingFlowStage2 user={user} />
           )}
           {children}
         </main>

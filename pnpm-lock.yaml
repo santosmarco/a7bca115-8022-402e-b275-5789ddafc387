@@ -227,6 +227,9 @@ importers:
       axios:
         specifier: ^1.7.7
         version: 1.7.7
+      canvas-confetti:
+        specifier: ^1.9.3
+        version: 1.9.3
       cheerio:
         specifier: ^1.0.0
         version: 1.0.0
@@ -323,6 +326,9 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-confetti:
+        specifier: ^6.2.2
+        version: 6.2.2(react@18.3.1)
       react-day-picker:
         specifier: 8.10.1
         version: 8.10.1(date-fns@4.1.0)(react@18.3.1)
@@ -353,6 +359,9 @@ importers:
       react-resizable-panels:
         specifier: ^2.1.6
         version: 2.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use:
+        specifier: ^17.6.0
+        version: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       recharts:
         specifier: ^2.13.2
         version: 2.13.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -429,6 +438,9 @@ importers:
       '@trigger.dev/build':
         specifier: 3.3.10
         version: 3.3.10(typescript@5.6.3)
+      '@types/canvas-confetti':
+        specifier: ^1.9.0
+        version: 1.9.0
       '@types/eslint':
         specifier: ^9.6.1
         version: 9.6.1
@@ -3218,6 +3230,9 @@ packages:
   '@types/cacheable-request@6.0.3':
     resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}
 
+  '@types/canvas-confetti@1.9.0':
+    resolution: {integrity: sha512-aBGj/dULrimR1XDZLtG9JwxX1b4HPRF6CX9Yfwh3NvstZEm1ZL7RBnel4keCPSqs1ANRu1u2Aoz9R+VmtjYuTg==}
+
   '@types/cookie@0.4.1':
     resolution: {integrity: sha512-XW/Aa8APYr6jSVVA1y/DEIZX0/GMKLEVekNG727R8cs56ahETkRAy/3DR7+fJyh7oUgGwNQaRfXCun0+KbWY7Q==}
 
@@ -3912,6 +3927,9 @@ packages:
 
   caniuse-lite@1.0.30001676:
     resolution: {integrity: sha512-Qz6zwGCiPghQXGJvgQAem79esjitvJ+CxSbSQkW9H/UX5hg8XM88d4lp2W+MEQ81j+Hip58Il+jGVdazk1z9cw==}
+
+  canvas-confetti@1.9.3:
+    resolution: {integrity: sha512-rFfTURMvmVEX1gyXFgn5QMn81bYk70qa0HLzcIOSVEyl57n6o9ItHeBtUSWdvKAPY0xlvBHno4/v3QPrT83q9g==}
 
   case@1.6.3:
     resolution: {integrity: sha512-mzDSXIPaFwVDvZAHqZ9VlbyF4yyXRuX6IvB06WvPYkqJVO24kX1PPhv9bfpKNFZyxYFmmgo03HUiD8iklmJYRQ==}
@@ -7199,6 +7217,12 @@ packages:
       react:
         optional: true
 
+  react-confetti@6.2.2:
+    resolution: {integrity: sha512-K+kTyOPgX+ZujMZ+Rmb7pZdHBvg+DzinG/w4Eh52WOB8/pfO38efnnrtEZNJmjTvLxc16RBYO+tPM68Fg8viBA==}
+    engines: {node: '>=16'}
+    peerDependencies:
+      react: ^16.3.0 || ^17.0.1 || ^18.0.0 || ^19.0.0
+
   react-day-picker@8.10.1:
     resolution: {integrity: sha512-TMx7fNbhLk15eqcMt+7Z7S2KF7mfTId/XJDjKE8f+IUcFn0l08/kI4FiYTL/0yuOLmEcbR4Fwe3GJf/NiiMnPA==}
     peerDependencies:
@@ -7360,8 +7384,8 @@ packages:
       react: '*'
       tslib: '*'
 
-  react-use@17.5.1:
-    resolution: {integrity: sha512-LG/uPEVRflLWMwi3j/sZqR00nF6JGqTTDblkXK2nzXsIvij06hXl1V/MZIlwj1OKIQUtlh1l9jK8gLsRyCQxMg==}
+  react-use@17.6.0:
+    resolution: {integrity: sha512-OmedEScUMKFfzn1Ir8dBxiLLSOzhKe/dPZwVxcujweSj45aNM7BEGPb9BEVIgVEqEXx6f3/TsXzwIktNgUR02g==}
     peerDependencies:
       react: '*'
       react-dom: '*'
@@ -8092,6 +8116,9 @@ packages:
     engines: {node: '>= 6'}
     peerDependencies:
       typescript: '>=2.8.0 || >= 3.2.0-dev || >= 3.3.0-dev || >= 3.4.0-dev || >= 3.5.0-dev || >= 3.6.0-dev || >= 3.6.0-beta || >= 3.7.0-dev || >= 3.7.0-beta'
+
+  tween-functions@1.2.0:
+    resolution: {integrity: sha512-PZBtLYcCLtEcjL14Fzb1gSxPBeL7nWvGhO5ZFPGqziCcr8uvHp0NDmdjBchp6KHL+tExcg0m3NISmKxhU394dA==}
 
   type-check@0.4.0:
     resolution: {integrity: sha512-XleUoc9uwGXqjWwXaUTZAmzMcFZ5858QA2vvx1Ur5xIcixXIP+8LnFDgRplU30us6teqdlskFfu+ae4K79Ooew==}
@@ -10976,6 +11003,8 @@ snapshots:
       '@types/node': 22.8.6
       '@types/responselike': 1.0.3
 
+  '@types/canvas-confetti@1.9.0': {}
+
   '@types/cookie@0.4.1': {}
 
   '@types/cors@2.8.17':
@@ -11838,6 +11867,8 @@ snapshots:
   camelcase@6.3.0: {}
 
   caniuse-lite@1.0.30001676: {}
+
+  canvas-confetti@1.9.3: {}
 
   case@1.6.3: {}
 
@@ -15475,6 +15506,11 @@ snapshots:
     optionalDependencies:
       react: 18.3.1
 
+  react-confetti@6.2.2(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      tween-functions: 1.2.0
+
   react-day-picker@8.10.1(date-fns@4.1.0)(react@18.3.1):
     dependencies:
       date-fns: 4.1.0
@@ -15603,7 +15639,7 @@ snapshots:
       react-lazy-images: 1.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-modal: 3.16.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-pdf: 5.7.2(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(webpack@5.96.1(esbuild@0.19.12))
-      react-use: 17.5.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react-use: 17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     transitivePeerDependencies:
       - '@babel/runtime'
       - '@types/react'
@@ -15693,7 +15729,7 @@ snapshots:
       react: 18.3.1
       tslib: 2.7.0
 
-  react-use@17.5.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  react-use@17.6.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
       '@types/js-cookie': 2.2.7
       '@xobotyi/scrollbar-width': 1.9.5
@@ -16622,6 +16658,8 @@ snapshots:
     dependencies:
       tslib: 1.14.1
       typescript: 5.6.3
+
+  tween-functions@1.2.0: {}
 
   type-check@0.4.0:
     dependencies:

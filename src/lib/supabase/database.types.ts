@@ -1038,6 +1038,7 @@ export type Database = {
           company: string | null
           created_at: string | null
           did_complete_onboarding: boolean
+          did_complete_post_ten_meeting_onboarding: boolean
           email: string | null
           id: string
           is_admin: boolean
@@ -1050,6 +1051,7 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           did_complete_onboarding?: boolean
+          did_complete_post_ten_meeting_onboarding?: boolean
           email?: string | null
           id: string
           is_admin?: boolean
@@ -1062,6 +1064,7 @@ export type Database = {
           company?: string | null
           created_at?: string | null
           did_complete_onboarding?: boolean
+          did_complete_post_ten_meeting_onboarding?: boolean
           email?: string | null
           id?: string
           is_admin?: boolean

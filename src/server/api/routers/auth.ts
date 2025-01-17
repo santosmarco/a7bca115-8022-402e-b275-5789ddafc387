@@ -175,4 +175,23 @@ export const authRouter = createTRPCRouter({
         });
       return { success: true };
     }),
+
+  completePostTenMeetingOnboarding: publicProcedure
+    .input(z.object({ userId: z.string() }))
+    .mutation(async ({ input }) => {
+      const supabase = await createClient();
+      const { error } = await supabase
+        .from("profiles")
+        .update({
+          did_complete_post_ten_meeting_onboarding: true,
+        })
+        .eq("id", input.userId);
+      if (error)
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Failed to complete post ten meeting onboarding: ${(error as Error).message}`,
+          cause: error,
+        });
+      return { success: true };
+    }),
 });
