@@ -993,6 +993,57 @@ export type Database = {
           },
         ]
       }
+      onboarding_task_completions: {
+        Row: {
+          completed_at: string
+          id: string
+          profile_id: string
+          task_name: Database["public"]["Enums"]["onboarding_task_name_enum"]
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          profile_id: string
+          task_name: Database["public"]["Enums"]["onboarding_task_name_enum"]
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          profile_id?: string
+          task_name?: Database["public"]["Enums"]["onboarding_task_name_enum"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_task_completions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "onboarding_task_completions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      onboarding_task_specs: {
+        Row: {
+          created_at: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       profile_enhancements: {
         Row: {
           created_at: string
@@ -1696,6 +1747,14 @@ export type Database = {
         | "webrtc"
         | "slack_huddle_observer"
       moment_reaction_type: "thumbs_up" | "thumbs_down"
+      onboarding_task_name_enum:
+        | "explore_team_conflict_chat"
+        | "explore_feedback_chat"
+        | "explore_discovery_chat"
+        | "ask_follow_up"
+        | "watch_moment"
+        | "use_moments_command"
+        | "reset_chat"
       profile_status_enum: "active" | "pending" | "inactive"
       recall_calendar_platform_type: "google_calendar" | "microsoft_outlook"
       user_role_enum: "user" | "coach" | "admin"
