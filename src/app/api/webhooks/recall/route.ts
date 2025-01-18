@@ -451,6 +451,12 @@ async function processCalendarEvent(
   }
 
   try {
+    const { data: existingMeetingBot } = await supabase
+      .from("meeting_bots")
+      .select("*")
+      .eq("deduplication_key", deduplicationKey)
+      .maybeSingle();
+
     const shouldScheduleBot = await evaluateShouldScheduleBot(
       event,
       calendarData.profile_id,
@@ -458,6 +464,13 @@ async function processCalendarEvent(
     );
 
     if (!shouldScheduleBot) return;
+
+    if (existingMeetingBot) {
+      log.info("Meeting bot already exists", {
+        existingMeetingBot,
+      });
+      return;
+    }
 
     // Handle Zoom meetings differently from other platforms
     if (event.meeting_platform === "zoom") {
