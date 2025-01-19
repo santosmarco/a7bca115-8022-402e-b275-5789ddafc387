@@ -39,7 +39,8 @@ export function SecondConfirmationModal({
           </DialogTitle>
           <DialogDescription>
             This is your last chance to cancel. This action will permanently
-            delete the meeting and all associated data.
+            delete the meeting and all associated data. Deleting your meeting data. 
+            This may take a few minutes as we permanently erase your data from our systems.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
