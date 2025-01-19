@@ -238,7 +238,7 @@ export async function POST(request: NextRequest) {
       if (userCommands.includes("/meetings")) {
         latestUserMessage.content += `\n\nVERY IMPORTANT: THE USER IS ASKING FOR MEETINGS. **CALLING THE \`listMeetings\` TOOL IS MANDATORY.**\n${explainTools({ listMeetings: listMeetingsTool }, false)}`;
       }
-      if (userCommands.includes("/moments")) {
+      if (coreMessages.length === 1 || userCommands.includes("/moments")) {
         latestUserMessage.content += `\n\nVERY IMPORTANT: THE USER IS ASKING FOR MOMENTS. **CALLING BOTH THE \`searchMoments\` AND \`displayMoment\` TOOLS IS MANDATORY.**\n${explainTools({ searchMoments: searchMomentsTool, displayMoment: displayMomentTool }, false)}`;
       }
       if (selectedMoments.length > 0) {
