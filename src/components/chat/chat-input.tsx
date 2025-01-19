@@ -62,6 +62,11 @@ export function ChatInput({
   return (
     <div className="relative mb-4 flex w-full flex-col gap-2">
       <Editor
+        placeholderText={
+          isLandingPage
+            ? "Start with the /moments command to search your meetings for important topics"
+            : "Ask AI, or press '/' for commands, '@' for frameworks..."
+        }
         frameworks={frameworks}
         onChange={onChange}
         onSubmit={onSubmit}

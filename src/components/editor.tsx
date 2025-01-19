@@ -20,6 +20,7 @@ type EditorProps = Except<
   React.ComponentProps<typeof EditorContent>,
   "editor" | "onChange"
 > & {
+  placeholderText: string;
   frameworks: Tables<"coaching_frameworks">[];
   onChange: (
     event:
@@ -33,6 +34,7 @@ export function Editor({
   onChange,
   onSubmit,
   frameworks,
+  placeholderText,
   className,
   disabled,
   ...props
@@ -43,7 +45,7 @@ export function Editor({
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: "Ask AI, or press '/' for commands, '@' for frameworks...",
+        placeholder: placeholderText,
       }),
       SlashCommandMark,
       MentionMark,
