@@ -89,7 +89,22 @@ async function fetchVideoData(
         ),
       }));
 
+    let videoSrc = `https://vod.api.video/vod/${videoId}/mp4/source.mp4`;
+    const videoFetch = await fetch(videoSrc);
+    if (videoFetch.status !== 200) {
+      // if not, check accross all meeting_bots table
+      const { data: meetingBots } = await supabase
+        .from("meeting_bots")
+        .select("mp4_source_url")
+        .eq("api_video_id", videoId)
+        .not("mp4_source_url", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      videoSrc = meetingBots?.[0]?.mp4_source_url ?? videoSrc;
+    }
+
     return {
+      videoSrc,
       meeting: meetingResult.data?.[0],
       summary: (meetingResult.data?.[0]?.summary ?? "").replace(/^"|"$/g, ""),
       moments: transformedMoments,

@@ -23,14 +23,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import type { Video } from "~/lib/schemas/video";
 import type { VideoMoment } from "~/lib/schemas/video-moment";
 import { cn } from "~/lib/utils";
+import type { RouterOutputs } from "~/trpc/react";
 
 import { usePlayer } from "./provider";
 
 export type VideoPlayerProps = {
-  video: Video;
+  video: RouterOutputs["videos"]["getOne"];
   momentsShown?: VideoMoment[];
   startAt?: number;
 };
@@ -97,7 +97,7 @@ export function VideoPlayer({
       <div className="group relative w-full rounded-lg">
         <video
           ref={videoRef}
-          src={`https://vod.api.video/vod/${video.videoId}/mp4/source.mp4`}
+          src={video.videoSrc}
           className="w-full cursor-pointer rounded-lg"
           crossOrigin="anonymous"
           playsInline={true}

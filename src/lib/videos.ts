@@ -150,11 +150,13 @@ export function handleMomentCategorySort(categoryA: string, categoryB: string) {
 export function toVideoOutput<T extends Awaited<ReturnType<typeof getVideo>>>(
   video: T,
   additionalData: {
+    videoSrc: string;
     meeting?: Tables<"meetings">;
     moments?: VideoMoment[];
     summary?: string;
   },
 ) {
+  const videoSrc = additionalData.videoSrc;
   const meeting = additionalData.meeting;
   const moments = additionalData.moments ?? [];
   const summary = additionalData.summary ?? "";
@@ -167,7 +169,7 @@ export function toVideoOutput<T extends Awaited<ReturnType<typeof getVideo>>>(
     { key: "activities", value: JSON.stringify(moments) },
   ];
 
-  return { ...video, meeting, moments, summary, vtt, metadata };
+  return { ...video, videoSrc, meeting, moments, summary, vtt, metadata };
 }
 
 export type VideoOutput = Awaited<ReturnType<typeof toVideoOutput>>;
