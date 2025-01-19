@@ -1052,6 +1052,7 @@ export type Database = {
           did_complete_onboarding: boolean
           did_complete_post_ten_meeting_onboarding: boolean
           email: string | null
+          force_post_ten_meeting_onboarding: boolean
           id: string
           is_admin: boolean
           nickname: string | null
@@ -1065,6 +1066,7 @@ export type Database = {
           did_complete_onboarding?: boolean
           did_complete_post_ten_meeting_onboarding?: boolean
           email?: string | null
+          force_post_ten_meeting_onboarding?: boolean
           id: string
           is_admin?: boolean
           nickname?: string | null
@@ -1078,6 +1080,7 @@ export type Database = {
           did_complete_onboarding?: boolean
           did_complete_post_ten_meeting_onboarding?: boolean
           email?: string | null
+          force_post_ten_meeting_onboarding?: boolean
           id?: string
           is_admin?: boolean
           nickname?: string | null
@@ -1289,24 +1292,6 @@ export type Database = {
           vad_word_count?: number | null
           video_api_id?: string | null
           word_count?: number | null
-        }
-        Relationships: []
-      }
-      test: {
-        Row: {
-          id: number | null
-          index: number | null
-          name: string | null
-        }
-        Insert: {
-          id?: number | null
-          index?: number | null
-          name?: string | null
-        }
-        Update: {
-          id?: number | null
-          index?: number | null
-          name?: string | null
         }
         Relationships: []
       }
