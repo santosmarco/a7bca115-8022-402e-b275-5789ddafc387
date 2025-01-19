@@ -481,6 +481,16 @@ export async function POST(request: NextRequest) {
           } as Json,
         });
 
+        if (event.data.transcript?.length) {
+          log.info("Found transcript data", {
+            transcriptLength: event.data.transcript.length,
+          });
+          await slack.send({
+            text: `📝 Processing transcript for meeting ${event.data.bot_id}`,
+          });
+          await handleTranscript(supabase, event);
+        }
+
         if (updatedMeetingBot?.api_video_id) {
           await processVideo({ meetingBotId: updatedMeetingBot.id })
             .then((res) => {
@@ -493,16 +503,6 @@ export async function POST(request: NextRequest) {
                 error,
               });
             });
-        }
-
-        if (event.data.transcript?.length) {
-          log.info("Found transcript data", {
-            transcriptLength: event.data.transcript.length,
-          });
-          await slack.send({
-            text: `📝 Processing transcript for meeting ${event.data.bot_id}`,
-          });
-          await handleTranscript(supabase, event);
         }
 
         await slack.done({
