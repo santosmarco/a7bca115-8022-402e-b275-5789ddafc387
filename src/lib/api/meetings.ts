@@ -27,3 +27,20 @@ export async function deleteMeeting({ videoId }: MeetingDeleteParams) {
     throw error;
   }
 }
+
+export const ProcessVideoParams = z.object({
+  meetingBotId: z.string(),
+});
+export type ProcessVideoParams = z.infer<typeof ProcessVideoParams>;
+
+export async function processVideo({ meetingBotId }: ProcessVideoParams) {
+  try {
+    const response = await client.post("/process_video", { meetingBotId });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error ?? "Failed to process video");
+    }
+    throw error;
+  }
+}

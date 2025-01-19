@@ -4,6 +4,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import type { SetRequired } from "type-fest";
 import { z } from "zod";
 
+import { processVideo } from "~/lib/api/meetings";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
@@ -282,10 +283,12 @@ async function updateMeetingBot(
 ) {
   log.info("Updating meeting bot:", { data });
 
-  const { error } = await supabase
+  const { data: meetingBot, error } = await supabase
     .from("meeting_bots")
     .update(data)
-    .eq("id", data.id);
+    .eq("id", data.id)
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     log.error("Update error:", {
@@ -296,6 +299,8 @@ async function updateMeetingBot(
   }
 
   log.info(`Successfully updated meeting bot ${data.id}`);
+
+  return meetingBot;
 }
 
 async function handleTranscript(
@@ -462,7 +467,7 @@ export async function POST(request: NextRequest) {
           botId: event.data.bot_id,
         });
 
-        await updateMeetingBot(supabase, {
+        const updatedMeetingBot = await updateMeetingBot(supabase, {
           id: event.data.bot_id,
           mp4_source_url: storageUrl,
           api_video_id: apiVideoId,
@@ -475,6 +480,20 @@ export async function POST(request: NextRequest) {
             google_calendar_raw_data: bot_data.bot.extra?.event,
           } as Json,
         });
+
+        if (updatedMeetingBot?.api_video_id) {
+          await processVideo({ meetingBotId: updatedMeetingBot.id })
+            .then((res) => {
+              log.info("🎯 /process_video response", {
+                response: res,
+              });
+            })
+            .catch((error) => {
+              log.error("❌ Error calling /process_video", {
+                error,
+              });
+            });
+        }
 
         if (event.data.transcript?.length) {
           log.info("Found transcript data", {

@@ -3,6 +3,7 @@ import _ from "lodash";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { processVideo } from "~/lib/api/meetings";
 import { GoogleCalendarEvent } from "~/lib/google-calendar/schemas";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
@@ -807,7 +808,7 @@ export async function POST(request: Request) {
         //   });
       }
 
-      await supabase
+      const { data: meetingBot } = await supabase
         .from("meeting_bots")
         .update({
           ...(payload.data.status?.code && {
@@ -827,7 +828,23 @@ export async function POST(request: Request) {
             google_calendar_raw_data: event,
           } as Json,
         })
-        .eq("id", bot.id);
+        .eq("id", bot.id)
+        .select("*")
+        .maybeSingle();
+
+      if (meetingBot?.api_video_id) {
+        await processVideo({ meetingBotId: meetingBot.id })
+          .then((res) => {
+            log.info("🎯 /process_video response", {
+              response: res,
+            });
+          })
+          .catch((error) => {
+            log.error("❌ Error calling /process_video", {
+              error,
+            });
+          });
+      }
 
       log.info("✨ Bot status change processed successfully", {
         bot,
