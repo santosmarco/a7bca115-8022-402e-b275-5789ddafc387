@@ -25,5 +25,6 @@ export function transformUserInviteIntoProfile(
     status: "pending",
     did_complete_onboarding: false,
     did_complete_post_ten_meeting_onboarding: false,
+    force_post_ten_meeting_onboarding: false,
   };
 }
