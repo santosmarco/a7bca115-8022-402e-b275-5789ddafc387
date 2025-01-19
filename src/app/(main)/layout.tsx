@@ -28,7 +28,8 @@ export default async function MainLayout({
       <div className="pt-6 lg:pl-64 lg:pt-0">
         <main className="p-4 py-12 lg:p-12">
           {!user.did_complete_onboarding && <OnboardingFlow user={user} />}
-          {meetings.length >= 10 &&
+          {(meetings.length >= 10 || user.force_post_ten_meeting_onboarding) &&
+            user.did_complete_onboarding &&
             !user.did_complete_post_ten_meeting_onboarding && (
               <OnboardingFlowStage2 user={user} />
             )}
