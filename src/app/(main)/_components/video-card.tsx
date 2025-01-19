@@ -5,7 +5,7 @@ import _ from "lodash";
 import { Heart, Play } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState } from "react";
 
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
@@ -22,6 +22,7 @@ export const VideoCard = React.forwardRef<
 >(({ video, className, ...props }, ref) => {
   const moments = video.moments;
   const momentsByCategory = _.groupBy(moments, (moment) => moment.activity);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <motion.div
@@ -37,13 +38,18 @@ export const VideoCard = React.forwardRef<
       <Link href={`/videos/${video.videoId}`} className="block h-full">
         {/* Thumbnail Section */}
         <div className="relative h-[60%] overflow-hidden">
-          <Image
-            src={video.assets?.thumbnail ?? "/placeholder.svg"}
-            alt={video.title ?? "Video"}
-            layout="fill"
-            objectFit="cover"
-            className="transition-transform duration-700 will-change-transform group-hover:scale-105"
-          />
+          {imgError ? (
+            <div className="h-full w-full bg-black" />
+          ) : (
+            <Image
+              src={video.assets?.thumbnail ?? ""}
+              alt={video.title ?? "Video"}
+              layout="fill"
+              objectFit="cover"
+              className="transition-transform duration-700 will-change-transform group-hover:scale-105"
+              onError={() => setImgError(true)}
+            />
+          )}
 
           {/* Hover Overlay Gradient */}
           <motion.div
