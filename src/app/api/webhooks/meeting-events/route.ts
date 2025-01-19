@@ -229,7 +229,7 @@ async function uploadToApiVideo(
   log.info("Calendar event data:", { event: eventParsed ?? event });
 
   const metadata = [
-    botId && { key: "meeting_bot_id", value: JSON.stringify(botId) },
+    botId && { key: "meeting_bot_id", value: botId },
     botData && { key: "meeting_baas_raw_data", value: JSON.stringify(botData) },
     event && { key: "google_calendar_raw_data", value: event },
     userId && { key: "user_id", value: userId },
