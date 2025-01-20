@@ -620,6 +620,9 @@ export type Database = {
           name: string | null
           original_vtt_file: string | null
           profile_id: string | null
+          provider:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           searchable: unknown | null
           speaker: string | null
           summary: string | null
@@ -638,6 +641,9 @@ export type Database = {
           name?: string | null
           original_vtt_file?: string | null
           profile_id?: string | null
+          provider?:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           searchable?: unknown | null
           speaker?: string | null
           summary?: string | null
@@ -656,6 +662,9 @@ export type Database = {
           name?: string | null
           original_vtt_file?: string | null
           profile_id?: string | null
+          provider?:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           searchable?: unknown | null
           speaker?: string | null
           summary?: string | null
@@ -1624,6 +1633,9 @@ export type Database = {
           name: string | null
           original_vtt_file: string | null
           profile_id: string | null
+          provider:
+            | Database["public"]["Enums"]["meeting_bots_provider_enum"]
+            | null
           searchable: unknown | null
           speaker: string | null
           summary: string | null

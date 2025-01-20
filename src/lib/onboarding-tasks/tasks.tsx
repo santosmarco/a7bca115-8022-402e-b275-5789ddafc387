@@ -11,19 +11,19 @@ const _taskRecord = {
     name: "explore_team_conflict_chat",
     title: "Explore Team Conflict Chat",
     description:
-      'Go to your Insights chats, select "Team Conflict", and write a message.',
+      'Go to your Explore chats, select "Team Conflict", and write a message.',
   },
   explore_feedback_chat: {
     name: "explore_feedback_chat",
     title: "Explore Feedback Chat",
     description:
-      'Go to your Insights chats, select "Feedback", and write a message.',
+      'Go to your Explore chats, select "Feedback", and write a message.',
   },
   explore_discovery_chat: {
     name: "explore_discovery_chat",
     title: "Explore Discovery Chat",
     description:
-      "Go to your Insights chats and write a message on the freeform input field.",
+      "Go to your Explore chats and write a message on the freeform input field.",
   },
   ask_follow_up: {
     name: "ask_follow_up",

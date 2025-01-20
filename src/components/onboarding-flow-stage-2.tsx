@@ -21,13 +21,13 @@ interface OnboardingFlowStage2Props {
 
 const steps: OnboardingStep[] = [
   {
-    title: "Welcome to Your Insights Chat",
+    title: "Welcome to Your Explore Chat",
     description:
       "Uncover insights and tackle blind spots in your moments and meetings. Explore chats for Decision Making, Delegation, Emotions, Feedback, Goals, and Team Conflict, or let the Coach guide you through it all. Just start chatting to see the magic.",
     gifUrl: "/onboarding/stage-2/step-1.gif",
   },
   {
-    title: "Commands in Insights Chat",
+    title: "Commands in Explore Chat",
     description: (
       <>
         <div>

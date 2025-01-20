@@ -95,7 +95,7 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
     {
       href: "/insights",
       icon: <Brain className="h-5 w-5" />,
-      label: "Insights",
+      label: "Explore",
       isActive: pathname.startsWith("/insights"),
     },
     {

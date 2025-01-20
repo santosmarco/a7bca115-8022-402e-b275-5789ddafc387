@@ -50,11 +50,11 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
               >
                 <div className="space-y-2">
                   <h1 className="text-2xl font-bold tracking-tight">
-                    Insights Access Locked
+                    Explore Access Locked
                   </h1>
                   <p className="text-pretty text-muted-foreground">
                     Complete {progress.requiredMeetings} meetings to unlock the
-                    insights feature
+                    Explore feature
                   </p>
                 </div>
 
@@ -93,7 +93,7 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
                 <div className="space-y-4">
                   <p className="text-pretty px-4 text-sm text-muted-foreground">
                     Keep going! Each meeting brings you closer to unlocking
-                    insights functionality.
+                    Explore functionality.
                   </p>
                   <div className="flex justify-center space-x-4">
                     <div className="flex items-center text-sm">
