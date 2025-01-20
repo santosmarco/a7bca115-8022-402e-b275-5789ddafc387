@@ -456,20 +456,30 @@ export async function POST(request: NextRequest) {
           mp4Url: mp4,
         });
 
-        const [storageUrl, apiVideoId] = await Promise.all([
-          uploadVideoToStorage(event.data.bot_id, mp4, supabase),
-          uploadToApiVideo(event.data.bot_id, mp4, bot_data),
-        ]);
+        // Start storage upload in background
+        const storagePromise = uploadVideoToStorage(
+          event.data.bot_id,
+          mp4,
+          supabase,
+        ).catch((error) => {
+          log.error("Background storage upload failed:", { error });
+          return null;
+        });
+
+        const apiVideoId = await uploadToApiVideo(
+          event.data.bot_id,
+          mp4,
+          bot_data,
+        );
 
         log.info("Upload results:", {
-          storageUrl,
           apiVideoId,
           botId: event.data.bot_id,
         });
 
         const updatedMeetingBot = await updateMeetingBot(supabase, {
           id: event.data.bot_id,
-          mp4_source_url: storageUrl,
+          mp4_source_url: `https://db.withtitan.com/storage/v1/object/public/meetings/${event.data.bot_id}.mp4`,
           api_video_id: apiVideoId,
           speakers: event.data.speakers,
           profile_id: bot_data.bot.extra?.user_id,
@@ -479,6 +489,16 @@ export async function POST(request: NextRequest) {
             meeting_baas_raw_data: { bot_data, event },
             google_calendar_raw_data: bot_data.bot.extra?.event,
           } as Json,
+        });
+
+        // Update storage URL in background once upload completes
+        void storagePromise.then(async (storageUrl) => {
+          if (storageUrl) {
+            await updateMeetingBot(supabase, {
+              id: event.data.bot_id,
+              mp4_source_url: storageUrl,
+            });
+          }
         });
 
         if (event.data.transcript?.length) {
