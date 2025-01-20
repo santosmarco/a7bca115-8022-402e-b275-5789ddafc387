@@ -455,7 +455,7 @@ async function processCalendarEvent(
     const { data: existingMeetingBot } = await supabase
       .from("meeting_bots")
       .select("*")
-      .eq("deduplication_key", deduplicationKey)
+      .eq("deduplication_key", `${event.start_time}-${deduplicationKey}`)
       .maybeSingle();
 
     const shouldScheduleBot = await evaluateShouldScheduleBot(
@@ -466,7 +466,7 @@ async function processCalendarEvent(
 
     if (!shouldScheduleBot) return;
 
-    if (existingMeetingBot) {
+    if (existingMeetingBot?.status) {
       log.info("Meeting bot already exists", {
         existingMeetingBot,
       });
@@ -643,7 +643,7 @@ async function handleZoomMeeting(
       recall_calendar_id: calendarData.id,
       provider: "meeting_baas",
       profile_id: calendarData.profile_id,
-      deduplication_key: deduplicationKey,
+      deduplication_key: `${event.start_time}-${deduplicationKey}`,
     },
     { onConflict: "id" },
   );
@@ -696,7 +696,7 @@ async function handleGoogleMeetMeeting(
           recall_calendar_id: calendarData.id,
           provider: "recall",
           profile_id: calendarData.profile_id,
-          deduplication_key: deduplicationKey,
+          deduplication_key: `${event.start_time}-${deduplicationKey}`,
         }) satisfies TablesInsert<"meeting_bots">,
     ),
     { onConflict: "id" },
