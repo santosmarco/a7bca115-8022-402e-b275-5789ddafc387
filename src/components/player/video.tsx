@@ -62,6 +62,7 @@ export function VideoPlayer({
     undefined,
   );
   const [hoveredMoment, setHoveredMoment] = useState<VideoMoment | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
 
   useEffect(() => {
     if (startAt !== undefined && videoRef.current) {
@@ -95,14 +96,24 @@ export function VideoPlayer({
   return (
     <TooltipProvider>
       <div className="group relative w-full rounded-lg">
+        {isVideoLoading && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-accent">
+            <p className="text-sm text-muted-foreground">Loading video...</p>
+          </div>
+        )}
         <video
           ref={videoRef}
           src={video.videoSrc}
-          className="w-full cursor-pointer rounded-lg"
+          className={cn(
+            "w-full cursor-pointer rounded-lg",
+            isVideoLoading && "invisible",
+          )}
           crossOrigin="anonymous"
           playsInline={true}
           preload="auto"
           onClick={togglePlay}
+          onLoadedData={() => setIsVideoLoading(false)}
+          tabIndex={0}
         />
 
         {isControlsVisible && (
