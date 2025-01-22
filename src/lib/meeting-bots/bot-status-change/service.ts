@@ -591,7 +591,7 @@ export function createBotStatusChangeService(
 
     const { data: transcriptSlices, error: transcriptSlicesError } =
       await supabase
-        .from("transcript_slices")
+        .from("transcript_slices_v2")
         .insert(
           transcript.map(
             (slice, index) =>
@@ -599,7 +599,7 @@ export function createBotStatusChangeService(
                 bot_id: bot.id,
                 speaker_name: slice.speaker,
                 index,
-              }) satisfies TablesInsert<"transcript_slices">,
+              }) satisfies TablesInsert<"transcript_slices_v2">,
           ),
         )
         .select("*");
@@ -646,12 +646,12 @@ export function createBotStatusChangeService(
         (word, wordIndex) =>
           ({
             bot_id: bot.id,
-            transcript_slice_id: transcriptSlices[transcriptSliceIndex]?.id,
+            transcript_slice_id: transcriptSlices[transcriptSliceIndex]?.id!,
             start_time: word.start_timestamp,
             end_time: word.end_timestamp,
             content: word.text,
             index: wordIndex,
-          }) satisfies TablesInsert<"transcript_words">,
+          }) satisfies TablesInsert<"transcript_words_v2">,
       ),
     );
 
@@ -663,7 +663,7 @@ export function createBotStatusChangeService(
     });
 
     const { error: wordsError } = await supabase
-      .from("transcript_words")
+      .from("transcript_words_v2")
       .insert(words);
 
     if (wordsError) {
