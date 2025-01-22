@@ -342,7 +342,7 @@ async function setupGoogleCalendar(
 ) {
   logger.info("Setting up Google Calendar", { user, profile });
   const { data: existingCalendar } = await supabase
-    .from("recall_calendars")
+    .from("recall_calendars_v2")
     .select("*, profile:profiles(*)")
     .eq("profile_id", user.id)
     .eq("platform", "google_calendar")
@@ -356,10 +356,12 @@ async function setupGoogleCalendar(
       session.provider_refresh_token,
     );
     logger.info("Recall calendar created", { recallCalendar });
-    await supabase.from("recall_calendars").insert({
+    await supabase.from("recall_calendars_v2").insert({
       id: recallCalendar.id,
       profile_id: user.id,
       platform: "google_calendar",
+      created_at: recallCalendar.created_at,
+      updated_at: recallCalendar.updated_at,
     });
     logger.info("Calendar setup complete", { userId: user.id });
   }
