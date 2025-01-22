@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { syncCalendars } from "~/jobs/sync-calendars";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import { MeetingBotsWebhookRequest } from "~/lib/meeting-bots/schemas";
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
           calendar_id: parsedBody.data.calendar_id,
           last_updated: parsedBody.data.last_updated_ts,
         });
-        await meetingBotsService.handleCalendarSyncEvent(parsedBody);
+        void syncCalendars.trigger(parsedBody);
       }
 
       logger.info("✨ Successfully processed webhook", {
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  void run();
+  await run();
 
   return new NextResponse(null, { status: 200 });
 }
