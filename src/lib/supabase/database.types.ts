@@ -602,6 +602,7 @@ export type Database = {
             | null
           event_id: string
           id: string
+          is_removed: boolean
           message: string | null
           mp4_source_url: string | null
           profile_id: string
@@ -622,6 +623,7 @@ export type Database = {
             | null
           event_id: string
           id: string
+          is_removed?: boolean
           message?: string | null
           mp4_source_url?: string | null
           profile_id: string
@@ -642,6 +644,7 @@ export type Database = {
             | null
           event_id?: string
           id?: string
+          is_removed?: boolean
           message?: string | null
           mp4_source_url?: string | null
           profile_id?: string
