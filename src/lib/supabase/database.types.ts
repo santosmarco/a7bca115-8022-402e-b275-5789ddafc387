@@ -1249,7 +1249,7 @@ export type Database = {
           created_at: string | null
           did_complete_onboarding: boolean
           did_complete_post_ten_meeting_onboarding: boolean
-          email: string | null
+          email: string
           force_post_ten_meeting_onboarding: boolean
           id: string
           is_admin: boolean
@@ -1263,7 +1263,7 @@ export type Database = {
           created_at?: string | null
           did_complete_onboarding?: boolean
           did_complete_post_ten_meeting_onboarding?: boolean
-          email?: string | null
+          email: string
           force_post_ten_meeting_onboarding?: boolean
           id: string
           is_admin?: boolean
@@ -1277,7 +1277,7 @@ export type Database = {
           created_at?: string | null
           did_complete_onboarding?: boolean
           did_complete_post_ten_meeting_onboarding?: boolean
-          email?: string | null
+          email?: string
           force_post_ten_meeting_onboarding?: boolean
           id?: string
           is_admin?: boolean

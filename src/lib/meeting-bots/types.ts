@@ -1,4 +1,5 @@
-import type { logger } from "~/lib/logging/server";
+import type { logger } from "@trigger.dev/sdk/v3";
+
 import type { meetingBaas } from "~/lib/meeting-baas/client";
 import type { createClient as createRecallClient } from "~/lib/recall/client";
 import type { slack } from "~/lib/slack";
@@ -10,11 +11,13 @@ export type MeetingBotsServiceLogger = Pick<
   "info" | "debug" | "warn" | "error"
 >;
 
-export type MeetingBotsServiceDependencies = {
+export type MeetingBotsServiceDependencies<
+  TLogger extends MeetingBotsServiceLogger = MeetingBotsServiceLogger,
+> = {
   supabase: SupabaseServerClient;
   meetingBaas: typeof meetingBaas;
   recall: ReturnType<typeof createRecallClient>;
   apiVideo: typeof apiVideo;
-  logger: MeetingBotsServiceLogger;
+  logger: TLogger;
   slack: typeof slack;
 };

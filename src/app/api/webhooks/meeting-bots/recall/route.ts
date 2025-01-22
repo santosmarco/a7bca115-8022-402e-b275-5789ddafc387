@@ -3,8 +3,8 @@ import { type NextRequest, NextResponse } from "next/server";
 import { syncCalendars } from "~/jobs/sync-calendars";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
+import { createBotStatusChangeService } from "~/lib/meeting-bots/bot-status-change/service";
 import { MeetingBotsWebhookRequest } from "~/lib/meeting-bots/schemas";
-import { createMeetingBotsService } from "~/lib/meeting-bots/service";
 import type { MeetingBotsServiceDependencies } from "~/lib/meeting-bots/types";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
@@ -52,14 +52,14 @@ export async function POST(request: NextRequest) {
         slack: slack,
       } satisfies MeetingBotsServiceDependencies;
 
-      const meetingBotsService = createMeetingBotsService(deps);
+      const { handleBotStatusChange } = createBotStatusChangeService(deps);
 
       if (parsedBody.event === "bot.status_change") {
         logger.info("🤖 Processing bot status change event", {
           bot_id: parsedBody.data.bot_id,
           status: parsedBody.data.status,
         });
-        await meetingBotsService.handleBotStatusChange(parsedBody);
+        await handleBotStatusChange(parsedBody);
       } else if (parsedBody.event === "calendar.sync_events") {
         logger.info("📅 Processing calendar sync event", {
           calendar_id: parsedBody.data.calendar_id,

@@ -303,7 +303,7 @@ async function handleInvitedUserProfile(
           .from("profiles")
           .insert({
             id: user.id,
-            email: user.email,
+            email: user.email!,
             ...profileData,
           })
           .select("*")

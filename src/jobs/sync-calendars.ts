@@ -1,8 +1,8 @@
 import { logger, schemaTask } from "@trigger.dev/sdk/v3";
 
 import { meetingBaas } from "~/lib/meeting-baas/client";
+import { createCalendarSyncService } from "~/lib/meeting-bots/calendar-sync/service";
 import { CalendarSyncEvent } from "~/lib/meeting-bots/schemas";
-import { createMeetingBotsService } from "~/lib/meeting-bots/service";
 import type { MeetingBotsServiceDependencies } from "~/lib/meeting-bots/types";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
@@ -23,8 +23,8 @@ export const syncCalendars = schemaTask({
       slack: slack,
     } satisfies MeetingBotsServiceDependencies;
 
-    const meetingBotsService = createMeetingBotsService(deps);
+    const { handleCalendarSyncEvent } = createCalendarSyncService(deps);
 
-    await meetingBotsService.handleCalendarSyncEvent(payload);
+    await handleCalendarSyncEvent(payload);
   },
 });
