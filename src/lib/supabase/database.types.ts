@@ -77,6 +77,91 @@ export type Database = {
           },
         ]
       }
+      calendar_events_v2: {
+        Row: {
+          created_at: string
+          end_time: string
+          ical_uid: string
+          id: string
+          is_deleted: boolean
+          meeting_platform:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url: string | null
+          platform:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id: string
+          profile_id: string
+          raw: Json | null
+          recall_calendar_id: string
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at: string
+          end_time: string
+          ical_uid: string
+          id?: string
+          is_deleted: boolean
+          meeting_platform?:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url?: string | null
+          platform?:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id: string
+          profile_id: string
+          raw?: Json | null
+          recall_calendar_id: string
+          start_time: string
+          updated_at: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          ical_uid?: string
+          id?: string
+          is_deleted?: boolean
+          meeting_platform?:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url?: string | null
+          platform?:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id?: string
+          profile_id?: string
+          raw?: Json | null
+          recall_calendar_id?: string
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "calendar_events_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_v2_recall_calendar_id_fkey1"
+            columns: ["recall_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "recall_calendars_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_integrations: {
         Row: {
           email: string
@@ -494,6 +579,98 @@ export type Database = {
             columns: ["recall_calendar_id"]
             isOneToOne: false
             referencedRelation: "recall_calendars"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_bots_v2: {
+        Row: {
+          api_video_id: string | null
+          created_at: string
+          deduplication_key: string
+          error_code:
+            | Database["public"]["Enums"]["meeting_bot_error_code_type"]
+            | null
+          event_id: string
+          id: string
+          message: string | null
+          mp4_source_url: string | null
+          profile_id: string
+          provider: Database["public"]["Enums"]["meeting_bots_provider_enum"]
+          raw_data: Json | null
+          recall_calendar_id: string
+          recording_id: string | null
+          speakers: string[] | null
+          status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+          sub_code: string | null
+        }
+        Insert: {
+          api_video_id?: string | null
+          created_at?: string
+          deduplication_key: string
+          error_code?:
+            | Database["public"]["Enums"]["meeting_bot_error_code_type"]
+            | null
+          event_id: string
+          id: string
+          message?: string | null
+          mp4_source_url?: string | null
+          profile_id: string
+          provider: Database["public"]["Enums"]["meeting_bots_provider_enum"]
+          raw_data?: Json | null
+          recall_calendar_id: string
+          recording_id?: string | null
+          speakers?: string[] | null
+          status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+          sub_code?: string | null
+        }
+        Update: {
+          api_video_id?: string | null
+          created_at?: string
+          deduplication_key?: string
+          error_code?:
+            | Database["public"]["Enums"]["meeting_bot_error_code_type"]
+            | null
+          event_id?: string
+          id?: string
+          message?: string | null
+          mp4_source_url?: string | null
+          profile_id?: string
+          provider?: Database["public"]["Enums"]["meeting_bots_provider_enum"]
+          raw_data?: Json | null
+          recall_calendar_id?: string
+          recording_id?: string | null
+          speakers?: string[] | null
+          status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+          sub_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_bots_v2_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "calendar_events_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_bots_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "meeting_bots_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_bots_v2_recall_calendar_id_fkey1"
+            columns: ["recall_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "recall_calendars_v2"
             referencedColumns: ["id"]
           },
         ]
@@ -1184,6 +1361,45 @@ export type Database = {
           },
           {
             foreignKeyName: "recall_calendars_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recall_calendars_v2: {
+        Row: {
+          created_at: string
+          id: string
+          platform: Database["public"]["Enums"]["recall_calendar_platform_type"]
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          platform: Database["public"]["Enums"]["recall_calendar_platform_type"]
+          profile_id: string
+          updated_at: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          platform?: Database["public"]["Enums"]["recall_calendar_platform_type"]
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recall_calendars_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "recall_calendars_v2_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"

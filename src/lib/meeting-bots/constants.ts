@@ -1,0 +1,4 @@
+export const BOT_AUTOMATIC_LEAVE = {
+  WAITING_ROOM_TIMEOUT_IN_SECONDS: 60 * 60, // 1 hour
+  NOONE_JOINED_TIMEOUT_IN_SECONDS: 60 * 60, // 1 hour
+} as const;
