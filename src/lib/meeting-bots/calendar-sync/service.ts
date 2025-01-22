@@ -261,12 +261,14 @@ export function createCalendarSyncService(
 
       const { data: meetingBots } = await supabase
         .from("meeting_bots_v2")
-        .delete()
+        .update({
+          is_removed: true,
+        })
         .eq("event_id", event.id)
         .select("*");
 
       const meetingBaasBots = meetingBots?.filter(
-        (bot) => !bot.provider || bot.provider === "meeting_baas",
+        (bot) => bot.provider === "meeting_baas",
       );
 
       if (meetingBaasBots && meetingBaasBots.length > 0) {
