@@ -511,6 +511,7 @@ export type Database = {
             | null
           event_id: string | null
           id: string
+          message: string | null
           mp4_source_url: string | null
           profile_id: string | null
           provider:
@@ -518,8 +519,10 @@ export type Database = {
             | null
           raw_data: Json | null
           recall_calendar_id: string | null
+          recording_id: string | null
           speakers: string[] | null
           status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+          sub_code: string | null
         }
         Insert: {
           api_video_id?: string | null
@@ -530,6 +533,7 @@ export type Database = {
             | null
           event_id?: string | null
           id: string
+          message?: string | null
           mp4_source_url?: string | null
           profile_id?: string | null
           provider?:
@@ -537,8 +541,10 @@ export type Database = {
             | null
           raw_data?: Json | null
           recall_calendar_id?: string | null
+          recording_id?: string | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+          sub_code?: string | null
         }
         Update: {
           api_video_id?: string | null
@@ -549,6 +555,7 @@ export type Database = {
             | null
           event_id?: string | null
           id?: string
+          message?: string | null
           mp4_source_url?: string | null
           profile_id?: string | null
           provider?:
@@ -556,8 +563,10 @@ export type Database = {
             | null
           raw_data?: Json | null
           recall_calendar_id?: string | null
+          recording_id?: string | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
+          sub_code?: string | null
         }
         Relationships: [
           {
@@ -1559,6 +1568,38 @@ export type Database = {
           },
         ]
       }
+      transcript_slices_v2: {
+        Row: {
+          bot_id: string
+          created_at: string
+          id: string
+          index: number
+          speaker_name: string | null
+        }
+        Insert: {
+          bot_id: string
+          created_at?: string
+          id?: string
+          index: number
+          speaker_name?: string | null
+        }
+        Update: {
+          bot_id?: string
+          created_at?: string
+          id?: string
+          index?: number
+          speaker_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcript_slices_v2_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_bots_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transcript_words: {
         Row: {
           bot_id: string
@@ -1610,6 +1651,54 @@ export type Database = {
             columns: ["transcript_slice_id"]
             isOneToOne: false
             referencedRelation: "transcript_slices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transcript_words_v2: {
+        Row: {
+          bot_id: string
+          content: string | null
+          created_at: string
+          end_time: number | null
+          id: string
+          index: number | null
+          start_time: number | null
+          transcript_slice_id: string
+        }
+        Insert: {
+          bot_id: string
+          content?: string | null
+          created_at?: string
+          end_time?: number | null
+          id?: string
+          index?: number | null
+          start_time?: number | null
+          transcript_slice_id: string
+        }
+        Update: {
+          bot_id?: string
+          content?: string | null
+          created_at?: string
+          end_time?: number | null
+          id?: string
+          index?: number | null
+          start_time?: number | null
+          transcript_slice_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcript_words_v2_bot_id_fkey"
+            columns: ["bot_id"]
+            isOneToOne: false
+            referencedRelation: "meeting_bots_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transcript_words_v2_transcript_slice_id_fkey1"
+            columns: ["transcript_slice_id"]
+            isOneToOne: false
+            referencedRelation: "transcript_slices_v2"
             referencedColumns: ["id"]
           },
         ]
