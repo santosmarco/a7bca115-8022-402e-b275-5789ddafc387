@@ -106,9 +106,11 @@ export function createCalendarSyncService(
         profile_email: calendar.profile.email,
       });
 
-      for (const event of events.results ?? []) {
-        await processCalendarEvent(calendar, event);
-      }
+      await Promise.all(
+        (events.results ?? []).map((event) =>
+          processCalendarEvent(calendar, event),
+        ),
+      );
 
       logger.info("✅ Completed calendar sync event processing", {
         calendar_id: event.data.calendar_id,
