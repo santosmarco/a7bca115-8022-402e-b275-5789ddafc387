@@ -116,11 +116,9 @@ export function createCalendarSyncService(
           profile_email: calendar.profile.email,
         });
 
-        await Promise.all(
-          (events.results ?? []).map((event) =>
-            processCalendarEvent(calendar, event),
-          ),
-        );
+        for (const event of events.results ?? []) {
+          await processCalendarEvent(calendar, event);
+        }
 
         logger.info("✅ Completed calendar sync event processing", {
           calendar_id: event.data.calendar_id,
@@ -643,19 +641,16 @@ export function createCalendarSyncService(
 
         const { data: meetingBots } = await supabase
           .from("meeting_bots_v2")
-          .upsert(
-            {
-              id: meetingJoinResult.bot_id,
-              provider: "meeting_baas",
-              profile_id: calendar.profile_id,
-              recall_calendar_id: calendar.id,
-              event_id: event.id,
-              deduplication_key:
-                meetingData?.bot_data.bot.deduplication_key ??
-                botDeduplicationKey,
-            } satisfies TablesInsert<"meeting_bots_v2">,
-            { onConflict: "deduplication_key" },
-          )
+          .insert({
+            id: meetingJoinResult.bot_id,
+            provider: "meeting_baas",
+            profile_id: calendar.profile_id,
+            recall_calendar_id: calendar.id,
+            event_id: event.id,
+            deduplication_key:
+              meetingData?.bot_data.bot.deduplication_key ??
+              botDeduplicationKey,
+          } satisfies TablesInsert<"meeting_bots_v2">)
           .select("*");
 
         logger.info("💾 Saved Zoom bots", {
@@ -764,7 +759,7 @@ export function createCalendarSyncService(
 
         const { data: meetingBots } = await supabase
           .from("meeting_bots_v2")
-          .upsert(
+          .insert(
             calendarEventResult.bots.map(
               (bot) =>
                 ({
@@ -776,7 +771,6 @@ export function createCalendarSyncService(
                   deduplication_key: bot.deduplication_key,
                 }) satisfies TablesInsert<"meeting_bots_v2">,
             ),
-            { onConflict: "deduplication_key" },
           )
           .select("*");
 
