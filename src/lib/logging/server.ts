@@ -1,7 +1,6 @@
 "server-only";
 
 import { log } from "@logtail/next";
-import _ from "lodash";
 
 import { env } from "~/env";
 
@@ -13,15 +12,19 @@ const _logger = log.with({
 export const logger = {
   ..._logger,
   info: (...args: Parameters<typeof _logger.info>) => {
-    console.log("Logging info:", args);
+    console.info(...args);
     _logger.info(...args);
   },
+  debug: (...args: Parameters<typeof _logger.debug>) => {
+    console.debug(...args);
+    _logger.debug(...args);
+  },
   warn: (...args: Parameters<typeof _logger.warn>) => {
-    console.log("Logging warn:", args);
+    console.warn(...args);
     _logger.warn(...args);
   },
   error: (...args: Parameters<typeof _logger.error>) => {
-    console.log("Logging error:", args);
+    console.error(...args);
     _logger.error(...args);
   },
 };

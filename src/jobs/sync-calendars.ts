@@ -1,6 +1,5 @@
-import { schemaTask } from "@trigger.dev/sdk/v3";
+import { logger, schemaTask } from "@trigger.dev/sdk/v3";
 
-import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import { CalendarSyncEvent } from "~/lib/meeting-bots/schemas";
 import { createMeetingBotsService } from "~/lib/meeting-bots/service";
