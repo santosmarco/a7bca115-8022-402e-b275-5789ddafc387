@@ -580,9 +580,15 @@ export function createCalendarSyncService(
         text: `[${calendar.profile.email}] Successfully created Zoom bot: ${meetingJoinResult.bot_id}`,
       });
 
-      const meetingData = await meetingBaas.meetings.getMeetingData(
-        meetingJoinResult.bot_id,
-      );
+      const meetingData = await meetingBaas.meetings
+        .getMeetingData(meetingJoinResult.bot_id)
+        .catch((error: unknown) => {
+          logger.warn("Failed to get meeting data from Meeting BaaS", {
+            error,
+            bot_id: meetingJoinResult.bot_id,
+          });
+          return null;
+        });
 
       const { data: meetingBots } = await supabase
         .from("meeting_bots_v2")
@@ -594,7 +600,8 @@ export function createCalendarSyncService(
             recall_calendar_id: calendar.id,
             event_id: event.id,
             deduplication_key:
-              meetingData.bot_data.bot.deduplication_key ?? botDeduplicationKey,
+              meetingData?.bot_data.bot.deduplication_key ??
+              botDeduplicationKey,
           } satisfies TablesInsert<"meeting_bots_v2">,
           { onConflict: "deduplication_key" },
         )
