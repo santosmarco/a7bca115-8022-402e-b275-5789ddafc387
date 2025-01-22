@@ -7,7 +7,7 @@ import { createMeetingBotsService } from "~/lib/meeting-bots/service";
 import type { MeetingBotsServiceDependencies } from "~/lib/meeting-bots/types";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
-import { createClient as createSupabaseClient } from "~/lib/supabase/server";
+import { __dangerouslyCreateAdminClient__ } from "~/lib/supabase/admin";
 import { apiVideo } from "~/server/api/services/api-video";
 
 export async function POST(request: NextRequest) {
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       });
 
       const deps = {
-        supabase: await createSupabaseClient(),
+        supabase: await __dangerouslyCreateAdminClient__(),
         meetingBaas: meetingBaas,
         recall: createRecallClient(),
         apiVideo: apiVideo,

@@ -84,7 +84,7 @@ export function createCalendarSyncService(
       const events = await recall.calendarV2.calendar_events_list({
         queries: {
           calendar_id: event.data.calendar_id,
-          // updated_at__gte: event.data.last_updated_ts,
+          updated_at__gte: event.data.last_updated_ts,
         },
       });
 
