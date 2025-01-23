@@ -15,6 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { LiveMeetingStatus } from "~/components/meetings/live-meeting-status";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
@@ -50,6 +51,16 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
   const { data: tasks } = api.onboarding.getTaskList.useQuery({
     profileId: selectedProfile?.id ?? user.id,
   });
+
+  const { data: events, isLoading: isLoadingEvents } =
+    api.calendar.getLiveEvents.useQuery(
+      {
+        profileId: selectedProfile?.id ?? user.id,
+      },
+      {
+        refetchInterval: 60000, // Refetch every minute
+      },
+    );
 
   useEffect(() => {
     if (didSetProfiles) return;
@@ -139,8 +150,21 @@ export function SidebarContent({ user, onNavClick }: SidebarContentProps) {
 
   return (
     <>
+      <LiveMeetingStatus
+        user={user}
+        events={events ?? []}
+        isLoading={isLoadingEvents}
+        canJoinMeeting={user.id === selectedProfile?.id}
+        shouldShowOnMobile={!tasks || tasks.every((task) => task.completed)}
+      />
+
       {/* Navigation */}
-      <nav className="mt-32 flex-1 space-y-2">
+      <nav
+        className={cn(
+          "mt-4 flex-1 space-y-2",
+          tasks?.some((task) => !task.completed) && "mt-20 lg:mt-4",
+        )}
+      >
         <AnimatePresence>
           {menuItems.map((item, index) => (
             <motion.div
