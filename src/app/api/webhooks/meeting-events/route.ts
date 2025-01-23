@@ -8,6 +8,7 @@ import { processVideo } from "~/lib/api/meetings";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import type { MeetingBaasBotData } from "~/lib/meeting-baas/schemas";
+import { validateBotDeduplicationKey } from "~/lib/meeting-bots/utils";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
 import type { Json, TablesInsert } from "~/lib/supabase/database.types";
@@ -279,7 +280,7 @@ async function uploadToApiVideo(
 
 async function updateMeetingBot(
   supabase: SupabaseServerClient,
-  data: SetRequired<Partial<TablesInsert<"meeting_bots">>, "id">,
+  data: SetRequired<Partial<TablesInsert<"meeting_bots_v2">>, "id">,
 ) {
   log.info("Updating meeting bot:", { data });
 
@@ -408,6 +409,27 @@ export async function POST(request: NextRequest) {
       });
       await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {});
       return new NextResponse("Meeting bot not found", { status: 200 });
+    }
+
+    const { bot_data: meetingBaasBot } = await meetingBaas.meetings
+      .getMeetingData(event.data.bot_id)
+      .catch((error: unknown) => {
+        log.error("Error getting meeting data", {
+          fullError: error,
+          botId: event.data.bot_id,
+        });
+        return { bot_data: { bot: { deduplication_key: null } } };
+      });
+
+    if (!validateBotDeduplicationKey(meetingBaasBot.bot.deduplication_key)) {
+      log.warn("Meeting Baas bot deduplication key is invalid; kicking", {
+        botId: event.data.bot_id,
+        deduplicationKey: meetingBaasBot.bot.deduplication_key,
+      });
+      await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {});
+      return new NextResponse("Meeting Baas bot deduplication key is invalid", {
+        status: 200,
+      });
     }
 
     // Handle different event types
