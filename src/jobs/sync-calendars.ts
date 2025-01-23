@@ -2,7 +2,10 @@ import { logger, schemaTask } from "@trigger.dev/sdk/v3";
 
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import { createCalendarSyncService } from "~/lib/meeting-bots/calendar-sync/service";
-import { CalendarSyncEvent } from "~/lib/meeting-bots/schemas";
+import {
+  CalendarSyncEvent,
+  CalendarSyncEventQuery,
+} from "~/lib/meeting-bots/schemas";
 import type { MeetingBotsServiceDependencies } from "~/lib/meeting-bots/types";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
@@ -11,7 +14,7 @@ import { apiVideo } from "~/server/api/services/api-video";
 
 export const syncCalendars = schemaTask({
   id: "sync-calendars",
-  schema: CalendarSyncEvent,
+  schema: CalendarSyncEvent.merge(CalendarSyncEventQuery),
   maxDuration: 60 * 10, // 10 minutes
   run: async (payload) => {
     const deps = {
@@ -25,6 +28,14 @@ export const syncCalendars = schemaTask({
 
     const { handleCalendarSyncEvent } = createCalendarSyncService(deps);
 
-    await handleCalendarSyncEvent(payload);
+    await handleCalendarSyncEvent(
+      {
+        event: payload.event,
+        data: payload.data,
+      },
+      {
+        full: payload.full,
+      },
+    );
   },
 });

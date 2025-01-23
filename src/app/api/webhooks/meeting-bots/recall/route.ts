@@ -4,7 +4,10 @@ import { syncCalendars } from "~/jobs/sync-calendars";
 import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import { createBotStatusChangeService } from "~/lib/meeting-bots/bot-status-change/service";
-import { MeetingBotsWebhookRequest } from "~/lib/meeting-bots/schemas";
+import {
+  CalendarSyncEventQuery,
+  MeetingBotsWebhookRequest,
+} from "~/lib/meeting-bots/schemas";
 import type { MeetingBotsServiceDependencies } from "~/lib/meeting-bots/types";
 import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
@@ -61,11 +64,17 @@ export async function POST(request: NextRequest) {
         });
         await handleBotStatusChange(parsedBody);
       } else if (parsedBody.event === "calendar.sync_events") {
+        const query = CalendarSyncEventQuery.catch({
+          full: false,
+        }).parse(Object.fromEntries(request.nextUrl.searchParams.entries()));
+
         logger.info("📅 Processing calendar sync event", {
           calendar_id: parsedBody.data.calendar_id,
           last_updated: parsedBody.data.last_updated_ts,
+          query,
         });
-        void syncCalendars.trigger(parsedBody);
+
+        void syncCalendars.trigger({ ...parsedBody, ...query });
       }
 
       logger.info("✨ Successfully processed webhook", {

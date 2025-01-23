@@ -8,7 +8,12 @@ import type {
 import type { Json, Tables, TablesInsert } from "~/lib/supabase/database.types";
 
 import { BOT_AUTOMATIC_LEAVE } from "../constants";
-import { type CalendarSyncEvent, MeetingPlatform, Platform } from "../schemas";
+import {
+  type CalendarSyncEvent,
+  type CalendarSyncEventQuery,
+  MeetingPlatform,
+  Platform,
+} from "../schemas";
 import type { MeetingBotsServiceDependencies } from "../types";
 
 export type RecallCalendarWithProfile = Tables<"recall_calendars_v2"> & {
@@ -25,7 +30,10 @@ export function createCalendarSyncService(
 ) {
   const { supabase, meetingBaas, recall, logger, slack } = deps;
 
-  async function handleCalendarSyncEvent(event: CalendarSyncEvent) {
+  async function handleCalendarSyncEvent(
+    event: CalendarSyncEvent,
+    options: CalendarSyncEventQuery = { full: false },
+  ) {
     return logger.trace("calendar-sync.handle-event", async (trace) => {
       trace.setAttributes({
         "calendar.id": event.data.calendar_id,
@@ -94,7 +102,9 @@ export function createCalendarSyncService(
         const events = await recall.calendarV2.calendar_events_list({
           queries: {
             calendar_id: event.data.calendar_id,
-            updated_at__gte: event.data.last_updated_ts,
+            ...(!options.full && {
+              updated_at__gte: event.data.last_updated_ts,
+            }),
           },
         });
 

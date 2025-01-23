@@ -50,6 +50,11 @@ export const CalendarSyncEvent = z.object({
 });
 export type CalendarSyncEvent = z.infer<typeof CalendarSyncEvent>;
 
+export const CalendarSyncEventQuery = z.object({
+  full: z.boolean().default(false),
+});
+export type CalendarSyncEventQuery = z.infer<typeof CalendarSyncEventQuery>;
+
 export const BotStatusChangeEventDataStatus = z.object({
   code: BotStatusCode,
   created_at: z.string(),
