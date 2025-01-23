@@ -31,7 +31,7 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed bottom-0 left-64 right-0 top-0 z-50"
+            className="fixed bottom-0 left-72 right-0 top-0 z-50"
             onClick={() => setOpen(false)}
           >
             {/* Backdrop with blur effect */}
@@ -118,7 +118,7 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
       {!shouldShowLockScreen && (
         <div
           className={cn(
-            "fixed bottom-0 left-64 right-0 top-0 z-50",
+            "fixed bottom-0 left-72 right-0 top-0 z-50",
             percentage >= 100 && "pointer-events-none",
           )}
           onClick={() => setOpen(true)}
