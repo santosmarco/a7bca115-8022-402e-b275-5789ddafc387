@@ -661,6 +661,13 @@ export type Database = {
             foreignKeyName: "meeting_bots_v2_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
+            referencedRelation: "calendar_event_details_v2"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "meeting_bots_v2_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
             referencedRelation: "calendar_events_v2"
             referencedColumns: ["id"]
           },
@@ -1804,6 +1811,112 @@ export type Database = {
       }
     }
     Views: {
+      calendar_event_details_v2: {
+        Row: {
+          created: string | null
+          created_at: string | null
+          creator_email: string | null
+          end_date_time: string | null
+          end_time: string | null
+          event_id: string | null
+          html_link: string | null
+          ical_uid: string | null
+          id: string | null
+          is_deleted: boolean | null
+          meeting_platform:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url: string | null
+          platform:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id: string | null
+          profile_id: string | null
+          recall_calendar_id: string | null
+          start_date_time: string | null
+          start_time: string | null
+          status: string | null
+          summary: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created?: never
+          created_at?: string | null
+          creator_email?: never
+          end_date_time?: never
+          end_time?: string | null
+          event_id?: never
+          html_link?: never
+          ical_uid?: string | null
+          id?: string | null
+          is_deleted?: boolean | null
+          meeting_platform?:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url?: string | null
+          platform?:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id?: string | null
+          profile_id?: string | null
+          recall_calendar_id?: string | null
+          start_date_time?: never
+          start_time?: string | null
+          status?: never
+          summary?: never
+          updated_at?: string | null
+        }
+        Update: {
+          created?: never
+          created_at?: string | null
+          creator_email?: never
+          end_date_time?: never
+          end_time?: string | null
+          event_id?: never
+          html_link?: never
+          ical_uid?: string | null
+          id?: string | null
+          is_deleted?: boolean | null
+          meeting_platform?:
+            | Database["public"]["Enums"]["meeting_platform_enum"]
+            | null
+          meeting_url?: string | null
+          platform?:
+            | Database["public"]["Enums"]["recall_calendar_platform_type"]
+            | null
+          platform_id?: string | null
+          profile_id?: string | null
+          recall_calendar_id?: string | null
+          start_date_time?: never
+          start_time?: string | null
+          status?: never
+          summary?: never
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "meetings_with_profile"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "calendar_events_v2_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_events_v2_recall_calendar_id_fkey1"
+            columns: ["recall_calendar_id"]
+            isOneToOne: false
+            referencedRelation: "recall_calendars_v2"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meeting_bot_transcripts: {
         Row: {
           bot_id: string | null
