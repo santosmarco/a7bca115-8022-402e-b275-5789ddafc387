@@ -53,7 +53,7 @@ export function DeleteMeetingButton({ meetingId }: DeleteMeetingButtonProps) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="h-6 w-6">
             <Settings className="h-4 w-4" />
             <span className="sr-only">Open settings</span>
           </Button>
