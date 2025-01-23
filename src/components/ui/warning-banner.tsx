@@ -27,7 +27,7 @@ export function WarningBanner({ profile }: WarningBannerProps) {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="fixed top-4 z-[100] bg-background px-4 lg:left-72 lg:right-8 lg:px-0"
+      className="fixed left-0 right-0 top-4 z-[100] bg-background px-4 lg:left-80 lg:right-8 lg:px-0"
     >
       <Alert
         variant="destructive"
