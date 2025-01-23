@@ -74,7 +74,10 @@ export async function POST(request: NextRequest) {
           query,
         });
 
-        void syncCalendars.trigger({ ...parsedBody, ...query });
+        void syncCalendars.trigger({
+          ...parsedBody,
+          full: query.full ? "true" : "false",
+        });
       }
 
       logger.info("✨ Successfully processed webhook", {
