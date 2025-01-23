@@ -86,20 +86,23 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
 
   return (
     <PlayerProvider>
-      <header className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background pl-0 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border lg:p-4">
+      <header className="fixed left-0 right-0 top-16 z-50 flex h-[4.75rem] items-center justify-between border-b border-border bg-background pl-0 lg:left-72 lg:top-0 lg:flex lg:border-border lg:p-4">
         <motion.div
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="flex items-center"
         >
-          <motion.div whileHover={{ scale: 1.2, x: -5 }}>
+          <motion.div
+            whileHover={{ scale: 1.2, x: -5 }}
+            className="hidden lg:block"
+          >
             <Button
               variant="ghost"
               size="icon"
               onClick={() => router.back()}
               aria-label="Go back"
-              className="h-[3.25rem] w-14 hover:bg-transparent lg:h-16"
+              className="h-[3.25rem] w-10 hover:bg-transparent lg:h-16"
             >
               <ChevronLeft className="h-6 w-6" />
             </Button>
@@ -108,11 +111,12 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
+            className="pl-4 lg:pl-0"
           >
-            <div className="text-sm text-muted-foreground lg:text-base">
+            <div className="text-sm text-muted-foreground lg:text-sm">
               You are watching
             </div>
-            <div className="font-bold lg:text-lg">{video.title}</div>
+            <div className="font-bold lg:text-base">{video.title}</div>
           </motion.div>
         </motion.div>
         {user?.role !== "coach" && (

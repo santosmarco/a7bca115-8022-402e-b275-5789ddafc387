@@ -2407,7 +2407,7 @@ const botEndpoints = makeApi([
       {
         name: "body",
         type: "Body",
-        schema: Bot,
+        schema: Bot.partial(),
       },
     ],
     response: Bot,

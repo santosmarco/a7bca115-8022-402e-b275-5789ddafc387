@@ -52,7 +52,7 @@ export function MobileNav({ user, className }: SidebarNavProps) {
       </motion.div>
 
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="flex h-screen w-64 flex-col p-0">
+        <SheetContent side="left" className="flex h-screen w-72 flex-col p-0">
           <Link
             href="/"
             className="absolute left-4 top-4 flex items-center gap-2"

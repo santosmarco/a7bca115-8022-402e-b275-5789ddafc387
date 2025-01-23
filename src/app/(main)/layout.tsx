@@ -25,7 +25,7 @@ export default async function MainLayout({
     <>
       <ProfileWarning />
       <AppSidebar user={user} />
-      <div className="pt-6 lg:pl-64 lg:pt-0">
+      <div className="pt-6 lg:pl-72 lg:pt-0">
         <main className="p-4 py-12 lg:p-12">
           {!user.did_complete_onboarding && <OnboardingFlow user={user} />}
           {(meetings.length >= 10 || user.force_post_ten_meeting_onboarding) &&

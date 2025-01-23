@@ -1,3 +1,4 @@
+import { calendarRouter } from "~/server/api/routers/calendar";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 import { authRouter } from "./routers/auth";
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
   settings: settingsRouter,
   onboarding: onboardingRouter,
   meetings: meetingsRouter,
+  calendar: calendarRouter,
 });
 
 export type AppRouter = typeof appRouter;
