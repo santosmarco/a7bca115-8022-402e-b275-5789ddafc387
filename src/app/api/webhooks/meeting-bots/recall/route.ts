@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         await handleBotStatusChange(parsedBody);
       } else if (parsedBody.event === "calendar.sync_events") {
         const query = CalendarSyncEventQuery.catch({
-          full: false,
+          full: "false",
         }).parse(Object.fromEntries(request.nextUrl.searchParams.entries()));
 
         logger.info("📅 Processing calendar sync event", {
@@ -74,10 +74,7 @@ export async function POST(request: NextRequest) {
           query,
         });
 
-        void syncCalendars.trigger({
-          ...parsedBody,
-          full: query.full ? "true" : "false",
-        });
+        void syncCalendars.trigger({ ...parsedBody, ...query });
       }
 
       logger.info("✨ Successfully processed webhook", {

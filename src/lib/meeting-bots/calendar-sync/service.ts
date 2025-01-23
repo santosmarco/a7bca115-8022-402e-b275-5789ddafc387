@@ -32,7 +32,7 @@ export function createCalendarSyncService(
 
   async function handleCalendarSyncEvent(
     event: CalendarSyncEvent,
-    options: CalendarSyncEventQuery = { full: false },
+    options: CalendarSyncEventQuery = { full: "false" },
   ) {
     return logger.trace("calendar-sync.handle-event", async (trace) => {
       trace.setAttributes({
@@ -102,7 +102,7 @@ export function createCalendarSyncService(
         const events = await recall.calendarV2.calendar_events_list({
           queries: {
             calendar_id: event.data.calendar_id,
-            ...(!options.full && {
+            ...(options.full !== "true" && {
               updated_at__gte: event.data.last_updated_ts,
             }),
           },
