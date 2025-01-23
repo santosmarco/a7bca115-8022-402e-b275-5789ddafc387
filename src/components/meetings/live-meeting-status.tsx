@@ -167,7 +167,7 @@ export function LiveMeetingStatus({
               className="relative"
             >
               <div className="items-between flex flex-col justify-center gap-y-2 p-4">
-                <h2 className="flex items-center gap-1.5 truncate text-sm font-medium">
+                <h2 className="flex items-center gap-2 truncate text-sm font-medium">
                   <Video className="h-4 w-4 shrink-0 text-primary" />
                   <span className="truncate">{meetingSummary}</span>
                 </h2>
