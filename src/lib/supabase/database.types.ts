@@ -600,7 +600,7 @@ export type Database = {
           error_code:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
-          event_id: string
+          event_id: string | null
           id: string
           is_removed: boolean
           message: string | null
@@ -608,7 +608,7 @@ export type Database = {
           profile_id: string
           provider: Database["public"]["Enums"]["meeting_bots_provider_enum"]
           raw_data: Json | null
-          recall_calendar_id: string
+          recall_calendar_id: string | null
           recording_id: string | null
           speakers: string[] | null
           status: Database["public"]["Enums"]["meeting_bot_status_type"] | null
@@ -621,7 +621,7 @@ export type Database = {
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
-          event_id: string
+          event_id?: string | null
           id: string
           is_removed?: boolean
           message?: string | null
@@ -629,7 +629,7 @@ export type Database = {
           profile_id: string
           provider: Database["public"]["Enums"]["meeting_bots_provider_enum"]
           raw_data?: Json | null
-          recall_calendar_id: string
+          recall_calendar_id?: string | null
           recording_id?: string | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
@@ -642,7 +642,7 @@ export type Database = {
           error_code?:
             | Database["public"]["Enums"]["meeting_bot_error_code_type"]
             | null
-          event_id?: string
+          event_id?: string | null
           id?: string
           is_removed?: boolean
           message?: string | null
@@ -650,7 +650,7 @@ export type Database = {
           profile_id?: string
           provider?: Database["public"]["Enums"]["meeting_bots_provider_enum"]
           raw_data?: Json | null
-          recall_calendar_id?: string
+          recall_calendar_id?: string | null
           recording_id?: string | null
           speakers?: string[] | null
           status?: Database["public"]["Enums"]["meeting_bot_status_type"] | null
