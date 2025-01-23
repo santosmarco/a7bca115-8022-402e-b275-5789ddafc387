@@ -280,7 +280,7 @@ async function uploadToApiVideo(
 
 async function updateMeetingBot(
   supabase: SupabaseServerClient,
-  data: SetRequired<Partial<TablesInsert<"meeting_bots_v2">>, "id">,
+  data: SetRequired<Partial<TablesInsert<"meeting_bots">>, "id">,
 ) {
   log.info("Updating meeting bot:", { data });
 
