@@ -18,7 +18,7 @@ export function DesktopNav({ user, className }: SidebarNavProps) {
       animate={{ x: 0 }}
       transition={{ type: "spring", damping: 20 }}
       className={cn(
-        "fixed left-0 top-0 z-50 hidden h-screen w-64 flex-col border-r border-border bg-accent/25 text-foreground lg:flex",
+        "fixed left-0 top-0 z-50 hidden h-screen w-72 flex-col border-r border-border bg-accent/25 text-foreground lg:flex",
         className,
       )}
     >
