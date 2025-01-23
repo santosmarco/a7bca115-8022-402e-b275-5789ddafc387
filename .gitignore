@@ -47,3 +47,7 @@ yarn-error.log*
 # idea files
 .idea
 .trigger
+
+# python
+__pycache__
+.venv
