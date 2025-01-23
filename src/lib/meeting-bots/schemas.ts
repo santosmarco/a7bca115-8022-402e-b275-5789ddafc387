@@ -51,7 +51,7 @@ export const CalendarSyncEvent = z.object({
 export type CalendarSyncEvent = z.infer<typeof CalendarSyncEvent>;
 
 export const CalendarSyncEventQuery = z.object({
-  full: z.boolean().default(false),
+  full: z.enum(["true", "false"]).default("false"),
 });
 export type CalendarSyncEventQuery = z.infer<typeof CalendarSyncEventQuery>;
 
