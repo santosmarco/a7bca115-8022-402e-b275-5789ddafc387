@@ -1,5 +1,5 @@
+import { isAxiosError } from "axios";
 import _ from "lodash";
-import { dedent as s } from "ts-dedent";
 import type { Except } from "type-fest";
 
 import { uploadVideoToSupabaseStorage } from "~/jobs/upload-video-to-supabase-storage";
@@ -21,11 +21,14 @@ export type RecallTranscript = Except<
   "language" | "speaker_id"
 >[];
 
-export type MeetingBotWithProfileAndCalendarAndEvent =
-  Tables<"meeting_bots_v2"> & {
-    profile: Tables<"profiles">;
+export type MeetingBotWithProfileAndEvent = Tables<"meeting_bots_v2"> & {
+  profile: Tables<"profiles">;
+  event: Tables<"calendar_events_v2">;
+};
+
+export type MeetingBotWithProfileAndEventAndCalendar =
+  MeetingBotWithProfileAndEvent & {
     calendar: Tables<"recall_calendars_v2">;
-    event: Tables<"calendar_events_v2">;
   };
 
 export type ApiVideoMetadataObject = {
@@ -84,14 +87,11 @@ export function createBotStatusChangeService(
           return;
         }
 
-        await slack.send({
-          text: s`
-            🤖 Meeting bot failed for user *${meetingBot.profile.nickname}* on meeting "${meetingBot.event.meeting_url}"
-          
-            *Error:* \`${event.data.error}\`
-          
-            <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${meetingBot.id}`)}|View in Supabase>
-          `,
+        await slack.error({
+          text: formatSlackMessage(
+            meetingBot,
+            `🤖 Meeting bot failed\n\n*Error:* \`${event.data.error}\``,
+          ),
         });
 
         return;
@@ -118,9 +118,6 @@ export function createBotStatusChangeService(
           error: meetingBotError,
           event_id: event.data.bot_id,
           status,
-        });
-        await slack.error({
-          text: `[${event.data.bot_id}] Failed to update meeting bot status: ${meetingBotError.message}`,
         });
         return;
       }
@@ -154,11 +151,10 @@ export function createBotStatusChangeService(
 
       if (status?.code === "done" || event.event === "complete") {
         await slack.done({
-          text: s`
-            Meeting bot completed for user *${meetingBot.profile.nickname}* on meeting "${meetingBot.event.meeting_url}"
-
-            <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${meetingBot.id}`)}|View in Supabase>
-          `,
+          text: formatSlackMessage(
+            meetingBot,
+            `🤖 Meeting bot completed${status?.sub_code ? ` (\`${status.sub_code}\`)` : ""}`,
+          ),
         });
 
         logger.info("🎥 Starting meeting completion workflow", {
@@ -210,9 +206,6 @@ export function createBotStatusChangeService(
             profile_id: meetingBot.profile_id,
             user_email: meetingBot.profile.email,
           });
-          await slack.error({
-            text: `[${meetingBot.profile.email}] Failed to update meeting bot with video data: ${meetingBotUpdateError.message}`,
-          });
         }
 
         logger.info("📝 Fetching transcript from Recall", {
@@ -253,13 +246,12 @@ export function createBotStatusChangeService(
         }
       } else {
         await slack.info({
-          text: s`
-            Meeting bot status changed for user *${meetingBot.profile.nickname}* on meeting "${meetingBot.event.meeting_url}"
-
-            *New status:* \`${meetingBot.status}\`
-
-            <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${meetingBot.id}`)}|View in Supabase>
-          `,
+          text: formatSlackMessage(
+            meetingBot,
+            `🤖 Meeting bot status changed\n\n*New status:* \`${meetingBot.status}\`${
+              status?.sub_code ? ` (\`${status.sub_code}\`)` : ""
+            }`,
+          ),
         });
       }
     } catch (error) {
@@ -274,7 +266,7 @@ export function createBotStatusChangeService(
   }
 
   async function handleVideoUpload(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
     videoUrl: string | undefined,
     participants: string[],
   ): Promise<VideoUploadResult> {
@@ -294,7 +286,10 @@ export function createBotStatusChangeService(
         });
 
         await slack.warn({
-          text: `[${bot.profile.email}] Cannot upload video - Missing video URL for bot ${bot.id}`,
+          text: formatSlackMessage(
+            bot,
+            "🎥 Cannot upload video - Missing video URL",
+          ),
         });
 
         return { storageUrl: undefined, apiVideoId: undefined, speakers: [] };
@@ -323,21 +318,31 @@ export function createBotStatusChangeService(
 
       return { storageUrl, apiVideoId, speakers };
     } catch (error) {
+      let errorMessage = (error as Error).message;
+      if (isAxiosError(error)) {
+        errorMessage = error.response?.data
+          ? JSON.stringify(error.response.data)
+          : errorMessage;
+      }
       logger.error("❌ Failed to handle video upload", {
         error,
+        error_message: errorMessage,
         bot_id: bot.id,
         profile_id: bot.profile_id,
         user_email: bot.profile.email,
       });
       await slack.error({
-        text: `[${bot.profile.email}] Failed to handle video upload: ${(error as Error).message}`,
+        text: formatSlackMessage(
+          bot,
+          `🎥 Failed to handle video upload: ${errorMessage}`,
+        ),
       });
       return { storageUrl: undefined, apiVideoId: undefined, speakers: [] };
     }
   }
 
   async function uploadVideoToStorage(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
     videoUrl: string,
   ): Promise<Pick<VideoUploadResult, "storageUrl">> {
     try {
@@ -369,21 +374,31 @@ export function createBotStatusChangeService(
 
       return { storageUrl };
     } catch (error) {
+      let errorMessage = (error as Error).message;
+      if (isAxiosError(error)) {
+        errorMessage = error.response?.data
+          ? JSON.stringify(error.response.data)
+          : errorMessage;
+      }
       logger.error("❌ Failed to upload video to storage", {
         error,
+        error_message: errorMessage,
         bot_id: bot.id,
         profile_id: bot.profile_id,
         user_email: bot.profile.email,
       });
       await slack.error({
-        text: `[${bot.profile.email}] Failed to upload video to storage: ${(error as Error).message}`,
+        text: formatSlackMessage(
+          bot,
+          `💾 Failed to upload video to storage: ${errorMessage}`,
+        ),
       });
       return { storageUrl: undefined };
     }
   }
 
   async function uploadVideoToApiVideo(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
     videoUrl: string,
     participants: string[],
   ): Promise<Pick<VideoUploadResult, "apiVideoId" | "speakers">> {
@@ -438,8 +453,11 @@ export function createBotStatusChangeService(
           participants,
         });
 
-        await slack.warn({
-          text: `[${bot.profile.email}] Skipping API.video upload - No speakers detected for meeting ${bot.id}`,
+        await slack.info({
+          text: formatSlackMessage(
+            bot,
+            "🎥 Skipping API.video upload - No speakers detected",
+          ),
         });
 
         return { apiVideoId: undefined, speakers: [] };
@@ -461,7 +479,7 @@ export function createBotStatusChangeService(
       });
 
       await slack.info({
-        text: `[${bot.profile.email}] Starting API.video upload for meeting ${bot.id}`,
+        text: formatSlackMessage(bot, "🎥 Starting API.video upload"),
       });
 
       const video = await apiVideo.videos.create({
@@ -483,26 +501,39 @@ export function createBotStatusChangeService(
       });
 
       await slack.success({
-        text: `[${bot.profile.email}] Successfully uploaded video to API.video for meeting ${bot.id}`,
+        text: formatSlackMessage(
+          bot,
+          `🎥 Successfully uploaded video to API.video\n\n<https://dashboard.api.video/videos/${video.videoId}|Watch now>`,
+        ),
       });
 
       return { apiVideoId: video.videoId, speakers: tags };
     } catch (error) {
+      let errorMessage = (error as Error).message;
+      if (isAxiosError(error)) {
+        errorMessage = error.response?.data
+          ? JSON.stringify(error.response.data)
+          : errorMessage;
+      }
       logger.error("❌ Failed to upload to API.video", {
         error,
+        error_message: errorMessage,
         bot_id: bot.id,
         profile_id: bot.profile_id,
         user_email: bot.profile.email,
       });
       await slack.error({
-        text: `[${bot.profile.email}] Failed to upload to API.video: ${(error as Error).message}`,
+        text: formatSlackMessage(
+          bot,
+          `🎥 Failed to upload to API.video: ${errorMessage}`,
+        ),
       });
       return { apiVideoId: undefined, speakers: [] };
     }
   }
 
   async function getApiVideoMetadata(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
   ) {
     const metadataObject = {
       user_id: bot.profile.id,
@@ -517,7 +548,7 @@ export function createBotStatusChangeService(
   }
 
   async function getApiVideoTitle(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
   ) {
     const fallbackTitle = `Meeting Recording - ${bot.id}`;
     try {
@@ -539,7 +570,7 @@ export function createBotStatusChangeService(
   }
 
   async function getApiVideoDescription(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
   ) {
     try {
       return bot.event.raw &&
@@ -560,7 +591,7 @@ export function createBotStatusChangeService(
   }
 
   async function handleVideoProcessing(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
   ) {
     try {
       logger.info("🎬 Starting video processing", {
@@ -577,14 +608,24 @@ export function createBotStatusChangeService(
         user_email: bot.profile.email,
       });
     } catch (error) {
+      let errorMessage = (error as Error).message;
+      if (isAxiosError(error)) {
+        errorMessage = error.response?.data
+          ? JSON.stringify(error.response.data)
+          : errorMessage;
+      }
       logger.error("❌ Failed to process video", {
         error,
+        error_message: errorMessage,
         bot_id: bot.id,
         profile_id: bot.profile_id,
         user_email: bot.profile.email,
       });
       await slack.error({
-        text: `[${bot.profile.email}] Failed to process video: ${(error as Error).message}`,
+        text: formatSlackMessage(
+          bot,
+          `🎥 Failed to process video: ${errorMessage}`,
+        ),
       });
     }
   }
@@ -603,7 +644,7 @@ export function createBotStatusChangeService(
   }
 
   async function handleTranscript(
-    bot: MeetingBotWithProfileAndCalendarAndEvent,
+    bot: MeetingBotWithProfileAndEventAndCalendar,
     transcript: RecallTranscript,
   ) {
     logger.info("📝 Processing transcript", {
@@ -618,7 +659,10 @@ export function createBotStatusChangeService(
     });
 
     await slack.info({
-      text: `[${bot.profile.email}] Processing transcript with ${transcript.length} segments`,
+      text: formatSlackMessage(
+        bot,
+        `📝 Processing transcript with \`${transcript.length}\` segments`,
+      ),
     });
 
     const { data: transcriptSlices, error: transcriptSlicesError } =
@@ -644,22 +688,28 @@ export function createBotStatusChangeService(
         user_email: bot.profile.email,
       });
       await slack.error({
-        text: `[${bot.profile.email}] Failed to insert transcript slices: ${transcriptSlicesError.message}`,
+        text: formatSlackMessage(
+          bot,
+          `📝 Failed to insert transcript slices: ${transcriptSlicesError.message}`,
+        ),
       });
       return;
     }
 
     if (!transcriptSlices || transcriptSlices.length === 0) {
       const error = new Error("No transcript slices were inserted");
-      logger.error("❌ No transcript slices inserted", {
+      logger.warn("⚠️ No transcript slices inserted", {
         error,
         bot_id: bot.id,
         profile_id: bot.profile_id,
         user_email: bot.profile.email,
         transcript_length: transcript.length,
       });
-      await slack.error({
-        text: `[${bot.profile.email}] Failed to insert transcript slices: ${error.message}`,
+      await slack.warn({
+        text: formatSlackMessage(
+          bot,
+          `📝 Failed to insert transcript slices: ${error.message}`,
+        ),
       });
       return;
     }
@@ -707,7 +757,10 @@ export function createBotStatusChangeService(
         words_count: words.length,
       });
       await slack.error({
-        text: `[${bot.profile.email}] Failed to insert transcript words: ${wordsError.message}`,
+        text: formatSlackMessage(
+          bot,
+          `📝 Failed to insert transcript words: ${wordsError.message}`,
+        ),
       });
       return;
     }
@@ -725,6 +778,26 @@ export function createBotStatusChangeService(
     await slack.success({
       text: `[${bot.profile.email}] Successfully processed transcript with ${transcriptSlices.length} slices and ${words.length} words`,
     });
+  }
+
+  function formatSlackMessage(
+    bot: MeetingBotWithProfileAndEvent,
+    content: string,
+  ) {
+    const headerParts = [
+      bot.event.meeting_platform === "google_meet"
+        ? "🎥 GMeet"
+        : bot.event.meeting_platform === "zoom"
+          ? "🎥 Zoom"
+          : "🎥 Unknown",
+      `*User:* \`${bot.profile.email}\``,
+      `*Bot:* <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${bot.id}`)}|${bot.id}>`,
+      `*Event:* <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/287060?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${bot.event.id}`)}|${bot.event.id}>`,
+    ];
+
+    const footer = `<https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${bot.id}`)}|View in Supabase>`;
+
+    return [headerParts.join(" | "), content, footer].join("\n\n");
   }
 
   return {
