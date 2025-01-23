@@ -180,7 +180,7 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
 
               <div className="space-y-4 pt-6">
                 <h3 className="text-base font-medium text-foreground">
-                  Include
+                  Include these meetings
                 </h3>
 
                 <div className="space-y-3">
@@ -233,17 +233,11 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                     }
                     disabled={isCoach}
                   />
-                </div>
 
-                <h3 className="pt-1 text-base font-medium text-foreground">
-                  Exclude
-                </h3>
-
-                <div className="space-y-3">
                   <ToggleSetting
-                    value={settings.should_not_join_pending_meetings}
+                    value={!settings.should_not_join_pending_meetings}
                     onChange={(value) =>
-                      updateSetting("should_not_join_pending_meetings", value)
+                      updateSetting("should_not_join_pending_meetings", !value)
                     }
                     title="Pending meetings"
                     description="Meetings you haven't yet accepted or declined"
@@ -251,11 +245,11 @@ export function Settings({ user, settings: initialSettings }: SettingsProps) {
                   />
 
                   <ToggleSetting
-                    value={settings.should_not_join_owned_by_others_meetings}
+                    value={!settings.should_not_join_owned_by_others_meetings}
                     onChange={(value) =>
                       updateSetting(
                         "should_not_join_owned_by_others_meetings",
-                        value,
+                        !value,
                       )
                     }
                     title="Meetings organized by others"
