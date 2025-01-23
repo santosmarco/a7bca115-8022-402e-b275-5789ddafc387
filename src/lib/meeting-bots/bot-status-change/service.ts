@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { dedent as s } from "ts-dedent";
 import type { Except } from "type-fest";
 
 import { uploadVideoToSupabaseStorage } from "~/jobs/upload-video-to-supabase-storage";
@@ -63,14 +64,16 @@ export function createBotStatusChangeService(
           event,
         });
 
-        const { error: updateError } = await supabase
+        const { data: meetingBot, error: updateError } = await supabase
           .from("meeting_bots_v2")
           .update({
             status: "fatal",
             error_code: event.data.error,
           })
           .eq("id", event.data.bot_id)
-          .select("*")
+          .select(
+            "*, profile:profiles!inner(*), event:calendar_events_v2!inner(*)",
+          )
           .single();
 
         if (updateError) {
@@ -78,7 +81,18 @@ export function createBotStatusChangeService(
             error: updateError,
             bot_id: event.data.bot_id,
           });
+          return;
         }
+
+        await slack.send({
+          text: s`
+            🤖 Meeting bot failed for user *${meetingBot.profile.nickname}* on meeting "${meetingBot.event.meeting_url}"
+          
+            *Error:* \`${event.data.error}\`
+          
+            <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${meetingBot.id}`)}|View in Supabase>
+          `,
+        });
 
         return;
       }
@@ -139,6 +153,14 @@ export function createBotStatusChangeService(
       }
 
       if (status?.code === "done" || event.event === "complete") {
+        await slack.done({
+          text: s`
+            Meeting bot completed for user *${meetingBot.profile.nickname}* on meeting "${meetingBot.event.meeting_url}"
+
+            <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${meetingBot.id}`)}|View in Supabase>
+          `,
+        });
+
         logger.info("🎥 Starting meeting completion workflow", {
           bot_id: meetingBot.id,
           profile_id: meetingBot.profile_id,
@@ -229,6 +251,16 @@ export function createBotStatusChangeService(
         if (apiVideoId && !meetingBotUpdateError) {
           await handleVideoProcessing(meetingBot);
         }
+      } else {
+        await slack.info({
+          text: s`
+            Meeting bot status changed for user *${meetingBot.profile.nickname}* on meeting "${meetingBot.event.meeting_url}"
+
+            *New status:* \`${meetingBot.status}\`
+
+            <https://supabase.com/dashboard/project/gukeqqpzhaignmhdduma/editor/289720?schema=${encodeURIComponent("public")}&filter=${encodeURIComponent(`id:eq:${meetingBot.id}`)}|View in Supabase>
+          `,
+        });
       }
     } catch (error) {
       logger.error("❌ Failed to handle bot status change", {

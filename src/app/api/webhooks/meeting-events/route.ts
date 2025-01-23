@@ -439,6 +439,20 @@ export async function POST(request: NextRequest) {
           status: event.data.status,
         });
 
+        if (event.data.status.code === "in_call_recording") {
+          await slack.send({
+            text: `🎥 Started recording meeting ${event.data.bot_id}`,
+          });
+        } else if (event.data.status.code === "call_ended") {
+          await slack.send({
+            text: `🎬 Finished recording meeting ${event.data.bot_id}`,
+          });
+        } else if (event.data.status.code === "in_waiting_room") {
+          await slack.send({
+            text: `⏳ Bot is in waiting room for meeting ${event.data.bot_id}`,
+          });
+        }
+
         const { error } = await supabase
           .from("meeting_bots")
           .upsert(
