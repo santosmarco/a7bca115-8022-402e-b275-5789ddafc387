@@ -409,7 +409,7 @@ export function ChatInterface({
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-64 lg:top-0 lg:flex lg:h-auto lg:border-border"
+                  className="fixed left-0 right-0 top-16 z-50 flex h-16 items-center justify-between border-b border-border bg-background p-4 lg:left-72 lg:top-0 lg:flex lg:h-auto lg:border-border"
                 >
                   <motion.div
                     className="flex items-center gap-2"
