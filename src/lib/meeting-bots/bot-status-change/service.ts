@@ -166,7 +166,9 @@ export function createBotStatusChangeService(
         const participants = _.uniq(
           recallBot?.meeting_participants.map(({ name }) => name.trim()) ??
             ("speakers" in event.data
-              ? /* meeting_baas */ event.data.speakers
+              ? /* meeting_baas */ event.data.speakers.map((speaker) =>
+                  speaker.trim(),
+                )
               : []),
         );
 
@@ -435,7 +437,7 @@ export function createBotStatusChangeService(
         };
       }
 
-      const tags = participants;
+      const tags = [...participants, bot.profile_id];
 
       logger.info("👥 Detected meeting participants", {
         bot_id: bot.id,

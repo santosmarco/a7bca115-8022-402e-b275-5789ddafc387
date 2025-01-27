@@ -187,7 +187,16 @@ async function uploadToApiVideo(
     return existingVideo.data?.[0]?.videoId ?? null;
   }
 
-  const tags = _.uniq(transcripts.map(({ speaker }) => speaker.trim()));
+  const tags = _.uniq(
+    extra?.user_id
+      ? [
+          ...transcripts.map(({ speaker }) => speaker.trim()),
+          extra.user_id.startsWith('"')
+            ? extra.user_id.slice(1, -1)
+            : extra.user_id,
+        ]
+      : transcripts.map(({ speaker }) => speaker.trim()),
+  );
   log.info(`Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
   // Skip API video upload if no speakers/tags
