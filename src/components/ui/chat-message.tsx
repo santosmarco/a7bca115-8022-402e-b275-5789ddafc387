@@ -191,7 +191,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     icon={Tag}
                     args={toolInvocation.args}
                   >
-                    <MomentDisplay id={id} reasoning={reasoning} />
+                    <MomentDisplay id={id} />
                   </CollapsibleSection>
                 );
               }

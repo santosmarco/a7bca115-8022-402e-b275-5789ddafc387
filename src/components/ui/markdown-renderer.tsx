@@ -1,13 +1,22 @@
+import { TrendingUpIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import Markdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
 
 import { CopyButton } from "~/components/ui/copy-button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { rehypeMoment } from "~/lib/markdown/rehype-moment";
 import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
 import { MomentDisplay } from "../chat/moment-display";
+import { Button } from "./button";
 
 interface MarkdownRendererProps {
   children: string;
@@ -19,7 +28,7 @@ export function MarkdownRenderer({ children }: MarkdownRendererProps) {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw, rehypeMoment]}
       components={COMPONENTS}
-      className="space-y-3"
+      className="prose prose-sm space-y-3"
     >
       {children}
     </Markdown>
@@ -187,7 +196,6 @@ const COMPONENTS = {
     "border border-foreground/20 px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right",
   ),
   tr: withClass("tr", "m-0 border-t p-0 even:bg-muted"),
-  p: withClass("p", "whitespace-pre-wrap"),
   hr: withClass("hr", "border-foreground/20"),
   moment: ({
     "data-moment-id": momentId,
@@ -196,12 +204,43 @@ const COMPONENTS = {
   }: React.HTMLAttributes<HTMLDivElement> & {
     "data-moment-id": string;
     "data-moment-reasoning"?: string;
-  }) => (
-    <>
-      <MomentDisplay id={momentId} reasoning={momentReasoning} />
-      {props.children}
-    </>
-  ),
+  }) => {
+    const { data: moment, isLoading } = api.moments.getOneById.useQuery(
+      { momentId: momentId },
+      { retry: false },
+    );
+
+    if (isLoading || !moment) {
+      return null;
+    }
+
+    return (
+      <>
+        <TooltipProvider delayDuration={0}>
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-1.5 !h-6 gap-1.5 rounded-full border-foreground/20 px-2.5 leading-none text-muted-foreground transition-all hover:border-primary hover:bg-accent hover:text-accent-foreground"
+              >
+                <TrendingUpIcon className="text-primary" />
+                {moment.title}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              align="start"
+              className="rounded-lg border bg-card p-0 shadow-lg"
+            >
+              <MomentDisplay id={moment.id} reasoning={momentReasoning} />
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        {props.children}
+      </>
+    );
+  },
 };
 
 function withClass(Tag: keyof JSX.IntrinsicElements, classes: string) {
