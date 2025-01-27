@@ -79,12 +79,6 @@ export interface ChatMessageProps extends Message {
   actions?: React.ReactNode;
 }
 
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
-
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   content,

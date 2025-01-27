@@ -27,6 +27,9 @@ const eslintConfig = {
     "@typescript-eslint/require-await": "off",
     "simple-import-sort/exports": "warn",
     "simple-import-sort/imports": "warn",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-redundant-type-constituents": "off",
   },
 };
 

@@ -30,7 +30,7 @@ export function SecondConfirmationModal({
   const [inputText, setInputText] = useState("");
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !isDeleting && onClose()}>
+    <Dialog open={isOpen} onOpenChange={() => !isDeleting && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -39,8 +39,9 @@ export function SecondConfirmationModal({
           </DialogTitle>
           <DialogDescription>
             This is your last chance to cancel. This action will permanently
-            delete the meeting and all associated data. Deleting your meeting data. 
-            This may take a few minutes as we permanently erase your data from our systems.
+            delete the meeting and all associated data. Deleting your meeting
+            data. This may take a few minutes as we permanently erase your data
+            from our systems.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">

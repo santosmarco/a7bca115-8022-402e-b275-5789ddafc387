@@ -1,5 +1,5 @@
 import TiptapSuggestion from "@tiptap/suggestion";
-import { CodeIcon, TrendingUpIcon, VideoIcon } from "lucide-react";
+import { TrendingUpIcon, VideoIcon } from "lucide-react";
 
 import {
   createSuggestion,

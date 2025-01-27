@@ -51,7 +51,6 @@ export function ChatInput({
   onUnselectMoment,
   onSelectVideo,
   onUnselectVideo,
-  onClick,
   disabled,
   buttonPosition = "bottom",
   ...props

@@ -19,12 +19,6 @@ export interface SelectedContentListProps {
   onUnselectVideo: (video: VideoOutput) => void;
 }
 
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
-}
-
 export function SelectedContentList({
   selectedMoments,
   selectedVideos,

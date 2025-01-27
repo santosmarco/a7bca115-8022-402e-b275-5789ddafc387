@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import { Clock, MessageSquare, Tag, Timer, User } from "lucide-react";
-import { useMemo } from "react";
 
 import type { SearchMomentsToolOutput } from "~/lib/ai/tools";
 import { cn } from "~/lib/utils";
