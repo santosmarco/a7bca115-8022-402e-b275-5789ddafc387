@@ -315,17 +315,22 @@ async function handleInvitedUserProfile(
         .eq("profile_id", user.id)
         .maybeSingle();
 
+      // Get first name by taking everything before the first space
+      const firstName = (profile?.nickname ?? profileData.nickname).split(
+        " ",
+      )[0];
+
       if (userSettings) {
         await supabase
           .from("user_settings")
           .update({
-            bot_name: `${profile?.nickname ?? profileData.nickname}'s Notetaker`,
+            bot_name: `${firstName}'s Notetaker`,
           })
           .eq("id", userSettings.id);
       } else {
         await supabase.from("user_settings").insert({
           profile_id: user.id,
-          bot_name: `${profile?.nickname ?? profileData.nickname}'s Notetaker`,
+          bot_name: `${firstName}'s Notetaker`,
         });
       }
     }),
