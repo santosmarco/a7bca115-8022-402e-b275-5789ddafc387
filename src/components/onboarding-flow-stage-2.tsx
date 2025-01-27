@@ -159,6 +159,7 @@ export function OnboardingFlowStage2({ user }: OnboardingFlowStage2Props) {
 
                   {currentStep.gifUrl && (
                     <div className="aspect-video relative mb-14 overflow-hidden rounded-xl border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={currentStep.gifUrl}
                         alt={`Tutorial step ${currentStepIdx + 1}`}

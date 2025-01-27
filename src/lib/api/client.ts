@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { type AxiosError } from "axios";
 
 import { env } from "~/env";
 
@@ -21,7 +21,7 @@ client.interceptors.request.use(
     });
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
     console.error("Request error:", error);
     return Promise.reject(error);
   },
@@ -36,7 +36,7 @@ client.interceptors.response.use(
     });
     return response;
   },
-  (error) => {
+  (error: AxiosError) => {
     console.error("Response error:", {
       status: error.response?.status,
       data: error.response?.data,
