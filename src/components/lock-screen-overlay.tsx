@@ -31,7 +31,7 @@ export function LockScreenOverlay({ progress }: LockScreenOverlayProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed bottom-0 left-72 right-0 top-0 z-50"
+            className="fixed bottom-0 left-0 right-0 top-0 z-50 lg:left-72"
             onClick={() => setOpen(false)}
           >
             {/* Backdrop with blur effect */}
