@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { api } from "~/trpc/react";
 
@@ -11,6 +11,7 @@ interface MomentDisplayProps {
 
 export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
   const { data: moment, isLoading } = api.moments.getOneById.useQuery(
     { momentId: id },
     {
@@ -21,6 +22,11 @@ export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
 
   useEffect(() => {
     setIsMounted(true);
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+    };
   }, []);
 
   if (isLoading) {
@@ -38,7 +44,7 @@ export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
           }}
           transition={{
             duration: 2,
-            repeat: Infinity,
+            repeat: Number.POSITIVE_INFINITY,
             ease: "easeInOut",
           }}
           className="relative"
@@ -50,7 +56,7 @@ export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
             }}
             transition={{
               duration: 2,
-              repeat: Infinity,
+              repeat: Number.POSITIVE_INFINITY,
               ease: "easeInOut",
             }}
             className="absolute inset-0 rounded-full bg-primary/20 blur-xl"
@@ -73,14 +79,19 @@ export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
         className="w-full rounded-md"
         onLoad={(e) => {
           const iframe = e.currentTarget;
-          const resizeObserver = new ResizeObserver(() => {
+          if (resizeObserverRef.current) {
+            resizeObserverRef.current.disconnect();
+          }
+
+          resizeObserverRef.current = new ResizeObserver(() => {
             const height =
               iframe.contentWindow?.document.documentElement.scrollHeight;
             if (height && height <= 400) iframe.style.height = `${height}px`;
           });
+
           if (iframe.contentWindow?.document.documentElement) {
-            resizeObserver.observe(
-              iframe.contentWindow?.document.documentElement,
+            resizeObserverRef.current.observe(
+              iframe.contentWindow.document.documentElement,
             );
           }
         }}
