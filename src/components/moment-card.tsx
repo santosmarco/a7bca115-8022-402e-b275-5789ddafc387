@@ -250,7 +250,7 @@ export function MomentCard({
     (r) => r.user_id === user?.id,
   )?.reaction_type;
 
-  const hasThumbs = thumbsUpCount + thumbsDownCount > 0;
+  // const hasThumbs = thumbsUpCount + thumbsDownCount > 0;
   const hasMoreThumbsDown =
     !reactionsLoading && thumbsDownCount > thumbsUpCount;
 

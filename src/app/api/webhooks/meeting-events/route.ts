@@ -407,7 +407,9 @@ export async function POST(request: NextRequest) {
       log.warn("Meeting bot not found", {
         botId: event.data.bot_id,
       });
-      await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {});
+      await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {
+        // do nothing
+      });
       return new NextResponse("Meeting bot not found", { status: 200 });
     }
 
@@ -426,7 +428,9 @@ export async function POST(request: NextRequest) {
         botId: event.data.bot_id,
         deduplicationKey: meetingBaasBot.bot.deduplication_key,
       });
-      await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {});
+      await meetingBaas.meetings.leave(event.data.bot_id).catch(() => {
+        // do nothing
+      });
       return new NextResponse("Meeting Baas bot deduplication key is invalid", {
         status: 200,
       });

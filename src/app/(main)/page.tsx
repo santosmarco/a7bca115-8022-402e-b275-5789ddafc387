@@ -267,7 +267,7 @@ export default function HomePage() {
               <CheckCheckIcon className="h-10 w-10 text-green-500" />
             </div>
             <div className="text-center">
-              <p className="font-medium">You're all caught up! 🎉</p>
+              <p className="font-medium">You&apos;re all caught up! 🎉</p>
               <p className="text-sm text-muted-foreground">
                 Check back later for new meetings
               </p>

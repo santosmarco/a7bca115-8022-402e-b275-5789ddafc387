@@ -6,7 +6,7 @@ import _ from "lodash";
 import { FrownIcon, SearchX, TrendingUpDownIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { parseAsString, useQueryState } from "nuqs";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 
 import { MomentCard } from "~/components/moment-card";
@@ -150,12 +150,9 @@ export default function MomentsPage() {
     );
   };
 
-  const debouncedSetSearchQueryDebounced = useCallback(
-    _.debounce((value: string) => {
-      setSearchQueryDebounced(value);
-    }, 300),
-    [],
-  );
+  const debouncedSetSearchQueryDebounced = _.debounce((value: string) => {
+    setSearchQueryDebounced(value);
+  }, 300);
 
   const handleSearchChange = (value: string) => {
     void setSearchQuery(value);
@@ -309,7 +306,7 @@ export default function MomentsPage() {
             className="flex flex-col items-center gap-4 pt-8"
           >
             <div className="text-center">
-              <p className="font-medium">You're all caught up! 🎉</p>
+              <p className="font-medium">You&apos;re all caught up! 🎉</p>
               <p className="text-sm text-muted-foreground">
                 Check back later for new moments
               </p>

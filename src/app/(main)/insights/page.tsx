@@ -18,7 +18,7 @@ export const maxDuration = 30;
 const MIN_MEETINGS = 10;
 
 export default function InsightsPage() {
-  const [selectedVideo, setSelectedVideo] = useQueryState(
+  const [selectedVideo] = useQueryState(
     "video",
     parseAsString.withDefault("all").withOptions({ history: "push" }),
   );
@@ -26,7 +26,7 @@ export default function InsightsPage() {
     "topic",
     parseAsString.withOptions({ history: "push" }),
   );
-  const [shouldShowLockScreen, setShouldShowLockScreen] = useState(true);
+  const [, setShouldShowLockScreen] = useState(true);
 
   const { profile } = useProfile();
   const { data: user, isLoading: userLoading } = api.auth.getUser.useQuery(
