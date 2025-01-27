@@ -54,7 +54,7 @@ export default function InsightsPage() {
         tags:
           user?.is_admin && (!profile || user.id === profile.id)
             ? undefined
-            : [profile?.nickname ?? user?.nickname ?? ""],
+            : [profile?.id ?? user?.id ?? ""],
       },
     },
     {
@@ -68,7 +68,7 @@ export default function InsightsPage() {
       user?.is_admin && (!profile || user.id === profile.id)
         ? page.videos
         : page.videos.filter((v) =>
-            v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+            v.tags.includes(profile?.id ?? user?.id ?? ""),
           ),
     ) ?? [];
 

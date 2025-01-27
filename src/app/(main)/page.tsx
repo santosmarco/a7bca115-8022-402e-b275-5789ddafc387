@@ -65,7 +65,7 @@ export default function HomePage() {
         tags:
           user?.is_admin && (!profile || user.id === profile.id)
             ? undefined
-            : [profile?.nickname ?? user?.nickname ?? ""],
+            : [profile?.id ?? user?.id ?? ""],
       },
     },
     {
@@ -82,7 +82,7 @@ export default function HomePage() {
       user?.is_admin && (!profile || user.id === profile.id)
         ? page.videos
         : page.videos.filter((v) =>
-            v.tags.includes(profile?.nickname ?? user?.nickname ?? ""),
+            v.tags.includes(profile?.id ?? user?.id ?? ""),
           ),
     );
 
