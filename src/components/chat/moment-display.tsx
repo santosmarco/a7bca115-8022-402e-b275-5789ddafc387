@@ -100,7 +100,7 @@ export function MomentDisplay({ id, reasoning }: MomentDisplayProps) {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-xs italic text-muted-foreground"
+          className="border-t border-t-muted-foreground/20 bg-muted px-4 py-2 text-xs italic text-muted-foreground"
         >
           {reasoning}
         </motion.p>

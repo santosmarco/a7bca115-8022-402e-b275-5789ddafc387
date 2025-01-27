@@ -6,6 +6,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { ProfileProvider } from "~/components/profile-provider";
 import { Toaster } from "~/components/ui/sonner";
+import { TooltipProvider } from "~/components/ui/tooltip";
 import { TRPCReactProvider } from "~/trpc/react";
 import { HydrateClient } from "~/trpc/server";
 
@@ -32,7 +33,7 @@ export default function RootLayout({
           <TRPCReactProvider>
             <HydrateClient>
               <ProfileProvider>
-                {children}
+                <TooltipProvider delayDuration={0}>{children}</TooltipProvider>
                 <Toaster />
               </ProfileProvider>
             </HydrateClient>
