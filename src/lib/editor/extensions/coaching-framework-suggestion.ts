@@ -1,7 +1,8 @@
 import TiptapSuggestion from "@tiptap/suggestion";
 
 import { createLucideIcon } from "~/components/icons";
-import { Tables } from "~/lib/supabase/database.types";
+import type { Tables } from "~/lib/supabase/database.types";
+
 import {
   createSuggestion,
   type SuggestionItem,

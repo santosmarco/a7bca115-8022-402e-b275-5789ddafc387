@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
-import { Clock, Tag, Timer, Video, XIcon } from "lucide-react";
+import { Video, XIcon } from "lucide-react";
 
-import { Button } from "~/components/ui/button";
 import {
   Tooltip,
   TooltipContent,

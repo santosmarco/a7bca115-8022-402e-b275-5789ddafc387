@@ -4,7 +4,7 @@ import type { ToolInvocation } from "ai";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
 import { Tag, TagIcon, VideoIcon } from "lucide-react";
-import * as React from "react";
+import type * as React from "react";
 
 import type { ChatRequestBody } from "~/app/api/chat/route";
 import { CollapsibleSection } from "~/components/chat/collapsible-section";
@@ -171,7 +171,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                     message={
                       toolInvocation.toolName === "displayMoment"
                         ? "Analyzing moment..."
-                        : "Processing..."
+                        : toolInvocation.toolName === "listMeetings"
+                          ? "Searching across all your meetings..."
+                          : "Finding relevant moments..."
                     }
                   />
                 );

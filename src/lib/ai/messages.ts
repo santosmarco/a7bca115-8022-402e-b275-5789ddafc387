@@ -1,9 +1,9 @@
 import {
+  type CoreMessage,
   type CoreToolMessage,
   generateId,
   type Message,
   type ToolInvocation,
-  type CoreMessage,
 } from "ai";
 
 export function convertToUIMessages(
@@ -12,7 +12,7 @@ export function convertToUIMessages(
   return messages.reduce((chatMessages: Array<Message>, message) => {
     if (message.role === "tool") {
       return addToolMessageToChat({
-        toolMessage: message as CoreToolMessage,
+        toolMessage: message,
         messages: chatMessages,
       });
     }

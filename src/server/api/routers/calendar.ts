@@ -1,7 +1,7 @@
-import { z } from "zod";
-import { logger } from "~/lib/logging/server";
-
 import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+
+import { logger } from "~/lib/logging/server";
 import { meetingBaas } from "~/lib/meeting-baas/client";
 import { createLiveMeetingService } from "~/lib/meeting-bots/live-meeting/service";
 import type { MeetingBotsServiceDependencies } from "~/lib/meeting-bots/types";
@@ -9,6 +9,7 @@ import { createClient as createRecallClient } from "~/lib/recall/client";
 import { slack } from "~/lib/slack";
 import { createClient as createSupabaseClient } from "~/lib/supabase/server";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+
 import { apiVideo } from "../services/api-video";
 
 export const calendarRouter = createTRPCRouter({

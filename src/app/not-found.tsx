@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { HomeIcon, MoveLeft } from "lucide-react";
+import { HomeIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "~/components/ui/button";

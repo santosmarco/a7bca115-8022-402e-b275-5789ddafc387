@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
+
 import { BOT_AUTOMATIC_LEAVE } from "../constants";
 import type { MeetingBotsServiceDependencies } from "../types";
 
