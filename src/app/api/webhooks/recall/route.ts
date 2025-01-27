@@ -289,7 +289,16 @@ async function uploadVideoToApiVideo(
     return existingVideo.data?.[0]?.videoId;
   }
 
-  const tags = _.uniq(bot.meeting_participants.map(({ name }) => name.trim()));
+  const tags = _.uniq(
+    typeof bot.metadata?.user_id === "string"
+      ? [
+          ...bot.meeting_participants.map(({ name }) => name.trim()),
+          bot.metadata.user_id.startsWith('"')
+            ? bot.metadata.user_id.slice(1, -1)
+            : bot.metadata.user_id,
+        ]
+      : bot.meeting_participants.map(({ name }) => name.trim()),
+  );
   log.info(`🏷️ Detected speakers/tags: ${tags.join(", ")}`, { tags });
 
   if (tags.length === 0) {
