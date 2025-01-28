@@ -34,13 +34,9 @@ export function DeleteMeetingButton({ meetingId }: DeleteMeetingButtonProps) {
     setIsDeleting(true);
     try {
       await deleteMeetingAsync({ meetingId });
-
-      // Actual deletion logic would go here
-      // await deleteMeeting(meetingId)
-
       setIsSecondModalOpen(false);
       router.push("/");
-      toast.success("Meeting successfully deleted");
+      toast.success("Meeting deletion initiated");
     } catch (error) {
       console.error("Error deleting meeting:", error);
       toast.error("Failed to delete meeting. Please try again.");
