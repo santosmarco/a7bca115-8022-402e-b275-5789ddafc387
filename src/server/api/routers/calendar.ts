@@ -28,6 +28,7 @@ export const calendarRouter = createTRPCRouter({
       const { data, error } = await supabase
         .from("calendar_event_details_v2")
         .select("*")
+        .eq("is_deleted", false)
         .eq("profile_id", input.profileId)
         .gte("end_time", now.toISOString())
         .lte("start_time", tomorrow.toISOString())
