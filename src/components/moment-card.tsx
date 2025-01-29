@@ -275,14 +275,18 @@ export function MomentCard({
         <div className="mb-3 flex flex-col gap-1">
           {/* Title and Actions */}
           <div className="flex items-start justify-between">
-            <h2 className="flex items-baseline font-bold leading-none">
-              {moment.title}
-              {user?.is_admin && (
-                <span className="ml-2 text-xs text-muted-foreground">
-                  ID: {moment.id}
-                </span>
-              )}
-            </h2>
+            <TooltipProvider>
+              <Tooltip open={user?.is_admin ? undefined : false}>
+                <TooltipTrigger asChild>
+                  <h2 className="flex items-baseline font-bold leading-none">
+                    {moment.title}
+                  </h2>
+                </TooltipTrigger>
+                <TooltipContent align="start" sideOffset={8}>
+                  ID: <pre className="inline text-xs">{moment.id}</pre>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <div className="flex items-center gap-x-2 text-muted-foreground">
               {!moment.relevant && (
                 <Badge variant="destructive" className="mr-1.5">
