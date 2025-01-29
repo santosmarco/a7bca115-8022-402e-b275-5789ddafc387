@@ -8,6 +8,8 @@ import { useState } from "react";
 import { Button } from "~/components/ui/button";
 import { api, type RouterOutputs } from "~/trpc/react";
 
+import { Link } from "./ui/link";
+
 interface OnboardingFlowProps {
   user: RouterOutputs["auth"]["getUser"];
 }
@@ -66,7 +68,13 @@ const steps = [
         Your notetaker joins scheduled meetings automatically. If needed, ask
         the host to admit it. You can remove and re-add it anytime using the{" "}
         <span className="font-bold text-primary">Add to Live Meeting</span>{" "}
-        button.
+        button.{" "}
+        <Link
+          href="https://www.withtitan.com/documentation-guides/managing-your-notetaker"
+          target="_blank"
+        >
+          Learn more
+        </Link>
       </>
     ),
     icon: () => <FeatherIcon className="h-10 w-10 text-primary" />,
@@ -77,7 +85,13 @@ const steps = [
       <>
         Customize your Notetaker&apos;s behavior on the{" "}
         <span className="font-bold text-primary">Settings</span> page — set its
-        name and choose which meetings it joins automatically.
+        name and choose which meetings it joins automatically.{" "}
+        <Link
+          href="https://www.withtitan.com/documentation-articles/attendance-settings"
+          target="_blank"
+        >
+          Learn more
+        </Link>
       </>
     ),
     icon: () => <VideoIcon className="h-10 w-10 text-primary" />,
@@ -171,7 +185,7 @@ export default function OnboardingFlow({ user }: OnboardingFlowProps) {
                     {currentStep?.title}
                   </h2>
 
-                  <p className="mb-8 text-muted-foreground">
+                  <p className="mb-8 h-24 text-muted-foreground">
                     {currentStep?.description}
                   </p>
 
