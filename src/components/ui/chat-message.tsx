@@ -23,7 +23,7 @@ import { cn } from "~/lib/utils";
 import { Badge } from "./badge";
 
 const chatBubbleVariants = cva(
-  "group/message relative break-words rounded-lg p-3 text-sm sm:max-w-[70%]",
+  "group/message relative break-words rounded-lg p-3 text-sm",
   {
     variants: {
       isUser: {
@@ -71,6 +71,8 @@ export interface Message {
   createdAt?: Date;
   attachments?: File[];
   toolInvocations?: ToolInvocation[];
+  next?: Message[];
+  isNext?: boolean;
 }
 
 export interface ChatMessageProps extends Message {
@@ -87,6 +89,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   animation = "scale",
   actions,
   toolInvocations,
+  next,
+  isNext,
 }) => {
   const isUser = role === "user";
   const formattedTime = createdAt?.toLocaleTimeString("en-US", {
@@ -117,8 +121,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
       <div
         className={cn(
-          chatBubbleVariants({ isUser, animation }),
-          toolInvocations?.length && "sm:w-[50%]",
+          !isNext && chatBubbleVariants({ isUser, animation }),
+          isNext ? "sm:min-w-full" : "sm:max-w-[70%]",
+          "space-y-3",
         )}
       >
         {role !== "data" && (
@@ -234,6 +239,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             })}
           </div>
         )}
+
+        {next?.map((msg) => (
+          <ChatMessage key={msg.id} {...msg} isNext={true} />
+        ))}
       </div>
 
       {showTimeStamp && createdAt ? (

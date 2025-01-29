@@ -28,7 +28,7 @@ export function MarkdownRenderer({ children }: MarkdownRendererProps) {
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[rehypeRaw, rehypeMoment]}
       components={COMPONENTS}
-      className="prose prose-sm space-y-3"
+      className="prose prose-sm prose-invert space-y-3"
     >
       {children}
     </Markdown>
