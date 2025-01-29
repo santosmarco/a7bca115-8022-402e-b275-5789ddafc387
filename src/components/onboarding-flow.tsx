@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { UnlockIcon, User2Icon } from "lucide-react";
+import { FeatherIcon, UnlockIcon, User2Icon, VideoIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -58,6 +58,29 @@ const steps = [
         </defs>
       </svg>
     ),
+  },
+  {
+    title: "Managing Your Notetaker",
+    description: (
+      <>
+        Your notetaker joins scheduled meetings automatically. If needed, ask
+        the host to admit it. You can remove and re-add it anytime using the{" "}
+        <span className="font-bold text-primary">Add to Live Meeting</span>{" "}
+        button.
+      </>
+    ),
+    icon: () => <FeatherIcon className="h-10 w-10 text-primary" />,
+  },
+  {
+    title: "Customize Your Notetaker",
+    description: (
+      <>
+        Customize your Notetaker&apos;s behavior on the{" "}
+        <span className="font-bold text-primary">Settings</span> page — set its
+        name and choose which meetings it joins automatically.
+      </>
+    ),
+    icon: () => <VideoIcon className="h-10 w-10 text-primary" />,
   },
   {
     title: "Unlock Incredible Insights",
