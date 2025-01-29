@@ -1,8 +1,8 @@
-import { TagIcon } from "lucide-react";
+import { UsersIcon } from "lucide-react";
 import { z } from "zod";
 
+import { CollapsibleSection } from "~/components/chat/collapsible-section";
 import { Badge } from "~/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import type { Video } from "~/lib/schemas/video";
 
 export type VideoTagsProps = {
@@ -11,27 +11,26 @@ export type VideoTagsProps = {
 
 export function VideoTags({ video }: VideoTagsProps) {
   return (
-    <Card className="border-accent">
-      <CardHeader className="bg-secondary/50">
-        <CardTitle>Tags</CardTitle>
-      </CardHeader>
-      <CardContent className="py-4">
-        <div className="flex flex-wrap gap-2">
-          {video.tags
-            ?.filter((tag) => !isUuid(tag))
-            .map((tag, index) => (
-              <Badge
-                key={index}
-                variant="secondary"
-                className="flex items-center gap-1 px-2 py-1"
-              >
-                <TagIcon className="h-3 w-3" />
-                <span className="text-xs">{tag}</span>
-              </Badge>
-            ))}
-        </div>
-      </CardContent>
-    </Card>
+    <CollapsibleSection
+      title="Meeting Participants"
+      icon={UsersIcon}
+      className="border-accent"
+    >
+      <div className="flex flex-wrap gap-2 px-2 pb-2">
+        {video.tags
+          ?.filter((tag) => !isUuid(tag))
+          .map((tag, index) => (
+            <Badge
+              key={index}
+              variant="secondary"
+              size="sm"
+              className="flex items-center gap-1 rounded-sm border border-border px-2 py-1"
+            >
+              <span className="text-xs">{tag}</span>
+            </Badge>
+          ))}
+      </div>
+    </CollapsibleSection>
   );
 }
 

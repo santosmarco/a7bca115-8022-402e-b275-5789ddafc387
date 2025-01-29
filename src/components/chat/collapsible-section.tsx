@@ -17,6 +17,7 @@ interface CollapsibleSectionProps {
   count?: number;
   children: React.ReactNode;
   className?: string;
+  defaultOpen?: boolean;
 }
 
 export function CollapsibleSection({
@@ -26,8 +27,9 @@ export function CollapsibleSection({
   count,
   children,
   className,
+  defaultOpen = false,
 }: CollapsibleSectionProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = React.useState(() => defaultOpen);
   const [initialWidth, setInitialWidth] = React.useState<number>();
   const ref = React.useRef<HTMLDivElement>(null);
 

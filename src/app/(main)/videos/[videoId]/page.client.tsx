@@ -131,7 +131,7 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
         )}
       </header>
 
-      <div className="container mx-auto space-y-8 p-4 pt-24">
+      <div className="container mx-auto space-y-8 pt-24">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2 lg:space-y-6">
             <VideoPlayer
@@ -142,8 +142,9 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
               startAt={startAt ?? undefined}
             />
             {summary && (
-              <div className="block pb-2 lg:hidden">
+              <div className="block space-y-2 pb-2 lg:hidden">
                 <MeetingSummary summary={summary} />
+                <VideoTags video={video} />
               </div>
             )}
             <VideoMoments
@@ -153,7 +154,7 @@ export function VideoPageClient({ videoId }: VideoPageClientProps) {
               onSkipToMoment={handleSkipToMoment}
             />
           </div>
-          <div className="hidden space-y-4 lg:block">
+          <div className="hidden space-y-2 lg:block">
             {summary && <MeetingSummary summary={summary} />}
             <VideoTags video={video} />
           </div>
