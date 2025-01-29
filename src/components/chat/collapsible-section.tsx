@@ -28,20 +28,30 @@ export function CollapsibleSection({
   className,
 }: CollapsibleSectionProps) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const [initialWidth, setInitialWidth] = React.useState<number>();
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (ref.current && !initialWidth) {
+      setInitialWidth(ref.current.getBoundingClientRect().width);
+    }
+  }, [initialWidth]);
 
   return (
     <Collapsible
       open={isOpen}
       onOpenChange={setIsOpen}
       className={cn(
-        "min-w-full overflow-hidden rounded-md border border-border/50 bg-background/50",
+        "-mx-1 w-[calc(100%+8px)] overflow-hidden rounded-md border border-border/70 bg-background/50 data-[state=open]:border-border/50",
         className,
       )}
+      ref={ref}
+      style={initialWidth ? { maxWidth: initialWidth } : undefined}
     >
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          className="flex w-full min-w-full items-center justify-between gap-3 p-2 text-left hover:bg-accent/50"
+          className="flex w-full items-center justify-between gap-3 text-left hover:bg-accent/50"
         >
           <div className="flex items-center gap-x-2">
             <Icon className="h-4 w-4 text-primary" />

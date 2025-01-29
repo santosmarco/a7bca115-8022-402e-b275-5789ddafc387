@@ -1,7 +1,11 @@
 "use client";
 
 import { Placeholder } from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import {
+  type Editor as TiptapEditor,
+  EditorContent,
+  useEditor,
+} from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type * as React from "react";
 import type { Except } from "type-fest";
@@ -22,21 +26,17 @@ type EditorProps = Except<
 > & {
   placeholderText: string;
   frameworks: Tables<"coaching_frameworks">[];
-  onChange: (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>,
-  ) => void;
   onSubmit: (event?: { preventDefault?: () => void }) => void;
+  onEditorReady?: (editor: TiptapEditor) => void;
 };
 
 export function Editor({
-  onChange,
   onSubmit,
   frameworks,
   placeholderText,
   className,
   disabled,
+  onEditorReady,
   ...props
 }: EditorProps) {
   const { completeTask } = useOnboardingTasks();
@@ -58,6 +58,9 @@ export function Editor({
     ],
     content: "",
     editable: !disabled,
+    onBeforeCreate: ({ editor }) => {
+      onEditorReady?.(editor);
+    },
     editorProps: {
       attributes: {
         class: cn(
@@ -85,9 +88,6 @@ export function Editor({
       if (editorText.includes("/moments")) {
         void completeTask("use_moments_command");
       }
-      onChange({
-        target: { value: editorText },
-      } as React.ChangeEvent<HTMLInputElement>);
     },
   });
 

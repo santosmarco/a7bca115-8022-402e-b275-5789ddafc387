@@ -6,11 +6,11 @@ import dedent from "ts-dedent";
 import { z } from "zod";
 
 import {
+  listMeetingsTool as createListMeetingsTool,
+  searchMomentsTool as createSearchMomentsTool,
   displayMomentTool,
   explainTool,
   explainTools,
-  listMeetingsTool as createListMeetingsTool,
-  searchMomentsTool as createSearchMomentsTool,
 } from "~/lib/ai/tools";
 import { SlashCommand } from "~/lib/commands/schemas";
 import { searchSimilar } from "~/lib/pinecone/search";
@@ -278,12 +278,21 @@ export async function POST(request: NextRequest) {
       initialMessages.length + coreMessages.length,
     );
     const result = streamText({
-      model: openai(model),
+      model: openai.chat(model),
       tools: { ...tools, explain: explainTool(tools) },
       maxSteps: userCommands.length > 0 ? 8 : 5,
       temperature: 0.2,
       maxTokens: 8192,
-      messages: [...initialMessages, ...coreMessages],
+      experimental_continueSteps: true,
+      messages: [
+        ...initialMessages,
+        ...coreMessages,
+        {
+          role: "user",
+          content:
+            "REMEMBER: You must always state what you will do before calling a tool. For example, you will say, 'I will now search for moments that are relevant to what you want...'.",
+        },
+      ],
       onFinish: async ({ response: { messages: responseMessages } }) => {
         if (!selectedActivity) return;
 

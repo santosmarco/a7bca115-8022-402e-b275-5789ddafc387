@@ -1,3 +1,4 @@
+import type { Editor as TiptapEditor } from "@tiptap/core";
 import { motion } from "framer-motion";
 import { ArrowUp, Square } from "lucide-react";
 
@@ -14,12 +15,6 @@ import { SelectedContentList } from "./selected-content-list";
 export type ChatInputProps = {
   isLandingPage?: boolean;
   frameworks: Tables<"coaching_frameworks">[];
-  value: string;
-  onChange: (
-    event:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLTextAreaElement>,
-  ) => void;
   onSubmit: (event?: { preventDefault?: () => void }) => void;
   stop?: () => void;
   isGenerating: boolean;
@@ -31,6 +26,7 @@ export type ChatInputProps = {
   onUnselectMoment: (moment: VideoMoment) => void;
   onSelectVideo: (video: VideoOutput) => void;
   onUnselectVideo: (video: VideoOutput) => void;
+  onEditorReady: (editor: TiptapEditor) => void;
   onClick: () => void;
   disabled: boolean;
   buttonPosition?: "top" | "bottom";
@@ -38,7 +34,6 @@ export type ChatInputProps = {
 
 export function ChatInput({
   isLandingPage,
-  onChange,
   onSubmit,
   stop,
   frameworks,
@@ -51,6 +46,7 @@ export function ChatInput({
   onUnselectMoment,
   onSelectVideo,
   onUnselectVideo,
+  onEditorReady,
   disabled,
   buttonPosition = "bottom",
   ...props
@@ -67,7 +63,7 @@ export function ChatInput({
             : "Ask AI, or press '/' for commands, '@' for frameworks..."
         }
         frameworks={frameworks}
-        onChange={onChange}
+        onEditorReady={onEditorReady}
         onSubmit={onSubmit}
         className={cn((showSelectionsList || isLandingPage) && "min-h-28")}
         // disabled={isGenerating}
@@ -134,7 +130,7 @@ export function ChatInput({
             size="icon"
             className="h-8 w-8 transition-opacity"
             aria-label="Send message"
-            disabled={props.value === "" || isGenerating}
+            disabled={isGenerating}
           >
             <ArrowUp className="h-5 w-5" />
           </Button>

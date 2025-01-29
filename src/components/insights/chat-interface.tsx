@@ -1,12 +1,13 @@
 "use client";
 
+import type { Editor } from "@tiptap/react";
 import type { CoreMessage } from "ai";
 import { useChat } from "ai/react";
 import { AnimatePresence, motion } from "framer-motion";
 import _ from "lodash";
 import { AlertCircle, MessageCircleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import type { ChatRequestBody } from "~/app/api/chat/route";
@@ -135,6 +136,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const router = useRouter();
   const supabase = createClient();
+  const editorRef = useRef<Editor | null>(null);
   const [selectedMoments, setSelectedMoments] = useState<
     RouterOutputs["moments"]["listAll"]["moments"]
   >([]);
@@ -146,9 +148,6 @@ export function ChatInterface({
 
   const {
     messages,
-    input,
-    handleInputChange,
-    handleSubmit,
     append,
     isLoading: chatLoading,
     stop,
@@ -176,25 +175,65 @@ export function ChatInterface({
   const isEmpty = messages.length === 0;
   const isTyping = lastMessage?.role === "user";
 
-  const handleTopicClick = (topic: string) => () => {
-    if (topic === "Team Conflict") {
-      void completeTask("explore_team_conflict_chat");
-    } else if (topic === "Feedback") {
-      void completeTask("explore_feedback_chat");
-    }
-    onTopicSelect(topic);
-  };
+  const onEditorReady = useCallback((editor: Editor) => {
+    editorRef.current = editor;
+  }, []);
 
-  const handleRestart = async () => {
-    await supabase
+  const onSubmit = useCallback(async () => {
+    if (chatLoading || isTyping) return;
+
+    const text = editorRef.current?.getText() ?? "";
+    if (!text.trim()) return;
+
+    if (!isEmpty) {
+      void completeTask("ask_follow_up");
+    } else {
+      void completeTask("explore_discovery_chat");
+    }
+
+    await append({
+      content: text,
+      role: "user",
+    });
+
+    editorRef.current?.commands.clearContent();
+  }, [append, chatLoading, isTyping, isEmpty, completeTask]);
+
+  const handleTopicClick = useCallback(
+    (topic: string) => () => {
+      if (topic === "Team Conflict") {
+        void completeTask("explore_team_conflict_chat");
+      } else if (topic === "Feedback") {
+        void completeTask("explore_feedback_chat");
+      }
+      onTopicSelect(topic);
+    },
+    [completeTask, onTopicSelect],
+  );
+
+  const handleRestart = useCallback(async () => {
+    const { data: chat } = await supabase
       .from("chats")
-      .delete()
+      .select("*")
       .eq("user_id", userId)
-      .eq("topic", selectedTopic);
+      .eq("topic", selectedTopic)
+      .maybeSingle();
+
+    if (chat) {
+      await supabase
+        .from("chats")
+        .update({
+          topic: `${chat.topic}-${new Date().toISOString()}`,
+          latest: false,
+        })
+        .eq("id", chat.id);
+    }
+
+    stop();
     setMessages([]);
     void reload();
     router.push("/insights");
-  };
+  }, [supabase, userId, selectedTopic, setMessages, reload, router, stop]);
 
   useEffect(
     function handleInitializeConversation() {
@@ -233,7 +272,7 @@ export function ChatInterface({
 
       void initializeChat();
     },
-    [supabase, isEmpty, userId, selectedTopic, isTyping, append, setMessages],
+    [supabase, isEmpty, userId, selectedTopic, isTyping, setMessages],
   );
 
   return (
@@ -260,31 +299,15 @@ export function ChatInterface({
             <form
               className="mt-auto w-full"
               onSubmit={(ev) => {
-                if (chatLoading || isTyping) {
-                  ev.preventDefault();
-                  return;
-                }
-
-                void completeTask("explore_discovery_chat");
-
-                handleSubmit(ev);
+                ev.preventDefault();
+                void onSubmit();
               }}
             >
               <ChatInput
                 isLandingPage
                 frameworks={frameworks}
-                value={input}
-                onChange={handleInputChange}
-                onSubmit={(ev) => {
-                  if (chatLoading || isTyping) {
-                    ev?.preventDefault?.();
-                    return;
-                  }
-
-                  void completeTask("explore_discovery_chat");
-
-                  handleSubmit(ev);
-                }}
+                onSubmit={onSubmit}
+                onEditorReady={onEditorReady}
                 stop={stop}
                 isGenerating={chatLoading}
                 moments={relevantMoments}
@@ -455,28 +478,14 @@ export function ChatInterface({
         <form
           className="mt-auto"
           onSubmit={(ev) => {
-            if (chatLoading || isTyping) {
-              ev.preventDefault();
-              return;
-            }
-
-            handleSubmit(ev);
+            ev.preventDefault();
+            void onSubmit();
           }}
         >
           <ChatInput
             frameworks={frameworks}
-            value={input}
-            onChange={handleInputChange}
-            onSubmit={(ev) => {
-              if (chatLoading || isTyping) {
-                ev?.preventDefault?.();
-                return;
-              }
-
-              void completeTask("ask_follow_up");
-
-              handleSubmit(ev);
-            }}
+            onSubmit={onSubmit}
+            onEditorReady={onEditorReady}
             stop={stop}
             isGenerating={chatLoading}
             moments={relevantMoments}
