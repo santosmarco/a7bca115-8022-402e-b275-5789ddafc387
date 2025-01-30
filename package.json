@@ -113,7 +113,7 @@
     "jotai": "^2.11.1",
     "langchain": "^0.3.7",
     "langfuse": "^3.31.3",
-    "langfuse-vercel": "^3.31.3",
+    "langfuse-vercel": "^3.34.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.454.0",
     "media-captions": "^0.0.18",
