@@ -9,6 +9,8 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    // API
+    API_KEY: z.string(),
     // Vercel
     VERCEL_URL: z.string().optional(),
     SITE_URL: z.string().optional(),
@@ -68,6 +70,7 @@ export const env = createEnv({
   runtimeEnv: {
     // Server
     NODE_ENV: process.env.NODE_ENV,
+    API_KEY: process.env.API_KEY,
     VERCEL_URL: process.env.VERCEL_URL,
     SITE_URL: process.env.SITE_URL,
     INTERNAL_API_KEY: process.env.INTERNAL_API_KEY,

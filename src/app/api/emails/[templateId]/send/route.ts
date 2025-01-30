@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { safeParseAsync } from "zod-error";
 
+import { env } from "~/env";
 import { sendExploreUnlockedEmail } from "~/lib/email";
 import { logger } from "~/lib/logging/server";
 import {
@@ -85,6 +86,13 @@ export async function POST(
   { params }: { params: { templateId: string } },
 ): Promise<NextResponse<ResponseBody>> {
   try {
+    const apiKey = request.headers.get("x-api-key");
+
+    if (!apiKey || apiKey !== env.API_KEY) {
+      logger.warn("Unauthorized request - invalid or missing API key");
+      return createErrorResponse("Unauthorized", 401);
+    }
+
     const requestBodyParseResult = await safeParseAsync(RequestBody, {
       templateId: params.templateId,
       ...(await request.json()),
