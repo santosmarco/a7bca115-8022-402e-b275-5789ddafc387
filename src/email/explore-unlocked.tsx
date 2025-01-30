@@ -15,7 +15,8 @@ export function ExploreUnlockedEmail({ profile }: ExploreUnlockedEmailProps) {
   const previewText =
     "🎉 Congrats! Start Exploring Your Performance with GameTape";
   const exploreUrl = new URL("/insights", BASE_URL);
-  const bestPracticesUrl = new URL("/best-practices", BASE_URL);
+  const bestPracticesUrl =
+    "https://www.withtitan.com/documentation-articles/best-practices";
 
   return (
     <EmailContainer previewText={previewText}>
